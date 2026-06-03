@@ -208,8 +208,16 @@
 
     <!-- SPINNER -->
     <div id="viewerLoading" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900/80 rounded-lg z-50">
-      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-sky-400 border-opacity-70"></div>
-      <span class="ml-4 text-sky-300 font-semibold text-lg">Loading structures…</span>
+      <div class="mx-6 w-full max-w-md rounded-2xl border border-sky-400/20 bg-slate-950/85 px-6 py-7 text-center shadow-2xl shadow-sky-950/40 backdrop-blur-sm">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-sky-400/20 bg-slate-900/90">
+          <div class="animate-spin rounded-full h-12 w-12 border-4 border-sky-950 border-t-sky-400 border-r-cyan-300 border-opacity-70"></div>
+        </div>
+        <div id="loaderTitle" class="mt-4 text-sky-300 font-semibold text-lg">Loading structures…</div>
+        <div id="loaderMessage" class="mt-2 min-h-[1.25rem] text-sm text-slate-300" aria-live="polite">Preparing the viewer…</div>
+        <div id="loaderProgress" class="mt-2 min-h-[1rem] text-xs font-medium tracking-wide text-cyan-200"></div>
+        <div id="loaderCurrentFile" class="mt-1 min-h-[0.95rem] break-all text-[11px] text-slate-500"></div>
+        <div class="mt-3 text-[11px] uppercase tracking-[0.22em] text-slate-500">Large ligases may take a moment</div>
+      </div>
     </div>
 
     <div id="viewer3d" style="height:520px;"></div>
@@ -395,6 +403,9 @@
 let viewer, models = [];
 let referenceCenter = null;
 let referenceRadius = 0;
+let viewerLoaderMessageTimer = null;
+let viewerLoaderLigaseName = "";
+let viewerLoaderFailureCount = 0;
 let surfaceVisible = false;
 // let opacity = 0.0; // default opacity for surfaces (30%)
 let surfaceIDs = [];
@@ -412,6 +423,18 @@ let hbondVisible = false,
     chargeColored = false,
     vdwVisible = false,
     labelVisible = false;
+
+const viewerLoaderMessages = [
+  "Warming up the structural microscope…",
+  "Aligning ligase complexes…",
+  "Stacking PDBs into the viewer…",
+  "Finding the tiny molecules in the big proteins…",
+  "Painting ligand sticks electric blue…",
+  "Checking variant structures…",
+  "Centering the binding pocket…",
+  "Preparing hover tooltips…",
+  "Almost ready to explore…"
+];
 
 const standardResidues = new Set([
   "ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HIS","ILE",
@@ -490,13 +513,65 @@ window.colorFuncs = {
 function scrollToViewer() {
   document.getElementById('structureContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+function setLoaderTitle(text) {
+  const el = document.getElementById('loaderTitle');
+  if (el) el.textContent = text || 'Loading structures…';
+}
+function setLoaderMessage(text) {
+  const el = document.getElementById('loaderMessage');
+  if (el) el.textContent = text || 'Preparing the viewer…';
+}
+function setLoaderProgress(loaded, total, failed = 0) {
+  const el = document.getElementById('loaderProgress');
+  if (!el) return;
+  if (!Number.isFinite(total) || total <= 0) {
+    el.textContent = '';
+    return;
+  }
+  const base = `Loaded ${loaded} / ${total} structures`;
+  el.textContent = failed > 0 ? `${base} · skipped ${failed}` : base;
+}
+function setLoaderCurrentFile(filename) {
+  const el = document.getElementById('loaderCurrentFile');
+  if (el) el.textContent = filename ? `Current file: ${filename}` : '';
+}
+function resetLoaderText() {
+  viewerLoaderLigaseName = '';
+  viewerLoaderFailureCount = 0;
+  setLoaderTitle('Loading structures…');
+  setLoaderMessage('Preparing the viewer…');
+  setLoaderProgress();
+  setLoaderCurrentFile('');
+}
+function startLoaderMessages(ligase = '') {
+  viewerLoaderLigaseName = ligase || '';
+  let idx = 0;
+  if (viewerLoaderMessageTimer) {
+    clearInterval(viewerLoaderMessageTimer);
+    viewerLoaderMessageTimer = null;
+  }
+  setLoaderMessage(viewerLoaderMessages[0]);
+  viewerLoaderMessageTimer = setInterval(() => {
+    idx = (idx + 1) % viewerLoaderMessages.length;
+    setLoaderMessage(viewerLoaderMessages[idx]);
+  }, 1900);
+}
+function stopLoaderMessages() {
+  if (viewerLoaderMessageTimer) {
+    clearInterval(viewerLoaderMessageTimer);
+    viewerLoaderMessageTimer = null;
+  }
+}
 function toggleLoading(show) {
   const loader = document.getElementById('viewerLoading');
   if (show) {
+    resetLoaderText();
+    startLoaderMessages(viewerLoaderLigaseName);
     loader.classList.remove('hidden');
     loader.style.opacity = '1';
     loader.style.pointerEvents = 'auto';
   } else {
+    stopLoaderMessages();
     loader.style.opacity = '0';
     loader.style.pointerEvents = 'none';
     setTimeout(() => loader.classList.add('hidden'), 200); // give fade-out time
@@ -783,7 +858,10 @@ async function loadLigaseStructures(ligase, focus = true) {
   vdiv.empty(); models = [];
   list.innerHTML = '';
   panel.classList.add('hidden');
+  viewerLoaderLigaseName = ligase;
   toggleLoading(true);
+  setLoaderTitle(`Loading ${ligase} structures…`);
+  setLoaderMessage(`Preparing the ${ligase} viewer…`);
 
   console.log("🧼 Cleared viewer container and toggle panel");
 
@@ -808,10 +886,25 @@ async function loadLigaseStructures(ligase, focus = true) {
   console.log("🧹 Cleared previous click/hover handlers");
 
   // 🔍 Fetch all variant PDBs
-  const files = filterVariantFiles(await fetch(`/api/ligase-pdbs/${encodeURIComponent(ligase)}`).then(r => r.json()));
+  let files = [];
+  try {
+    files = filterVariantFiles(await fetch(`/api/ligase-pdbs/${encodeURIComponent(ligase)}`).then(r => r.json()));
+  } catch (err) {
+    console.error(`❌ Failed to fetch PDB list for ${ligase}`, err);
+    setLoaderMessage(`Could not fetch structure list for ${ligase}.`);
+    setLoaderCurrentFile('');
+    toggleLoading(false);
+    isLoadingLigase = false;
+    return;
+  }
   console.log(`📁 Found ${files.length} structure files for ${ligase}:`, files);
+  setLoaderTitle(`Loading ${ligase} structures…`);
+  setLoaderMessage(`Found ${files.length} structures for ${ligase}.`);
+  setLoaderProgress(0, files.length, 0);
 
   if (!files.length) {
+    setLoaderMessage(`No structures were found for ${ligase}.`);
+    setLoaderCurrentFile('');
     alert(`No PDBs found for ${ligase}`);
     toggleLoading(false);
     isLoadingLigase = false;
@@ -819,9 +912,15 @@ async function loadLigaseStructures(ligase, focus = true) {
   }
 
   // Load models sequentially
-  for (const file of files) {
+  let loadedCount = 0;
+  let failedCount = 0;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
     const fetchPath = `/api/Ligases/${ligase}/PDB/${file}`;
     console.log(`📡 Fetching ${fetchPath} ...`);
+    setLoaderMessage(`Loading structure ${i + 1} of ${files.length}…`);
+    setLoaderProgress(loadedCount, files.length, failedCount);
+    setLoaderCurrentFile(file);
     try {
       const pdbtxt = await $.get(fetchPath);
       const m = viewer.addModel(pdbtxt, 'pdb');
@@ -831,19 +930,28 @@ async function loadLigaseStructures(ligase, focus = true) {
       m.setStyle({ hetflag: true }, { stick: { colorscheme: 'hetAtomBlueCarbon', radius: 0.25 } }); // ligand(s)
 
       models.push({ model: m, name: file, visible: true });
+      loadedCount += 1;
+      setLoaderProgress(loadedCount, files.length, failedCount);
       console.log(`✅ Loaded model: ${file}`);
     } catch (err) {
+      failedCount += 1;
+      viewerLoaderFailureCount = failedCount;
+      setLoaderProgress(loadedCount, files.length, failedCount);
+      setLoaderMessage(`Skipped ${failedCount} structure${failedCount === 1 ? '' : 's'} that failed to load.`);
       console.error(`❌ Failed to load model: ${fetchPath}`, err);
     }
   }
 
   console.log(`🧩 Total models loaded: ${models.length}`);
+  setLoaderCurrentFile('');
+  setLoaderMessage(`Aligning ${models.length} loaded structures…`);
 
   // Give the browser a beat before alignment
   await new Promise(r => setTimeout(r, 100));
   alignAllModelsToFirst();
   console.log("🎯 Alignment complete");
 
+  setLoaderMessage("Centering the protein reference frame…");
   centerOnProteinReference(viewer, models);
   console.log("📍 Centered on protein reference frame");
 
@@ -853,6 +961,7 @@ async function loadLigaseStructures(ligase, focus = true) {
   }, 50);
 
   setTimeout(() => {
+    setLoaderMessage("Preparing hover tooltips and model controls…");
     buildModelTogglePanel();
     enableLigandHover();
     enableLigandInfoHover();
@@ -1887,6 +1996,9 @@ Promise.all([
 
 
 document.getElementById("closeViewer").onclick = () => {
+  stopLoaderMessages();
+  resetLoaderText();
+  toggleLoading(false);
   document.getElementById("structureContainer").classList.add("hidden");
   viewer.removeAllModels();
   models = [];

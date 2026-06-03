@@ -1,93 +1,100 @@
 # Qodex.summary
 
 ## Task
-Fix Heroku remote-mode SDF render filename normalization.
+Improve E3 structure viewer loader messaging.
 
 ## Original Goal
-Fix the new backend miscommunication where Heroku calls RANDY’s SDF endpoint with a `.pdb` filename, causing RANDY `400` and Heroku `500`.
+Make the long ligase structure loading wait feel better by showing descriptive, rotating loader messages and progress instead of a static “Loading structures…” message.
 
 ## Assumptions
-- RANDY’s `/backup/e3/file/sdf/<ligase>/<filename>` contract is correct and expects a real `.sdf` filename.
-- Frontend callers may continue passing PDB filenames for historical reasons, so backend compatibility is the safest primary fix.
-- The current shell does not contain live production RANDY credentials, so remote validation must be mocked safely.
+- The existing sequential PDB loading flow in `loadLigaseStructures()` should remain intact for this task.
+- Keeping the loader changes local to `templates/explorer.html` is preferable because the current loader markup, styles, and script all live there already.
+- Existing alert/no-PDB behavior should remain, with only better loader cleanup around it.
 
 ## Files Inspected
-- `Ligases/routes.py` — inspect `/api/render-sdf/<ligase>/<filename>`, local/remote file logic, and adjacent ligand-detail routes.
-- `Ligases/randy_client.py` — inspect remote proxy behavior and quoting helpers.
-- `Ligase_app.py` — confirm no app-level route override was involved.
-- `templates/ligand.html` — inspect page code that calls `/api/render-sdf/...` using `window.currentPDB`.
-- `templates/explorer.html` — inspect tooltip/popup flows that also call `/api/render-sdf/...` with PDB filenames.
+- `templates/explorer.html` — inspect loader markup, viewer styles, helper functions, and sequential structure loading flow.
+- `Qodex.summary.md` — replace the prior run summary with this task’s implementation and validation notes.
+- `Ligase_app.py` — included in syntax validation.
+- `Ligases/routes.py` — included in syntax validation.
+- `Ligases/randy_client.py` — included in syntax validation.
 
 ## Files Changed
-- `Ligases/routes.py` — added SDF filename normalization, changed remote proxying to use normalized `.sdf` filenames, and added clean upstream error handling.
-- `Qodex.summary.md` — updated for this debugging run.
+- `templates/explorer.html` — upgraded the structure viewer loader UI, added rotating message/progress helpers, and threaded status updates through the existing sequential ligase structure load loop.
+- `Qodex.summary.md` — updated for this loader UX improvement run.
 
 ## Files Created
-- `Qodex.summary.md` — concise record of findings, changes, validation, and manual verification.
+- `Qodex.summary.md` — rewritten to capture this task’s scope, decisions, commands, and validation.
 
 ## Implementation Summary
-Root cause: the Heroku-side `/api/render-sdf/<ligase>/<filename>` route already had local logic that effectively treated incoming names like `7HNS_LQP.pdb` as a structure key and resolved matching local SDF files, but in remote mode it skipped that normalization and proxied the raw incoming filename directly to RANDY. That produced bad upstream requests such as:
+The structure viewer loader in `templates/explorer.html` was upgraded from a plain spinner plus one static “Loading structures…” line into a richer overlay with:
 
-- `file/sdf/TRIM21/7HNS_LQP.pdb`
+- a ligase-specific title,
+- a rotating status line,
+- numeric progress text,
+- a current-filename line,
+- subtle reassurance text for large ligases.
 
-instead of:
+Small helper functions were added near the existing viewer globals to manage loader title/message/progress/current-file text, start and stop a single rotating interval safely, and reset the loader state between runs.
 
-- `file/sdf/TRIM21/7HNS_LQP.sdf`
+`loadLigaseStructures()` still uses the same architecture as before:
+- show viewer,
+- create a new 3Dmol viewer,
+- fetch PDB list,
+- sequentially fetch each PDB,
+- add models,
+- align,
+- center,
+- build toggle panel,
+- enable hover,
+- hide loader.
 
-RANDY correctly rejected the `.pdb` filename with `400`, and Heroku surfaced it as a generic `500`.
-
-The fix was to add `normalize_sdf_filename()` in `Ligases/routes.py` and apply it before both remote proxying and local file lookup:
-- `.sdf` input stays `.sdf`
-- `.pdb` input becomes `.sdf`
-- no-extension input becomes `.sdf`
-- path traversal and unsupported extensions are rejected cleanly
-
-Remote mode now proxies the normalized SDF filename through `randy_client.quote_path(...)`, and upstream `400`/`404`-style failures are returned as clean non-500 JSON responses with safe metadata only.
+The only changes in that flow are status hooks:
+- the loader now shows which ligase is loading,
+- it reports how many structure files were found,
+- it updates `Loaded X / Y structures` during the sequential loop,
+- it shows the current filename being fetched,
+- it tracks skipped model loads in the progress line,
+- it clears/stops cleanly on empty lists, list-fetch failure, close, and normal completion.
 
 ## Key Decisions
-- Fixed the backend route first rather than rewriting frontend callers, because old UI flows and cached JS may still pass `.pdb` names.
-- Kept frontend unchanged because backend compatibility is sufficient and preserves old behavior.
-- Preserved local-mode behavior by using the same normalized SDF filename for local fallback lookup.
-- Returned clean `400`/upstream-status JSON on remote proxy failures instead of letting `requests` exceptions bubble into generic `500`s.
+- Kept all loader logic local to `templates/explorer.html` to avoid broad styling or architectural changes.
+- Preserved the sequential model loading loop and existing viewer behavior exactly, adding only UI/progress updates around it.
+- Used one rotating message interval handle (`viewerLoaderMessageTimer`) and explicitly stopped it in `toggleLoading(false)` and viewer close handling to avoid duplicate intervals on repeated ligase loads.
+- Left the existing “No PDBs found” alert in place and improved only the loader cleanup/message state around that path.
 
 ## Commands Run
-- `rg -n "render-sdf|serve_sdf_file|file/sdf|file/pdb|quote_path|proxy_file|\.pdb|\.sdf|Ligases/.*/PDB|missing-recruiter|ligand-visual" .` — locate the failing route and its callers.
-- `sed -n '1,260p' Ligases/randy_client.py` — inspect remote proxy behavior.
-- `sed -n '1160,1245p' Ligases/routes.py` — inspect the SDF render route implementation.
-- `sed -n '1,260p' Ligase_app.py` — confirm no app-level override was involved.
-- `sed -n '1800,1865p' templates/ligand.html` — inspect page-level SDF calls.
-- `sed -n '1450,1525p' templates/explorer.html` — inspect explorer tooltip/popup SDF calls.
-- `python -m py_compile Ligase_app.py Ligases/randy_client.py Ligases/routes.py` — syntax validation.
-- `python - <<'PY' ... monkeypatched remote render-sdf checks ... PY` — confirm `.pdb` input proxies as `.sdf`.
-- `python - <<'PY' ... HTTPError(400) proxy failure check ... PY` — confirm non-500 upstream error handling.
-- `python - <<'PY' ... normalize_sdf_filename edge cases ... PY` — confirm traversal and unsupported extensions are rejected.
+- `rg -n "viewerLoading|toggleLoading|loadLigaseStructures|Loading structures|Found .*structure|for \(const file of files\)|modelTogglePanel|viewer3d" templates static Ligases Ligase_app.py` — locate the relevant loader and viewer code.
+- `rg -n "viewerLoading|toggleLoading|loadLigaseStructures" templates/explorer.html` — narrow to the target template sections.
+- `sed -n '190,370p' templates/explorer.html` — inspect loader markup and local styles.
+- `sed -n '470,880p' templates/explorer.html` — inspect helper functions and `loadLigaseStructures()`.
+- `sed -n '1800,1895p' templates/explorer.html` — inspect ligase row click handlers and viewer close behavior.
+- `sed -n '1,220p' Qodex.summary.md` — inspect the existing summary file before replacing it.
+- `python -m py_compile Ligase_app.py Ligases/routes.py Ligases/randy_client.py` — syntax validation; passed.
+- `python Ligase_app.py` — run the local Flask app for browser validation on `http://127.0.0.1:5025`.
 
 ## Validation Results
-- `python -m py_compile Ligase_app.py Ligases/randy_client.py Ligases/routes.py` passed.
-- Mocked remote-mode checks passed:
-  - `/api/render-sdf/TRIM21/7HNS_LQP.pdb` → `200`, `chemical/x-mdl-sdfile`
-  - `/api/render-sdf/TRIM21/7HNS_LQP.sdf` → `200`, `chemical/x-mdl-sdfile`
-  - Captured remote proxy paths were:
-    - `file/sdf/TRIM21/7HNS_LQP.sdf`
-    - `file/sdf/TRIM21/7HNS_LQP.sdf`
-- Mocked upstream failure check passed:
-  - remote `HTTPError` with status `400` now returns Heroku `400` JSON instead of generic `500`
-- Filename normalization edge-case checks passed:
-  - `../evil.pdb` → rejected
-  - `/tmp/x.pdb` → rejected
-  - `7HNS_LQP.mol2` → rejected
-- Live RANDY validation was not run from this shell because production `E3_RANDY_BASE_URL` and `E3_RANDY_TOKEN` are not available here.
+- `python -m py_compile Ligase_app.py Ligases/routes.py Ligases/randy_client.py` passed.
+- Manual browser validation was performed against `http://127.0.0.1:5025/explorer`:
+  - Explorer page loaded successfully.
+  - Clicking `CRBN` showed the upgraded loader overlay immediately.
+  - The loader displayed:
+    - ligase-specific title (`Loading CRBN structures…`)
+    - rotating/status messaging
+    - progress (`Loaded 0 / 108 structures`, later `Loaded 108 / 108 structures`)
+    - current file (`Current file: 4CI1_EF2.pdb`)
+  - The loader hid cleanly after the CRBN load finished.
+  - No browser console errors were introduced during this check.
+  - A second ligase load (`MDM2`) reused the loader correctly and showed fresh progress (`Loaded 5 / 122 structures`) rather than stale state.
+- Full manual validation of an actual no-PDB ligase path was not run during this pass, although the empty-list and list-fetch-failure code paths now stop the loader cleanly.
 
 ## Known Issues
-- This run did not hit the real Heroku deployment or live RANDY host, so final confirmation on the deployed app still needs a live request.
-- The route now returns JSON error payloads for remote proxy failures. That is appropriate for the API endpoint, but browser callers may still display a generic alert unless the frontend later gains richer error messaging.
+- The rotating message line intentionally continues cycling while loading is active, so explicit transient status text in that line may be replaced by the next rotation tick during long loads. The numeric progress and current-file lines remain stable.
+- This task does not change the underlying sequential loading architecture, so very large ligases may still take time; the improvement is UX clarity rather than runtime performance.
 
 ## Manual Verification
-1. Open `/api/render-sdf/TRIM21/7HNS_LQP.pdb`.
-2. Confirm it does not return a generic `500`.
-3. Confirm logs show the normalized SDF filename (`7HNS_LQP.sdf`) and safe metadata only, not tokens.
-4. Open `/api/render-sdf/TRIM21/7HNS_LQP.sdf` and confirm it still works.
-5. Open `/ligand/LR00471` and verify the ligand page can still trigger SDF-backed popup/render behavior without falling into a generic error path.
+1. Open the E3 Ligase Overview page.
+2. Click a ligase with many structures.
+3. Confirm rotating loader messages and progress appear until the viewer is ready.
 
 ## Suggested Next Prompt
-Please add a small regression test module for `/api/render-sdf/<ligase>/<filename>` covering `.pdb` normalization, `.sdf` passthrough, and mocked remote `400/404` propagation so this compatibility behavior stays locked in.
+Please implement progressive structure loading in the explorer viewer so the first aligned model becomes interactive before every remaining PDB finishes loading, while preserving the new loader messaging as a secondary status layer.
