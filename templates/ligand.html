@@ -447,9 +447,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
       const early = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
 
-      if (early.status === 411) {
+      if (early.status === 404 || early.status === 411) {
           console.warn("🔻 Missing recruiter detected:", recruiterCode);
           window.location.href = `/missing-recruiter?code=${recruiterCode}`;
+          return;
+      }
+
+      if (!early.ok) {
+          console.error("🚨 Early check returned non-OK status:", early.status);
           return;
       }
   } catch (err) {
@@ -463,6 +468,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // =====================================================
 
   const res = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
+  if (res.status === 404 || res.status === 411) {
+    window.location.href = `/missing-recruiter?code=${recruiterCode}`;
+    return;
+  }
+  if (!res.ok) {
+    document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
+    document.getElementById("ngl").innerHTML = '';
+    return;
+  }
   const data = await res.json();
   const descriptor = data.descriptor || {};
   const metadata   = data.metadata   || {};
@@ -504,7 +518,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 
-  if (!res.ok || data.error) {
+  if (!data.ok || data.error) {
     document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
     document.getElementById("ngl").innerHTML = '';
     return;
@@ -883,7 +897,7 @@ async function loadSASASummary(code) {
     // const data = await res.json();
     const res = await fetch(`/api/ligand-visual/${code}`);
 
-    if (res.status === 404) {
+    if (res.status === 404 || res.status === 411) {
         window.location.href = `/missing-recruiter?code=${code}`;
         return;
     }

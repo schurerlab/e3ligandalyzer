@@ -16,7 +16,7 @@ from urllib.parse import quote, unquote
 from flask import Flask, abort, jsonify, request, send_file
 from werkzeug.utils import secure_filename
 
-from RANDY.e3_data_routes import register_e3_routes
+from backup_receiver.e3_data_routes import register_e3_routes
 
 APP = Flask(__name__)
 

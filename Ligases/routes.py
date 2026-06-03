@@ -811,6 +811,88 @@ def _find_fallback_recruiter(recruiter_code: str):
     return fallback_row["RECRUITER_CODE"] if fallback_row else None
 
 
+def _pdb_filename_candidates(pdb_id, ligand, variant=None):
+    """Return variant-aware candidate PDB filenames for a mapping row."""
+    base = f"{str(pdb_id or '').strip().upper()}_{str(ligand or '').strip().upper()}"
+    candidates = []
+
+    variant_text = "" if variant in (None, "", 0, "0") else str(variant).strip()
+    if variant_text:
+        candidates.append(f"{base}_{variant_text}.pdb")
+
+    candidates.append(f"{base}.pdb")
+
+    if variant_text in {"", "1"}:
+        candidates.append(f"{base}_1.pdb")
+
+    for n in range(2, 10):
+        if str(n) != variant_text:
+            candidates.append(f"{base}_{n}.pdb")
+
+    seen = set()
+    ordered = []
+    for candidate in candidates:
+        key = candidate.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(candidate)
+    return ordered
+
+
+def _resolve_pdb_filename(ligase, pdb_id, ligand, variant=None):
+    """Resolve the effective PDB filename from local files or the remote RANDY listing."""
+    ligase = str(ligase or "").strip()
+    pdb_id = str(pdb_id or "").strip().upper()
+    ligand = str(ligand or "").strip().upper()
+    candidates = _pdb_filename_candidates(pdb_id, ligand, variant)
+
+    if randy_client.remote_enabled():
+        try:
+            filenames = randy_client.get_json(f"ligase-pdbs/{randy_client.quote_part(ligase)}")
+        except Exception as exc:
+            current_app.logger.warning(
+                "Remote PDB listing failed for recruiter lookup: ligase=%s exc=%s",
+                ligase,
+                type(exc).__name__,
+            )
+            return None
+
+        if not isinstance(filenames, list):
+            return None
+
+        by_lower = {
+            str(name).strip().lower(): str(name).strip()
+            for name in filenames
+            if isinstance(name, str) and str(name).strip()
+        }
+        for candidate in candidates:
+            match = by_lower.get(candidate.lower())
+            if match:
+                return match
+
+        base = f"{pdb_id}_{ligand}"
+        pattern = re.compile(rf"^{re.escape(base)}(?:_\d+)?\.pdb$", re.IGNORECASE)
+        for name in sorted(by_lower.values(), key=str.lower):
+            if pattern.fullmatch(name):
+                return name
+        return None
+
+    pdb_dir = os.path.join("Ligases", ligase, "PDB")
+    for candidate in candidates:
+        if os.path.exists(os.path.join(pdb_dir, candidate)):
+            return candidate
+
+    if os.path.isdir(pdb_dir):
+        base = f"{pdb_id}_{ligand}"
+        pattern = re.compile(rf"^{re.escape(base)}(?:_\d+)?\.pdb$", re.IGNORECASE)
+        for name in sorted(os.listdir(pdb_dir), key=str.lower):
+            if pattern.fullmatch(name):
+                return name
+
+    return None
+
+
 # ============================================================
 # ✅ Unified visual payload (composite-key aware, auto-fallback)
 # ============================================================
@@ -826,6 +908,9 @@ def get_ligand_visual(recruiter_code):
       • Atom-level SASA + 3D coordinates
       • If missing SASA or PDB data → render missing_data.html
     """
+
+    recruiter_code = str(recruiter_code or "").strip().upper()
+    backend_mode = "remote" if randy_client.remote_enabled() else "local"
 
     try:
         # ------------------------------------------------------------------
@@ -861,7 +946,17 @@ def get_ligand_visual(recruiter_code):
         """, [recruiter_code], one=True)
 
         if not key_row:
-            raise Exception(f"No composite key found for {recruiter_code}")
+            current_app.logger.warning(
+                "Ligand visual missing composite key: code=%s backend=%s",
+                recruiter_code,
+                backend_mode,
+            )
+            return jsonify({
+                "ok": False,
+                "error": "No composite key found.",
+                "recruiter_code": recruiter_code,
+                "backend_mode": backend_mode,
+            }), 404
 
         ligase  = key_row["Ligase"]
         pdb_id  = key_row["pdb_id"]
@@ -882,21 +977,7 @@ def get_ligand_visual(recruiter_code):
         canonical_smiles = sm_row["SMILES"] if sm_row else descriptor.get("SMILES")
 
         metadata = {
-            "SMILES": canonical_smiles,  # 🔥 THIS WILL ALWAYS BE RIGHT
-            "Ligand": ligand,
-            "PDB_ID": pdb_id,
-            "Ligase": ligase,
-            "Variant": variant,
-        }
-
-
-        print(f"🔑 [CompositeKey] {recruiter_code} → Ligase={ligase}, PDB={pdb_id}, Ligand={ligand}, Variant={variant}")
-
-        # --------------------------------------------------------------
-        # STEP 2B: Attach SMILES to metadata (canonical source)
-        # --------------------------------------------------------------
-        metadata = {
-            "SMILES": descriptor.get("SMILES"),
+            "SMILES": canonical_smiles,
             "Ligand": ligand,
             "PDB_ID": pdb_id,
             "Ligase": ligase,
@@ -981,20 +1062,11 @@ def get_ligand_visual(recruiter_code):
 
 
         # ------------------------------------------------------------------
-        # 🧱 STEP 4: Validate PDB path
+        # 🧱 STEP 4: Validate PDB availability in the active backend
         # ------------------------------------------------------------------
-        pdb_path = None
-        pdb_missing = False
-
-        if ligase and pdb_id and ligand:
-            pdb_path = os.path.join("Ligases", ligase, "PDB", f"{pdb_id}_{ligand}.pdb")
-            if not os.path.exists(pdb_path):
-                alt_path = os.path.join("Ligases", ligase, "PDB", f"{pdb_id}_{ligand}_1.pdb")
-                if os.path.exists(alt_path):
-                    pdb_path = alt_path
-                else:
-                    pdb_missing = True
-                    pdb_path = None
+        pdb_file = _resolve_pdb_filename(ligase, pdb_id, ligand, variant)
+        pdb_missing = not bool(pdb_file)
+        pdb_path = f"/Ligases/{ligase}/PDB/{pdb_file}" if pdb_file else None
 
         # ------------------------------------------------------------------
         # 🚨 STEP 5: Missing data fallback
@@ -1002,20 +1074,27 @@ def get_ligand_visual(recruiter_code):
         missing_critical = (
             not sasa_summary or
             not sasa_atoms or
-            pdb_missing or
-            pdb_path is None
+            pdb_missing
         )
 
         if missing_critical:
-            print(f"⚠️ Missing SASA or PDB for recruiter {recruiter_code}")
-            return render_template(
-                "missing_data.html",
-                recruiter_code=recruiter_code,
-                descriptor=descriptor,
-                metadata=metadata,
-                sasa_summary=sasa_summary,
-                SUPPORT_EMAIL="jxs794@miami.edu"
-            ), 411
+            current_app.logger.warning(
+                "Ligand visual missing critical data: code=%s backend=%s has_summary=%s has_atoms=%s has_pdb=%s",
+                recruiter_code,
+                backend_mode,
+                bool(sasa_summary),
+                bool(sasa_atoms),
+                bool(pdb_file),
+            )
+            return jsonify({
+                "ok": False,
+                "error": "Missing SASA or PDB data.",
+                "recruiter_code": recruiter_code,
+                "backend_mode": backend_mode,
+                "has_sasa_summary": bool(sasa_summary),
+                "has_sasa_atoms": bool(sasa_atoms),
+                "has_pdb": bool(pdb_file),
+            }), 411
         
         
         # ------------------------------------------------------------------
@@ -1070,27 +1149,33 @@ def get_ligand_visual(recruiter_code):
         # ------------------------------------------------------------------
         print(f"✅ Successfully built visual payload for {recruiter_code}")
         return jsonify({
+            "ok": True,
             "recruiter_code": recruiter_code,
             "descriptor": descriptor,
             "metadata": metadata,
             "sasa_summary": sasa_summary,
             "sasa_atoms": sasa_atoms,
             "pdb_path": pdb_path,
+            "pdb_file": pdb_file,
             "pdb_missing": pdb_missing,
             "sasa_svg": sasa_svg,  # ⬅ ADD THIS
 
         })
 
     except Exception as e:
-        print(f"❌ ligand-visual fatal error for {recruiter_code}: {e}")
-        return render_template(
-            "missing_data.html",
-            recruiter_code=recruiter_code,
-            descriptor={},
-            metadata={},
-            sasa_summary={},
-            SUPPORT_EMAIL="jxs794@miami.edu"
-        ), 500
+        current_app.logger.exception(
+            "Ligand visual fatal error: code=%s backend=%s exc=%s",
+            recruiter_code,
+            backend_mode,
+            type(e).__name__,
+        )
+        return jsonify({
+            "ok": False,
+            "error": "ligand-visual-failed",
+            "recruiter_code": recruiter_code,
+            "backend_mode": backend_mode,
+            "exception_type": type(e).__name__,
+        }), 500
 
 
 
@@ -2436,10 +2521,10 @@ def random_recruiter():
       - Valid composite key mapping
       - SASA summary
       - Atom-level SASA data
-      - A valid PDB file on disk
+      - A valid PDB file in the active backend
     Ensures random clicks never hit missing_data.html
     """
-    import random, os
+    import random
 
     # Step 1 — Get all recruiters with valid composite key
     rows = query_db("""
@@ -2480,15 +2565,8 @@ def random_recruiter():
         if not atoms:
             continue
 
-        # Step 4 — PDB must exist
-        pdb_path = os.path.join(
-            "Ligases", ligase, "PDB", f"{pdb_id}_{ligand}.pdb"
-        )
-        pdb_path_alt = os.path.join(
-            "Ligases", ligase, "PDB", f"{pdb_id}_{ligand}_1.pdb"
-        )
-
-        if not os.path.exists(pdb_path) and not os.path.exists(pdb_path_alt):
+        # Step 4 — PDB must exist in the active backend
+        if not _resolve_pdb_filename(ligase, pdb_id, ligand, variant):
             continue
 
         # PASSED ALL CHECKS → SAFE RECRUITER
