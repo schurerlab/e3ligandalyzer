@@ -2,6 +2,8 @@
 {% block title %}API Reference — E3 Recruiter Ligandalyzer{% endblock %}
 
 {% block content %}
+{% set site_root = request.host_url.rstrip('/') ~ request.script_root.rstrip('/') %}
+{% set api_base = site_root ~ '/api' %}
 <div id="scrollProgress" class="fixed top-0 left-0 w-0 h-1 bg-gradient-to-r from-cyan-300 via-sky-400 to-amber-300 z-50 transition-[width] duration-150"></div>
 
 <section class="max-w-7xl mx-auto text-slate-200 leading-relaxed space-y-14">
@@ -24,7 +26,7 @@
       </h1>
 
       <p class="mt-6 max-w-4xl mx-auto text-lg md:text-xl text-slate-300">
-        Use this page to pull JSON, CSV, PDB, SDF, and ZIP bundles directly from STAN. Every visible command below is written for a terminal unless explicitly labeled as Python.
+        Use this page to pull JSON, CSV, PDB, SDF, and ZIP bundles through the public E3 Ligandalyzer API. Every visible command below is written for a terminal unless explicitly labeled as Python.
       </p>
 
       <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
@@ -64,9 +66,9 @@
     <div class="lg:col-span-2 rounded-3xl border border-sky-500/20 bg-slate-900/75 p-8 shadow-xl">
       <h2 class="section-title">Base URL</h2>
       <p class="text-slate-400 mt-3">
-        For now, use STAN as the live API host. When the production domain is ready, replace the base URL with <span class="text-cyan-300">https://e3ligandalyzer.com/api</span>.
+        All public examples on this page use the current E3 Ligandalyzer host, so downloads and JSON queries stay on the public API surface.
       </p>
-      <pre class="code-block mt-5"><button class="copy-code" data-copy-target="baseExport">Copy</button><code id="baseExport">export BASE="https://stan.rove-vernier.ts.net/api"</code></pre>
+      <pre class="code-block mt-5"><button class="copy-code" data-copy-target="baseExport">Copy</button><code id="baseExport">export BASE="{{ api_base }}"</code></pre>
       <p class="text-xs text-slate-500 mt-3">Tip: after copying this once, every terminal block that starts with <code>$BASE</code> will work in the same shell session.</p>
     </div>
 
@@ -94,14 +96,14 @@
         <div class="card-kicker">JSON sanity check</div>
         <h3>View the full download manifest</h3>
         <p>Confirms the API is reachable and prints pretty JSON.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="cmdManifest">Copy Bash</button><code id="cmdManifest">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdManifest">Copy Bash</button><code id="cmdManifest">curl -sS "$BASE/download/manifest" | python -m json.tool</code></pre>
       </article>
 
       <article class="big-code-card">
         <div class="card-kicker">Ligase bundle</div>
         <h3>Download all CRBN PDB + SDF files</h3>
         <p>This is the exact style of command that worked in your terminal.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="cmdCRBN">Copy Bash</button><code id="cmdCRBN">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/all.zip" -o CRBN_ligandalyzer_bundle.zip
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdCRBN">Copy Bash</button><code id="cmdCRBN">curl -L "$BASE/download/ligase/CRBN/all.zip" -o CRBN_ligandalyzer_bundle.zip
 unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
       </article>
 
@@ -109,14 +111,14 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
         <div class="card-kicker">Recruiter discovery</div>
         <h3>Find valid LR recruiter codes for CRBN</h3>
         <p>Use this first if you are not sure which recruiter IDs are downloadable.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiterCodes">Copy Bash</button><code id="cmdRecruiterCodes">curl -sS "https://stan.rove-vernier.ts.net/api/download/recruiter-codes?ligase=CRBN&limit=25" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiterCodes">Copy Bash</button><code id="cmdRecruiterCodes">curl -sS "$BASE/download/recruiter-codes?ligase=CRBN&limit=25" | python -m json.tool</code></pre>
       </article>
 
       <article class="big-code-card">
         <div class="card-kicker">Selected recruiters</div>
         <h3>Download multiple LR recruiter bundles</h3>
         <p>Uses canonical LR IDs and saves the ZIP locally.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiters">Copy Bash</button><code id="cmdRecruiters">curl -L "https://stan.rove-vernier.ts.net/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiters">Copy Bash</button><code id="cmdRecruiters">curl -L "$BASE/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
       </article>
     </div>
   </section>
@@ -133,75 +135,75 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Manifest</p><h3>GET /api/download/manifest</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/manifest" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Manifest</p><h3>GET /api/download/manifest</h3></div><a class="open-link" href="{{ api_base }}/download/manifest" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Discover downloadable ligases, file counts, ZIP links, and public CSV table exports.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifest">Copy Bash</button><code id="dlManifest">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifest">Copy Bash</button><code id="dlManifest">curl -sS "{{ api_base }}/download/manifest" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Manifest filtered by ligase</p><h3>GET /api/download/manifest?ligase=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/manifest?ligase=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Manifest filtered by ligase</p><h3>GET /api/download/manifest?ligase=CRBN</h3></div><a class="open-link" href="{{ api_base }}/download/manifest?ligase=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Show only the downloadable CRBN assets and generated bundle links.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifestCRBN">Copy Bash</button><code id="dlManifestCRBN">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest?ligase=CRBN" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifestCRBN">Copy Bash</button><code id="dlManifestCRBN">curl -sS "{{ api_base }}/download/manifest?ligase=CRBN" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Manifest filtered by recruiter</p><h3>GET /api/download/manifest?recruiter_code=LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/manifest?recruiter_code=LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Manifest filtered by recruiter</p><h3>GET /api/download/manifest?recruiter_code=LR00001</h3></div><a class="open-link" href="{{ api_base }}/download/manifest?recruiter_code=LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Resolve one canonical LR recruiter ID to available PDB/SDF files and bundle links.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifestLR">Copy Bash</button><code id="dlManifestLR">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest?recruiter_code=LR00001" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifestLR">Copy Bash</button><code id="dlManifestLR">curl -sS "{{ api_base }}/download/manifest?recruiter_code=LR00001" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Ligase index</p><h3>GET /api/download/ligases</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligases" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Ligase index</p><h3>GET /api/download/ligases</h3></div><a class="open-link" href="{{ api_base }}/download/ligases" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Compact JSON list of ligases with PDB/SDF counts and bundle links.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlLigases">Copy Bash</button><code id="dlLigases">curl -sS "https://stan.rove-vernier.ts.net/api/download/ligases" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlLigases">Copy Bash</button><code id="dlLigases">curl -sS "{{ api_base }}/download/ligases" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Valid LR code discovery</p><h3>GET /api/download/recruiter-codes</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/recruiter-codes?ligase=CRBN&limit=25" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Valid LR code discovery</p><h3>GET /api/download/recruiter-codes</h3></div><a class="open-link" href="{{ api_base }}/download/recruiter-codes?ligase=CRBN&limit=25" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Return recruiter codes that actually map to database rows and downloadable files.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlCodes">Copy Bash</button><code id="dlCodes">curl -sS "https://stan.rove-vernier.ts.net/api/download/recruiter-codes?ligase=CRBN&limit=25" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCodes">Copy Bash</button><code id="dlCodes">curl -sS "{{ api_base }}/download/recruiter-codes?ligase=CRBN&limit=25" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Ligase full bundle</p><h3>GET /api/download/ligase/CRBN/all.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/all.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Ligase full bundle</p><h3>GET /api/download/ligase/CRBN/all.zip</h3></div><a class="open-link" href="{{ api_base }}/download/ligase/CRBN/all.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download all CRBN PDB + SDF files as one ZIP bundle.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNAll">Copy Bash</button><code id="dlCRBNAll">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/all.zip" -o CRBN_all.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNAll">Copy Bash</button><code id="dlCRBNAll">curl -L "{{ api_base }}/download/ligase/CRBN/all.zip" -o CRBN_all.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Ligase PDB ZIP</p><h3>GET /api/download/ligase/CRBN/pdbs.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Ligase PDB ZIP</p><h3>GET /api/download/ligase/CRBN/pdbs.zip</h3></div><a class="open-link" href="{{ api_base }}/download/ligase/CRBN/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download only the CRBN PDB files.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNPDB">Copy Bash</button><code id="dlCRBNPDB">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/pdbs.zip" -o CRBN_pdbs.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNPDB">Copy Bash</button><code id="dlCRBNPDB">curl -L "{{ api_base }}/download/ligase/CRBN/pdbs.zip" -o CRBN_pdbs.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Ligase SDF ZIP</p><h3>GET /api/download/ligase/CRBN/sdfs.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/sdfs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Ligase SDF ZIP</p><h3>GET /api/download/ligase/CRBN/sdfs.zip</h3></div><a class="open-link" href="{{ api_base }}/download/ligase/CRBN/sdfs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download only the CRBN SDF files.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNSDF">Copy Bash</button><code id="dlCRBNSDF">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/sdfs.zip" -o CRBN_sdfs.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNSDF">Copy Bash</button><code id="dlCRBNSDF">curl -L "{{ api_base }}/download/ligase/CRBN/sdfs.zip" -o CRBN_sdfs.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Single recruiter bundle</p><h3>GET /api/download/recruiter/LR00001.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/recruiter/LR00001.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Single recruiter bundle</p><h3>GET /api/download/recruiter/LR00001.zip</h3></div><a class="open-link" href="{{ api_base }}/download/recruiter/LR00001.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download all mapped PDB/SDF files for one canonical LR recruiter code.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlOneRecruiter">Copy Bash</button><code id="dlOneRecruiter">curl -L "https://stan.rove-vernier.ts.net/api/download/recruiter/LR00001.zip" -o LR00001_bundle.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlOneRecruiter">Copy Bash</button><code id="dlOneRecruiter">curl -L "{{ api_base }}/download/recruiter/LR00001.zip" -o LR00001_bundle.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Multiple recruiter bundle</p><h3>GET /api/download/recruiters.zip?codes=LR00001,LR00002</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Multiple recruiter bundle</p><h3>GET /api/download/recruiters.zip?codes=LR00001,LR00002</h3></div><a class="open-link" href="{{ api_base }}/download/recruiters.zip?codes=LR00001,LR00002,LR00003" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download all mapped PDB/SDF files for selected LR recruiter codes.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlManyRecruiters">Copy Bash</button><code id="dlManyRecruiters">curl -L "https://stan.rove-vernier.ts.net/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManyRecruiters">Copy Bash</button><code id="dlManyRecruiters">curl -L "{{ api_base }}/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>All PDBs</p><h3>GET /api/download/all/pdbs.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/all/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>All PDBs</p><h3>GET /api/download/all/pdbs.zip</h3></div><a class="open-link" href="{{ api_base }}/download/all/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download all PDB files across every ligase folder.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllPDBs">Copy Bash</button><code id="dlAllPDBs">curl -L "https://stan.rove-vernier.ts.net/api/download/all/pdbs.zip" -o E3Ligandalyzer_ALL_pdbs.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllPDBs">Copy Bash</button><code id="dlAllPDBs">curl -L "{{ api_base }}/download/all/pdbs.zip" -o E3Ligandalyzer_ALL_pdbs.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>All structures</p><h3>GET /api/download/all/structures.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/all/structures.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>All structures</p><h3>GET /api/download/all/structures.zip</h3></div><a class="open-link" href="{{ api_base }}/download/all/structures.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download all available PDB + SDF assets across the full dataset.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllStructures">Copy Bash</button><code id="dlAllStructures">curl -L "https://stan.rove-vernier.ts.net/api/download/all/structures.zip" -o E3Ligandalyzer_ALL_structures.zip</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllStructures">Copy Bash</button><code id="dlAllStructures">curl -L "{{ api_base }}/download/all/structures.zip" -o E3Ligandalyzer_ALL_structures.zip</code></pre>
       </article>
 
     </div>
@@ -219,75 +221,75 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Basic</p><h3>GET /api/ligases</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/ligases" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Basic</p><h3>GET /api/ligases</h3></div><a class="open-link" href="{{ api_base }}/ligases" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>List all ligases for dropdowns and discovery.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonLigases">Copy Bash</button><code id="jsonLigases">curl -sS "https://stan.rove-vernier.ts.net/api/ligases" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonLigases">Copy Bash</button><code id="jsonLigases">curl -sS "{{ api_base }}/ligases" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Recruiter search</p><h3>GET /api/featured-recruiters?ligase=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/featured-recruiters?ligase=CRBN&min_qed=0.5" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Recruiter search</p><h3>GET /api/featured-recruiters?ligase=CRBN</h3></div><a class="open-link" href="{{ api_base }}/featured-recruiters?ligase=CRBN&min_qed=0.5" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Retrieve recruiter cards with optional filters such as ligase, scaffold class, QED range, limit, and offset.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonFeatured">Copy Bash</button><code id="jsonFeatured">curl -sS "https://stan.rove-vernier.ts.net/api/featured-recruiters?ligase=CRBN&min_qed=0.5&limit=25" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonFeatured">Copy Bash</button><code id="jsonFeatured">curl -sS "{{ api_base }}/featured-recruiters?ligase=CRBN&min_qed=0.5&limit=25" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Scaffold dashboard</p><h3>GET /api/scaffold-data?ligase=VHL</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-data?ligase=VHL" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Scaffold dashboard</p><h3>GET /api/scaffold-data?ligase=VHL</h3></div><a class="open-link" href="{{ api_base }}/scaffold-data?ligase=VHL" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Return scaffold diversity records formatted for the scaffold dashboard.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldData">Copy Bash</button><code id="jsonScaffoldData">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-data?ligase=VHL" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldData">Copy Bash</button><code id="jsonScaffoldData">curl -sS "{{ api_base }}/scaffold-data?ligase=VHL" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Scaffold summary</p><h3>GET /api/scaffold-summary</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-summary" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Scaffold summary</p><h3>GET /api/scaffold-summary</h3></div><a class="open-link" href="{{ api_base }}/scaffold-summary" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Summarize scaffold diversity metrics by ligase.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldSummary">Copy Bash</button><code id="jsonScaffoldSummary">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-summary" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldSummary">Copy Bash</button><code id="jsonScaffoldSummary">curl -sS "{{ api_base }}/scaffold-summary" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Scaffold frequency</p><h3>GET /api/scaffold-frequency?ligase=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-frequency?ligase=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Scaffold frequency</p><h3>GET /api/scaffold-frequency?ligase=CRBN</h3></div><a class="open-link" href="{{ api_base }}/scaffold-frequency?ligase=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Return scaffold frequency records for one ligase or the full dataset.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldFreq">Copy Bash</button><code id="jsonScaffoldFreq">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-frequency?ligase=CRBN" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldFreq">Copy Bash</button><code id="jsonScaffoldFreq">curl -sS "{{ api_base }}/scaffold-frequency?ligase=CRBN" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Recruiter-to-scaffold map</p><h3>GET /api/scaffold-recruiters?ligase=CHIP</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-recruiters?ligase=CHIP" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Recruiter-to-scaffold map</p><h3>GET /api/scaffold-recruiters?ligase=CHIP</h3></div><a class="open-link" href="{{ api_base }}/scaffold-recruiters?ligase=CHIP" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Map recruiters to scaffold IDs and scaffold SMILES.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldRecruiters">Copy Bash</button><code id="jsonScaffoldRecruiters">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-recruiters?ligase=CHIP" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldRecruiters">Copy Bash</button><code id="jsonScaffoldRecruiters">curl -sS "{{ api_base }}/scaffold-recruiters?ligase=CHIP" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Descriptors</p><h3>GET /api/descriptors/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/descriptors/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Descriptors</p><h3>GET /api/descriptors/LR00001</h3></div><a class="open-link" href="{{ api_base }}/descriptors/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Retrieve chemical descriptors for one canonical LR recruiter code.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonDescriptors">Copy Bash</button><code id="jsonDescriptors">curl -sS "https://stan.rove-vernier.ts.net/api/descriptors/LR00001" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonDescriptors">Copy Bash</button><code id="jsonDescriptors">curl -sS "{{ api_base }}/descriptors/LR00001" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Recruiter SMILES</p><h3>GET /api/recruiter-smiles/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/recruiter-smiles/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Recruiter SMILES</p><h3>GET /api/recruiter-smiles/LR00001</h3></div><a class="open-link" href="{{ api_base }}/recruiter-smiles/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Resolve one recruiter code to its SMILES string.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSmiles">Copy Bash</button><code id="jsonSmiles">curl -sS "https://stan.rove-vernier.ts.net/api/recruiter-smiles/LR00001" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSmiles">Copy Bash</button><code id="jsonSmiles">curl -sS "{{ api_base }}/recruiter-smiles/LR00001" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Ligand visual payload</p><h3>GET /api/ligand-visual/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/ligand-visual/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Ligand visual payload</p><h3>GET /api/ligand-visual/LR00001</h3></div><a class="open-link" href="{{ api_base }}/ligand-visual/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Return descriptors, metadata, SASA summary, atom-level SASA, and PDB path for one recruiter.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonLigandVisual">Copy Bash</button><code id="jsonLigandVisual">curl -sS "https://stan.rove-vernier.ts.net/api/ligand-visual/LR00001" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonLigandVisual">Copy Bash</button><code id="jsonLigandVisual">curl -sS "{{ api_base }}/ligand-visual/LR00001" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Full SASA payload</p><h3>GET /api/sasa-full/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/sasa-full/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Full SASA payload</p><h3>GET /api/sasa-full/LR00001</h3></div><a class="open-link" href="{{ api_base }}/sasa-full/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Return the composite-key SASA summary and atom-level SASA table for one recruiter.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSasaFull">Copy Bash</button><code id="jsonSasaFull">curl -sS "https://stan.rove-vernier.ts.net/api/sasa-full/LR00001" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSasaFull">Copy Bash</button><code id="jsonSasaFull">curl -sS "{{ api_base }}/sasa-full/LR00001" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>RDKit SVG render</p><h3>GET /api/render-smiles-by-code/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/render-smiles-by-code/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>RDKit SVG render</p><h3>GET /api/render-smiles-by-code/LR00001</h3></div><a class="open-link" href="{{ api_base }}/render-smiles-by-code/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download the RDKit-rendered 2D SVG structure for one recruiter code.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSVG">Copy Bash</button><code id="jsonSVG">curl -L "https://stan.rove-vernier.ts.net/api/render-smiles-by-code/LR00001" -o LR00001_structure.svg</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSVG">Copy Bash</button><code id="jsonSVG">curl -L "{{ api_base }}/render-smiles-by-code/LR00001" -o LR00001_structure.svg</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>ELiAH expression</p><h3>GET /api/eliah/expression?gene=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/eliah/expression?gene=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>ELiAH expression</p><h3>GET /api/eliah/expression?gene=CRBN</h3></div><a class="open-link" href="{{ api_base }}/eliah/expression?gene=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Query ELiAH expression data for ligase biology context.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="jsonEliah">Copy Bash</button><code id="jsonEliah">curl -sS "https://stan.rove-vernier.ts.net/api/eliah/expression?gene=CRBN" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonEliah">Copy Bash</button><code id="jsonEliah">curl -sS "{{ api_base }}/eliah/expression?gene=CRBN" | python -m json.tool</code></pre>
       </article>
 
     </div>
@@ -304,27 +306,27 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Table index</p><h3>GET /api/download/tables</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/tables" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Table index</p><h3>GET /api/download/tables</h3></div><a class="open-link" href="{{ api_base }}/download/tables" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>List whitelisted SQLite tables available as CSV downloads.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="csvIndex">Copy Bash</button><code id="csvIndex">curl -sS "https://stan.rove-vernier.ts.net/api/download/tables" | python -m json.tool</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvIndex">Copy Bash</button><code id="csvIndex">curl -sS "{{ api_base }}/download/tables" | python -m json.tool</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Scaffold data CSV</p><h3>GET /api/download/table/Ligase_Scaffold_Data.csv</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/table/Ligase_Scaffold_Data.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Scaffold data CSV</p><h3>GET /api/download/table/Ligase_Scaffold_Data.csv</h3></div><a class="open-link" href="{{ api_base }}/download/table/Ligase_Scaffold_Data.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Export the main scaffold data table.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="csvScaffold">Copy Bash</button><code id="csvScaffold">curl -L "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Scaffold_Data.csv" -o Ligase_Scaffold_Data.csv</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvScaffold">Copy Bash</button><code id="csvScaffold">curl -L "{{ api_base }}/download/table/Ligase_Scaffold_Data.csv" -o Ligase_Scaffold_Data.csv</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>SASA summary CSV</p><h3>GET /api/download/table/Ligase_Ligand_SASA_summary.csv</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/table/Ligase_Ligand_SASA_summary.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>SASA summary CSV</p><h3>GET /api/download/table/Ligase_Ligand_SASA_summary.csv</h3></div><a class="open-link" href="{{ api_base }}/download/table/Ligase_Ligand_SASA_summary.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Export ligand-level solvent exposure summaries.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="csvSasaSummary">Copy Bash</button><code id="csvSasaSummary">curl -L "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Ligand_SASA_summary.csv" -o Ligase_Ligand_SASA_summary.csv</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvSasaSummary">Copy Bash</button><code id="csvSasaSummary">curl -L "{{ api_base }}/download/table/Ligase_Ligand_SASA_summary.csv" -o Ligase_Ligand_SASA_summary.csv</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Descriptors CSV</p><h3>GET /api/download/table/Ligase_Chemical_Descriptors.csv</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/table/Ligase_Chemical_Descriptors.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <div class="endpoint-head"><div><p>Descriptors CSV</p><h3>GET /api/download/table/Ligase_Chemical_Descriptors.csv</h3></div><a class="open-link" href="{{ api_base }}/download/table/Ligase_Chemical_Descriptors.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Export recruiter chemical descriptors for local filtering.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="csvDescriptors">Copy Bash</button><code id="csvDescriptors">curl -L "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Chemical_Descriptors.csv" -o Ligase_Chemical_Descriptors.csv</code></pre>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvDescriptors">Copy Bash</button><code id="csvDescriptors">curl -L "{{ api_base }}/download/table/Ligase_Chemical_Descriptors.csv" -o Ligase_Chemical_Descriptors.csv</code></pre>
       </article>
     </div>
   </section>
@@ -344,7 +346,7 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
         <h3>Download and extract one ligase bundle</h3>
         <pre class="code-block"><button class="copy-code" data-copy-target="pyLigaseZip">Copy Python</button><code id="pyLigaseZip">import requests, zipfile, io
 
-BASE = "https://stan.rove-vernier.ts.net/api"
+BASE = "{{ api_base }}"
 url = f"{BASE}/download/ligase/CRBN/all.zip"
 
 r = requests.get(url, timeout=120)
@@ -361,7 +363,7 @@ print("Downloaded CRBN PDB/SDF bundle")</code></pre>
         <h3>Download selected LR recruiter bundles</h3>
         <pre class="code-block"><button class="copy-code" data-copy-target="pyRecruitersZip">Copy Python</button><code id="pyRecruitersZip">import requests
 
-BASE = "https://stan.rove-vernier.ts.net/api"
+BASE = "{{ api_base }}"
 codes = "LR00001,LR00002,LR00003"
 
 url = f"{BASE}/download/recruiters.zip?codes={codes}"
@@ -380,7 +382,7 @@ print("Saved selected_recruiters.zip")</code></pre>
         <pre class="code-block"><button class="copy-code" data-copy-target="pyPandas">Copy Python</button><code id="pyPandas">import requests
 import pandas as pd
 
-BASE = "https://stan.rove-vernier.ts.net/api"
+BASE = "{{ api_base }}"
 url = f"{BASE}/featured-recruiters?ligase=CRBN&min_qed=0.5&limit=500"
 
 rows = requests.get(url, timeout=60).json()
@@ -395,7 +397,7 @@ print(df.shape)</code></pre>
         <h3>Download CSV and read locally</h3>
         <pre class="code-block"><button class="copy-code" data-copy-target="pyCSV">Copy Python</button><code id="pyCSV">import pandas as pd
 
-url = "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Chemical_Descriptors.csv"
+url = "{{ api_base }}/download/table/Ligase_Chemical_Descriptors.csv"
 df = pd.read_csv(url)
 
 print(df.head())
@@ -416,7 +418,7 @@ print(df.columns.tolist())</code></pre>
         <article class="big-code-card">
           <div class="card-kicker">Browser console only</div>
           <h3>Fetch ligase list</h3>
-          <pre class="code-block"><button class="copy-code" data-copy-target="jsLigases">Copy JS</button><code id="jsLigases">fetch("https://stan.rove-vernier.ts.net/api/ligases")
+          <pre class="code-block"><button class="copy-code" data-copy-target="jsLigases">Copy JS</button><code id="jsLigases">fetch("{{ api_base }}/ligases")
   .then(r => r.json())
   .then(console.log);</code></pre>
         </article>
@@ -424,7 +426,7 @@ print(df.columns.tolist())</code></pre>
         <article class="big-code-card">
           <div class="card-kicker">Browser console only</div>
           <h3>Fetch CRBN recruiter cards</h3>
-          <pre class="code-block"><button class="copy-code" data-copy-target="jsCRBN">Copy JS</button><code id="jsCRBN">fetch("https://stan.rove-vernier.ts.net/api/featured-recruiters?ligase=CRBN&min_qed=0.5")
+          <pre class="code-block"><button class="copy-code" data-copy-target="jsCRBN">Copy JS</button><code id="jsCRBN">fetch("{{ api_base }}/featured-recruiters?ligase=CRBN&min_qed=0.5")
   .then(r => r.json())
   .then(console.log);</code></pre>
         </article>
