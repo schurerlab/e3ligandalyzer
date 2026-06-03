@@ -506,6 +506,7 @@ replaceFeather();
 let stage3D = null;
 let current3D = { atoms: [], mode: "sasa", pdbUrl: null };
 let current2D = { svgRaw: "", mode: "normal", exposure: new Map() };
+window.ligandVisualData = null;
 
 const loaderMessages = [
   "Connecting to the database and preparing the ligand view…",
@@ -556,157 +557,127 @@ function hideLigandLoader() {
 const RECRUITER = window.location.pathname.split("/").pop().toUpperCase();
 console.log("🔑 Recruiter =", RECRUITER);
 
-document.addEventListener("DOMContentLoaded", async () => {
-  showLigandLoader();
-  try {
+async function loadLigandBootstrap(recruiterCode) {
+  setLigandLoaderMessage("Pulling recruiter data from the database…");
+  const res = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
 
-  // =====================================================
-  // 🔥 EARLY SAFETY CHECK – REDIRECT IF RECRUITER IS MISSING
-  // =====================================================
+  if (res.status === 404 || res.status === 411) {
+    window.location.href = `/missing-recruiter?code=${recruiterCode}`;
+    return null;
+  }
 
-  const recruiterCode = decodeURIComponent(RECRUITER);
+  if (!res.ok) {
+    throw new Error(`ligand-visual returned ${res.status}`);
+  }
 
-  try {
-      setLigandLoaderMessage("Checking recruiter availability before rendering…");
-      const early = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
+  const data = await res.json();
+  if (!data.ok || data.error) {
+    throw new Error(data.error || "ligand-visual returned invalid payload");
+  }
 
-      if (early.status === 404 || early.status === 411) {
-          console.warn("🔻 Missing recruiter detected:", recruiterCode);
-          window.location.href = `/missing-recruiter?code=${recruiterCode}`;
-          return;
-      }
+  window.ligandVisualData = data;
+  return data;
+}
 
-      if (!early.ok) {
-          console.error("🚨 Early check returned non-OK status:", early.status);
-          return;
-      }
-  } catch (err) {
-      console.error("🚨 Early check request failed:", err);
-      window.location.href = `/missing-recruiter?code=${recruiterCode}`;
-      return;
+async function resolveLigandSmiles(data, recruiterCode) {
+  const bootstrapSmiles =
+    data?.metadata?.SMILES ||
+    data?.descriptor?.SMILES ||
+    data?.SMILES ||
+    data?.smiles ||
+    "";
+
+  if (bootstrapSmiles) {
+    return bootstrapSmiles;
   }
 
   try {
-    // =====================================================
-    // 🔥 MAIN FETCH
-    // =====================================================
+    setLigandLoaderMessage("Resolving the authoritative SMILES string…");
+    const sres = await fetch(`/api/fixed-2d-smiles/${encodeURIComponent(recruiterCode)}`);
+    if (!sres.ok) {
+      console.warn("⚠️ No fixed SMILES found, leaving SMILES blank.");
+      return "";
+    }
 
-    setLigandLoaderMessage("Pulling recruiter data from the database…");
-    const res = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
-    if (res.status === 404 || res.status === 411) {
-      window.location.href = `/missing-recruiter?code=${recruiterCode}`;
-      return;
-    }
-    if (!res.ok) {
-      document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
-      document.getElementById("ngl").innerHTML = '';
-      return;
-    }
-    const data = await res.json();
+    const sdata = await sres.json();
+    return sdata.SMILES || "";
+  } catch (err) {
+    console.error("❌ fixed-smiles fallback fetch error:", err);
+    return "";
+  }
+}
+
+function applyLigandBootstrapGlobals(data, recruiterCode) {
+  const metadata = data?.metadata || {};
+  const sasaSum = data?.sasa_summary || {};
+  const atoms = Array.isArray(data?.sasa_atoms) ? data.sasa_atoms : [];
+
+  const ligase = metadata.Ligase || sasaSum.Ligase || atoms[0]?.Ligase || "";
+  const ligand = metadata.Ligand || sasaSum.Ligand || atoms[0]?.Ligand || "";
+  const pdbId = metadata.PDB_ID || sasaSum.pdb_id || atoms[0]?.pdb_id || "";
+  const pdbFile = data?.pdb_file || (pdbId && ligand ? `${pdbId}_${ligand}.pdb` : "");
+  const pdbPath = data?.pdb_path || (
+    ligase && pdbFile
+      ? `/Ligases/${encodeURIComponent(ligase)}/PDB/${encodeURIComponent(pdbFile)}`
+      : null
+  );
+
+  window.currentLigandCode = recruiterCode;
+  window.currentLigase = ligase;
+  window.currentPDB = pdbFile;
+  window.currentPDBurl = pdbPath;
+  window.currentModel = { name: pdbFile };
+  window.models = [window.currentModel];
+
+  current3D.atoms = atoms;
+  current3D.summary = sasaSum;
+  current3D.sasa_summary = sasaSum;
+  current3D.bootstrapData = data;
+  current3D.pdbPath = pdbPath;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  showLigandLoader();
+  try {
+    const recruiterCode = decodeURIComponent(RECRUITER);
+    const data = await loadLigandBootstrap(recruiterCode);
+    if (!data) return;
+
     const descriptor = data.descriptor || {};
-    const metadata   = data.metadata   || {};
+    const metadata = data.metadata || {};
+    const sasaSum = data.sasa_summary || {};
+    const atoms = Array.isArray(data.sasa_atoms) ? data.sasa_atoms : [];
 
-    // ------------------------------------------
-    // 🔥 FETCH FIXED / AUTHORITATIVE SMILES
-    // ------------------------------------------
-    let fixedSmiles = "";
-    try {
-        setLigandLoaderMessage("Resolving the authoritative SMILES string…");
-        const sres = await fetch(`/api/fixed-2d-smiles/${recruiterCode}`);
-        if (sres.ok) {
-            const sdata = await sres.json();
-            fixedSmiles = sdata.SMILES || "";
-            console.log("🧪 FIXED SMILES FOUND =", fixedSmiles);
-        } else {
-            console.warn("⚠️ No fixed SMILES found, falling back.");
-            fixedSmiles = data.descriptor?.SMILES ||
-                          data.metadata?.SMILES ||
-                          data.smiles ||
-                          "";
-        }
-    } catch (err) {
-        console.error("❌ fixed-smiles fetch error:", err);
-        fixedSmiles = data.descriptor?.SMILES ||
-                      data.metadata?.SMILES ||
-                      data.smiles ||
-                      "";
-    }
-
-    // This SMILES is now the ONLY SMILES used for:
-    //   - 2D rendering
-    //   - SASA overlay
-    //   - Mapping
-    //   - External links
-    //   - Properties panel
-    renderLigandSMILES(fixedSmiles);
-
-    if (!data.ok || data.error) {
-      document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
-      document.getElementById("ngl").innerHTML = '';
-      return;
-    }
-
-    // =====================================================
-    // 🔥 NORMALIZE BACKEND DATA
-    // =====================================================
-
-    const sasaSum    = data.sasa_summary || {};
-    const atoms      = Array.isArray(data.sasa_atoms) ? data.sasa_atoms : [];
-
-    const ligase = sasaSum.Ligase || atoms[0]?.Ligase || "—";
+    const fixedSmiles = await resolveLigandSmiles(data, recruiterCode);
+    const ligandSmiles = fixedSmiles || "";
+    const ligase = metadata.Ligase || sasaSum.Ligase || atoms[0]?.Ligase || "—";
     const ligand = metadata.Ligand || sasaSum.Ligand || "—";
-    const pdbId  = sasaSum.pdb_id  || atoms[0]?.pdb_id || "";
+    const pdbId = metadata.PDB_ID || sasaSum.pdb_id || atoms[0]?.pdb_id || "";
 
-    // =====================================================
-    // 🔥 ALWAYS USE THE TRUE LIGAND SMILES ONLY
-    // =====================================================
-    const ligandSmiles =
-      descriptor.SMILES ||
-      metadata.SMILES ||
-      data.smiles ||
-      "";
+    renderLigandSMILES(ligandSmiles);
 
-    console.log("🧪 FINAL LIGAND SMILES =", ligandSmiles);
-
-    // Show SMILES in UI
-    renderLigandSMILES(fixedSmiles);
-
-    // =====================================================
-    // 🔥 SET BADGES / LABELS
-    // =====================================================
     document.getElementById("ligand-code").textContent = recruiterCode;
     document.getElementById("ligase-badge").textContent = ligase.toUpperCase();
     document.getElementById("ligand-badge").textContent = ligand;
 
-    // =====================================================
-    // 🔥 DOWNLOAD GLOBALS (AFTER ligase/pdbId/ligand resolved)
-    // =====================================================
-    window.currentLigase = ligase;
-    window.currentPDB = data.pdb_file || `${pdbId}_${ligand}.pdb`;
-    window.currentModel = { name: window.currentPDB };
-    window.models = [ window.currentModel ];
+    applyLigandBootstrapGlobals(data, recruiterCode);
 
     console.log("🧬 DOWNLOAD METADATA SET:", window.currentLigase, window.currentPDB);
 
-    // =====================================================
-    // 🔥 RENDER 2D + 3D + METADATA
-    // =====================================================
     setLigandLoaderMessage("Drawing the 2D ligand view…");
     await render2D(ligandSmiles, atoms, data.sasa_svg);
 
     setLigandLoaderMessage("Calculating SASA summaries and atom exposure…");
-    await loadSASASummary(recruiterCode);
+    loadSASASummary(data);
 
-    current3D.atoms = atoms;
     toggle3DButton("sasa");
 
     setLigandLoaderMessage("Building the 3D structure and surface overlays…");
     await render3D("sasa");
 
-    // SMILES is correct and only ligandSmiles is used for visualization
     setLigandLoaderMessage("Finalizing properties, links, and scaffold details…");
     setExternalLinks(ligandSmiles, pdbId);
-    renderProperties(descriptor, fixedSmiles, recruiterCode);
+    renderProperties(descriptor, ligandSmiles, recruiterCode);
     renderRules(descriptor);
     renderQuality(descriptor);
     renderStructuralMetrics(metadata, descriptor);
@@ -714,19 +685,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     toggleScaffoldUI(false);
 
     if (data.scaffold && data.scaffold.Scaffold_ID) {
-        renderScaffoldLink(data.scaffold);
+      renderScaffoldLink(data.scaffold);
+    } else {
+      loadScaffoldInfo(recruiterCode);
     }
-
-    loadScaffoldInfo(recruiterCode);
   } catch (err) {
     console.error("🚨 Ligand page initialization failed:", err);
     document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
     document.getElementById("ngl").innerHTML = '';
-  }
   } finally {
     hideLigandLoader();
   }
-
 }); // END DOMContentLoaded
 
 
@@ -1027,28 +996,18 @@ function apply2DColoring() {
 
 
 
-async function loadSASASummary(code) {
-    // const res = await fetch(`/api/sasa-summary/${code}`);
-    // const data = await res.json();
-    const res = await fetch(`/api/ligand-visual/${code}`);
+function loadSASASummary(dataOrCode) {
+    const data =
+      (dataOrCode && typeof dataOrCode === "object")
+        ? dataOrCode
+        : window.ligandVisualData;
 
-    if (res.status === 404 || res.status === 411) {
-        window.location.href = `/missing-recruiter?code=${code}`;
-        return;
-    }
-
-    const data = await res.json();
-
-
-    if (data.error) {
+    if (!data || data.error) {
         console.error("SASA load failed:", data);
         return;
     }
 
-    console.log("🧬 SASA summary:", data);
-
-    renderSASASummary(data.sasa_summary);
-
+    renderSASASummary(data.sasa_summary || {});
 }
 
 
@@ -1341,14 +1300,26 @@ async function render3D(mode = "sasa") {
   const pdbId   = (summary.pdb_id  || atoms[0]?.pdb_id || "").trim().toUpperCase();
   const ligand  = (summary.Ligand  || atoms[0]?.Ligand || "LIG").trim().toUpperCase();
   const variant = atoms[0]?.Variant || 1;
+  const bootstrapData = current3D.bootstrapData || window.ligandVisualData || {};
+  const bootstrapPdbFile = bootstrapData?.pdb_file || "";
+  let pdbPath =
+    current3D.pdbPath ||
+    bootstrapData?.pdb_path ||
+    (
+      ligase && bootstrapPdbFile
+        ? `/Ligases/${encodeURIComponent(ligase)}/PDB/${encodeURIComponent(bootstrapPdbFile)}`
+        : null
+    );
 
-  // --- File path: use helper to pick correct variant
-  const pdbPath = await getProteinPdbPath({
-    Ligase: ligase,
-    pdb_id: pdbId,
-    Ligand: ligand,
-    Variant: variant
-  });
+  // --- File path fallback: probe only if bootstrap payload lacks a resolved PDB file
+  if (!pdbPath) {
+    pdbPath = await getProteinPdbPath({
+      Ligase: ligase,
+      pdb_id: pdbId,
+      Ligand: ligand,
+      Variant: variant
+    });
+  }
 
   console.log(`[3D] Loading complex: ${pdbPath}`);
 
@@ -1357,6 +1328,7 @@ async function render3D(mode = "sasa") {
 
     window.currentLigase = ligase;
     window.currentPDB = pdbPath.split("/").pop();
+    window.currentPDBurl = pdbPath;
 
     // ===========================================================
     // Capture actual loaded filename from NGL

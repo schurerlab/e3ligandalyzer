@@ -935,31 +935,12 @@ def get_ligand_visual(recruiter_code):
     backend_mode = "remote" if randy_client.remote_enabled() else "local"
 
     try:
-        # ------------------------------------------------------------------
-        # 🧪 STEP 1: Descriptor
-        # ------------------------------------------------------------------
         desc = query_db(
             "SELECT * FROM Ligase_Chemical_Descriptors WHERE RECRUITER_CODE = ?;",
             [recruiter_code], one=True
         )
         descriptor = dict(desc) if desc else {}
 
-        # # ------------------------------------------------------------------
-        # # 📜 STEP 2: Metadata (via SMILES mapping)
-        # # ------------------------------------------------------------------
-        # meta = query_db("""
-        #     SELECT meta.*
-        #     FROM Ligase_Ligand_Metadata AS meta
-        #     JOIN Ligase_SMILE_Codes AS s
-        #       ON meta.SMILES = s.SMILES
-        #     WHERE s.RECRUITER_CODE = ?
-        #     LIMIT 1;
-        # """, [recruiter_code], one=True)
-        # metadata = dict(meta) if meta else {}
-
-        # --------------------------------------------------------------
-        # STEP 2: Resolve Composite Key (Ligase, pdb_id, Ligand, Variant)
-        # --------------------------------------------------------------
         key_row = query_db("""
             SELECT Ligase, PDB_ID AS pdb_id, Ligand, Variant
             FROM Ligase_Ligands_Smiles_3DMapped
@@ -980,22 +961,17 @@ def get_ligand_visual(recruiter_code):
                 "backend_mode": backend_mode,
             }), 404
 
-        ligase  = key_row["Ligase"]
-        pdb_id  = key_row["pdb_id"]
-        ligand  = key_row["Ligand"]
+        ligase = key_row["Ligase"]
+        pdb_id = key_row["pdb_id"]
+        ligand = key_row["Ligand"]
         variant = key_row["Variant"] or 1
 
-
-        # --------------------------------------------------------------
-        # FORCE correct canonical SMILES (from Recruiter_SMILES_Map)
-        # --------------------------------------------------------------
         sm_row = query_db("""
             SELECT SMILES
             FROM Recruiter_SMILES_Map
             WHERE RECRUITER_CODE = ?
             LIMIT 1;
         """, [recruiter_code], one=True)
-
         canonical_smiles = sm_row["SMILES"] if sm_row else descriptor.get("SMILES")
 
         metadata = {
@@ -1006,80 +982,35 @@ def get_ligand_visual(recruiter_code):
             "Variant": variant,
         }
 
-
-
-        # ------------------------------------------------------------------
-        # 🧩 STEP 3A: Resolve composite key (Ligase / PDB / Ligand / Variant)
-        # ------------------------------------------------------------------
-        key_row = query_db("""
-            SELECT Ligase, PDB_ID AS pdb_id, Ligand, Variant
-            FROM Ligase_Ligands_Smiles_3DMapped
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1;
-        """, [recruiter_code], one=True)
-
-        key = dict(key_row) if key_row else {}
-        ligase  = key.get("Ligase")
-        pdb_id  = key.get("pdb_id")
-        ligand  = key.get("Ligand")
-        variant = key.get("Variant", 1)
-
         print(f"🔑 [CompositeKey] {recruiter_code} → Ligase={ligase}, PDB={pdb_id}, Ligand={ligand}, Variant={variant}")
 
-        # ------------------------------------------------------------------
-        # 📊 STEP 3B: Retrieve SASA summary + atom data using composite key
-        # ------------------------------------------------------------------
-        sasa_summary = {}
-        sasa_atoms = []
-
-        # 🔍 Get composite key from mapping table (no Residue_ID there)
-        key_row = query_db("""
-            SELECT Ligase, pdb_id, Ligand, Variant
-            FROM Ligase_Ligands_Smiles_3DMapped
-            WHERE RECRUITER_CODE = ?
+        residue_row = query_db("""
+            SELECT Residue_ID
+            FROM Ligase_Ligand_SASA_summary
+            WHERE Ligase=? AND pdb_id=? AND Ligand=? AND (Variant=? OR Variant IS NULL)
             LIMIT 1;
-        """, [recruiter_code], one=True)
+        """, [ligase, pdb_id, ligand, variant], one=True)
+        residue_id = residue_row["Residue_ID"] if residue_row else None
 
-        if not key_row:
-            print(f"⚠️ No mapping record found for recruiter {recruiter_code}")
-        else:
-            ligase   = key_row["Ligase"]
-            pdb_id   = key_row["pdb_id"]
-            ligand   = key_row["Ligand"]
-            variant  = key_row["Variant"]
+        sasa_summary_row = query_db("""
+            SELECT *
+            FROM Ligase_Ligand_SASA_summary
+            WHERE Ligase=? AND pdb_id=? AND Ligand=?
+            AND (Residue_ID=? OR ? IS NULL)
+            AND (Variant=? OR Variant IS NULL)
+            LIMIT 1;
+        """, [ligase, pdb_id, ligand, residue_id, residue_id, variant], one=True)
+        sasa_summary = dict(sasa_summary_row) if sasa_summary_row else {}
 
-            # 🧠 find the Residue_ID by matching the same (Ligase, pdb_id, Ligand, Variant)
-            residue_row = query_db("""
-                SELECT Residue_ID
-                FROM Ligase_Ligand_SASA_summary
-                WHERE Ligase=? AND pdb_id=? AND Ligand=? AND (Variant=? OR Variant IS NULL)
-                LIMIT 1;
-            """, [ligase, pdb_id, ligand, variant], one=True)
-
-            residue_id = residue_row["Residue_ID"] if residue_row else None
-            print(f"🔑 [CompositeKey] {recruiter_code} → Ligase={ligase}, PDB={pdb_id}, Ligand={ligand}, Residue_ID={residue_id}, Variant={variant}")
-
-            # ✅ Fetch SASA summary
-            sasa_summary_row = query_db("""
-                SELECT *
-                FROM Ligase_Ligand_SASA_summary
-                WHERE Ligase=? AND pdb_id=? AND Ligand=? 
-                AND (Residue_ID=? OR ? IS NULL)
-                AND (Variant=? OR Variant IS NULL)
-                LIMIT 1;
-            """, [ligase, pdb_id, ligand, residue_id, residue_id, variant], one=True)
-            sasa_summary = dict(sasa_summary_row) if sasa_summary_row else {}
-
-            # ✅ Fetch SASA atom-level data
-            sasa_atoms_rows = query_db("""
-                SELECT *
-                FROM Ligase_Ligand_SASA_atoms
-                WHERE Ligase=? AND pdb_id=? AND Ligand=?
-                AND (Residue_ID=? OR ? IS NULL)
-                AND (Variant=? OR Variant IS NULL)
-                ORDER BY atom_id ASC;
-            """, [ligase, pdb_id, ligand, residue_id, residue_id, variant])
-            sasa_atoms = [dict(r) for r in sasa_atoms_rows]
+        sasa_atoms_rows = query_db("""
+            SELECT *
+            FROM Ligase_Ligand_SASA_atoms
+            WHERE Ligase=? AND pdb_id=? AND Ligand=?
+            AND (Residue_ID=? OR ? IS NULL)
+            AND (Variant=? OR Variant IS NULL)
+            ORDER BY atom_id ASC;
+        """, [ligase, pdb_id, ligand, residue_id, residue_id, variant])
+        sasa_atoms = [dict(r) for r in sasa_atoms_rows]
 
 
 
