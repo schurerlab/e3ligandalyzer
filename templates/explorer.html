@@ -1451,7 +1451,7 @@ async function handleProtacConfirm() {
   const sessionId = await convertAtomToV_backend(atomIndex, skipModify);
   if (!sessionId) return;
 
-  window.open(`${window.PROTACSUITE}/build?session=${sessionId}`, "_blank");
+  window.open(`${window.PROTACSUITE}/builder?session=${sessionId}`, "_blank");
 
   document.getElementById("protac-popup").classList.add("hidden");
 }
@@ -1499,7 +1499,7 @@ async function sendToProtacBuilder(modifiedSDF) {
   });
 
   const { sessionId } = await uploadResponse.json();
-  window.open(`${window.PROTACSUITE}/build?session=${sessionId}`, "_blank");
+  window.open(`${window.PROTACSUITE}/builder?session=${sessionId}`, "_blank");
 }
 
 

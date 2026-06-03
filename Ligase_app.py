@@ -18,7 +18,7 @@ def get_protac_builder_base_url() -> str:
 
 def build_protac_builder_session_url(session_id: str) -> str:
     query = urlencode({"session": str(session_id or "").strip()})
-    return f"{get_protac_builder_base_url()}/build?{query}"
+    return f"{get_protac_builder_base_url()}/builder?{query}"
 
 
 # =============================================================================
