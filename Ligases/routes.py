@@ -15,6 +15,7 @@ Provides:
 import os
 import re
 import sqlite3
+from pathlib import Path
 import requests
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
 import pandas as pd
@@ -112,6 +113,19 @@ def normalize_sdf_filename(filename: str) -> str:
     if suffix:
         raise ValueError(f"Unsupported file extension: {suffix}")
     return f"{raw}.sdf"
+
+
+def candidate_sdf_filenames(filename: str) -> list[str]:
+    """Return preferred SDF filename candidates for a PDB/SDF asset request."""
+    normalized = normalize_sdf_filename(filename)
+    stem = Path(normalized).stem
+    core_no_variant = re.sub(r"_\d+$", "", stem)
+
+    candidates = [normalized]
+    if core_no_variant != stem:
+        candidates.append(f"{core_no_variant}.sdf")
+    candidates.append(f"{core_no_variant}_1.sdf")
+    return list(dict.fromkeys(candidates))
 
 
 # ===========================================================================
@@ -1157,50 +1171,68 @@ def serve_sdf_file(ligase, filename):
         return jsonify({"ok": False, "error": str(exc)}), 400
 
     if randy_client.remote_enabled():
-        remote_path = (
-            f"file/sdf/{randy_client.quote_part(ligase)}/"
-            f"{randy_client.quote_path(normalized_filename)}"
+        attempted_filenames = []
+        for candidate_filename in candidate_sdf_filenames(filename):
+            attempted_filenames.append(candidate_filename)
+            remote_path = (
+                f"file/sdf/{randy_client.quote_part(ligase)}/"
+                f"{randy_client.quote_path(candidate_filename)}"
+            )
+            try:
+                return randy_client.proxy_file(
+                    remote_path,
+                    mimetype="chemical/x-mdl-sdfile",
+                )
+            except requests.HTTPError as exc:
+                status_code = exc.response.status_code if exc.response is not None else 502
+                if status_code == 404:
+                    continue
+                current_app.logger.warning(
+                    "Remote SDF proxy failed: ligase=%s original=%s attempted=%s status=%s exc=%s",
+                    ligase,
+                    filename,
+                    candidate_filename,
+                    status_code,
+                    type(exc).__name__,
+                )
+                return jsonify({
+                    "ok": False,
+                    "error": "Remote SDF request failed.",
+                    "ligase": ligase,
+                    "filename": candidate_filename,
+                }), status_code
+            except Exception as exc:
+                current_app.logger.warning(
+                    "Remote SDF proxy unexpected failure: ligase=%s original=%s attempted=%s exc=%s",
+                    ligase,
+                    filename,
+                    candidate_filename,
+                    type(exc).__name__,
+                )
+                return jsonify({
+                    "ok": False,
+                    "error": "Remote SDF proxy failed.",
+                    "ligase": ligase,
+                    "filename": candidate_filename,
+                }), 502
+
+        current_app.logger.warning(
+            "Remote SDF proxy failed: ligase=%s original=%s normalized=%s attempted=%s status=404 exc=HTTPError",
+            ligase,
+            filename,
+            normalized_filename,
+            attempted_filenames,
         )
-        try:
-            return randy_client.proxy_file(
-                remote_path,
-                mimetype="chemical/x-mdl-sdfile",
-            )
-        except requests.HTTPError as exc:
-            status_code = exc.response.status_code if exc.response is not None else 502
-            current_app.logger.warning(
-                "Remote SDF proxy failed: ligase=%s original=%s normalized=%s status=%s exc=%s",
-                ligase,
-                filename,
-                normalized_filename,
-                status_code,
-                type(exc).__name__,
-            )
-            return jsonify({
-                "ok": False,
-                "error": "Remote SDF request failed.",
-                "ligase": ligase,
-                "filename": normalized_filename,
-            }), status_code
-        except Exception as exc:
-            current_app.logger.warning(
-                "Remote SDF proxy unexpected failure: ligase=%s original=%s normalized=%s exc=%s",
-                ligase,
-                filename,
-                normalized_filename,
-                type(exc).__name__,
-            )
-            return jsonify({
-                "ok": False,
-                "error": "Remote SDF proxy failed.",
-                "ligase": ligase,
-                "filename": normalized_filename,
-            }), 502
+        return jsonify({
+            "ok": False,
+            "error": "Remote SDF request failed.",
+            "ligase": ligase,
+            "filename": normalized_filename,
+            "attempted": attempted_filenames,
+        }), 404
 
     from flask import send_from_directory
     import os
-    import re
-
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     sdf_dir = os.path.join(base_dir, "Ligases", ligase, "SDF_4Download")
 

@@ -121,7 +121,11 @@ def _candidate_names(filename: str, extension: str) -> list[str]:
 
     normalized_stem = stem if suffix else basename
     core_no_variant = re.sub(r"_\d+$", "", normalized_stem)
-    return [f"{normalized_stem}{extension}", f"{core_no_variant}_1{extension}"]
+    candidates = [f"{normalized_stem}{extension}"]
+    if core_no_variant != normalized_stem:
+        candidates.append(f"{core_no_variant}{extension}")
+    candidates.append(f"{core_no_variant}_1{extension}")
+    return list(dict.fromkeys(candidates))
 
 
 def _find_variant_file(folder: Path, filename: str, extension: str) -> Path:
