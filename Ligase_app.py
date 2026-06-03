@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from urllib.parse import urlencode
 from flask import Flask, render_template, send_from_directory, request, redirect
 from Ligases.routes import ligases_bp, query_db
 from Ligases import randy_client
@@ -9,6 +10,15 @@ from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Request
 
 import random
+
+
+def get_protac_builder_base_url() -> str:
+    return (os.environ.get("PROTAC_BUILDER_BASE_URL", "https://protacbuilder.com") or "https://protacbuilder.com").rstrip("/")
+
+
+def build_protac_builder_session_url(session_id: str) -> str:
+    query = urlencode({"session": str(session_id or "").strip()})
+    return f"{get_protac_builder_base_url()}/build?{query}"
 
 
 # =============================================================================
@@ -22,10 +32,18 @@ def create_app():
         template_folder='templates'
     )
 
+    app.config["PROTAC_BUILDER_BASE_URL"] = get_protac_builder_base_url()
+
     # Register your API blueprint normally (no prefix)
     app.register_blueprint(ligases_bp, url_prefix="/api")
 
     app.secret_key = os.urandom(24)
+
+    @app.context_processor
+    def inject_protac_builder_config():
+        return {
+            "PROTAC_BUILDER_BASE_URL": app.config["PROTAC_BUILDER_BASE_URL"],
+        }
 
 
     # ---------------------------------------------------------
@@ -46,6 +64,17 @@ def create_app():
     @app.route("/ligases")
     def ligases_page():
         return render_template("ligases.html")
+
+    @app.route("/copy/COPYindex")
+    def legacy_copyindex_home():
+        return redirect(app.config["PROTAC_BUILDER_BASE_URL"], code=302)
+
+    @app.route("/copy/COPYindex/build")
+    def legacy_copyindex_build():
+        session_id = str(request.args.get("session", "") or "").strip()
+        if not session_id:
+            return redirect(app.config["PROTAC_BUILDER_BASE_URL"], code=302)
+        return redirect(build_protac_builder_session_url(session_id), code=302)
 
     LIGAND_REDIRECTS = {
         # "L00794": "L00266",

@@ -260,7 +260,7 @@ class CustomFooter extends HTMLElement {
     if (protacLink) {
       protacLink.addEventListener("click", (e) => {
         e.preventDefault();
-        const base = window.PROTACSUITE || "https://kyle.rove-vernier.ts.net:/copy/COPYindex";
+        const base = window.PROTACSUITE || "https://protacbuilder.com";
         window.open(base, "_blank");
       });
     }

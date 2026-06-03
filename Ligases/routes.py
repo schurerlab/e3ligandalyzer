@@ -15,6 +15,7 @@ Provides:
 import os
 import re
 import sqlite3
+import requests
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
 import pandas as pd
 from Ligases import randy_client
@@ -90,6 +91,26 @@ def _eliah_table_columns(table_name):
         if name:
             columns.append(name)
     return columns
+
+
+def normalize_sdf_filename(filename: str) -> str:
+    """Normalize a PDB-like or SDF-like asset name into an SDF filename."""
+    raw = str(filename or "").strip()
+    if not raw:
+        raise ValueError("Missing filename.")
+
+    parts = Path(raw).parts
+    if raw.startswith("/") or ".." in parts:
+        raise ValueError("Invalid filename.")
+
+    suffix = Path(raw).suffix.lower()
+    if suffix == ".sdf":
+        return raw
+    if suffix == ".pdb":
+        return f"{raw[:-4]}.sdf"
+    if suffix:
+        raise ValueError(f"Unsupported file extension: {suffix}")
+    return f"{raw}.sdf"
 
 
 # ===========================================================================
@@ -1192,11 +1213,57 @@ def serve_sdf_file(ligase, filename):
     - If missing, try _1   (4W9L_3JJ_1.sdf)
     - If still missing, try any variant dynamically
     """
-    if randy_client.remote_enabled():
-        return randy_client.proxy_file(
-            f"file/sdf/{randy_client.quote_part(ligase)}/{randy_client.quote_path(filename)}",
-            mimetype="chemical/x-mdl-sdfile",
+    try:
+        normalized_filename = normalize_sdf_filename(filename)
+    except ValueError as exc:
+        current_app.logger.warning(
+            "SDF filename normalization rejected: ligase=%s original=%s exc=%s",
+            ligase,
+            filename,
+            type(exc).__name__,
         )
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+    if randy_client.remote_enabled():
+        remote_path = (
+            f"file/sdf/{randy_client.quote_part(ligase)}/"
+            f"{randy_client.quote_path(normalized_filename)}"
+        )
+        try:
+            return randy_client.proxy_file(
+                remote_path,
+                mimetype="chemical/x-mdl-sdfile",
+            )
+        except requests.HTTPError as exc:
+            status_code = exc.response.status_code if exc.response is not None else 502
+            current_app.logger.warning(
+                "Remote SDF proxy failed: ligase=%s original=%s normalized=%s status=%s exc=%s",
+                ligase,
+                filename,
+                normalized_filename,
+                status_code,
+                type(exc).__name__,
+            )
+            return jsonify({
+                "ok": False,
+                "error": "Remote SDF request failed.",
+                "ligase": ligase,
+                "filename": normalized_filename,
+            }), status_code
+        except Exception as exc:
+            current_app.logger.warning(
+                "Remote SDF proxy unexpected failure: ligase=%s original=%s normalized=%s exc=%s",
+                ligase,
+                filename,
+                normalized_filename,
+                type(exc).__name__,
+            )
+            return jsonify({
+                "ok": False,
+                "error": "Remote SDF proxy failed.",
+                "ligase": ligase,
+                "filename": normalized_filename,
+            }), 502
 
     from flask import send_from_directory
     import os
@@ -1205,8 +1272,8 @@ def serve_sdf_file(ligase, filename):
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     sdf_dir = os.path.join(base_dir, "Ligases", ligase, "SDF_4Download")
 
-    # Core name (strip .pdb)
-    core = os.path.splitext(filename)[0]  # e.g. 4W9L_3JJ_1.pdb -> 4W9L_3JJ_1
+    # Core name (strip normalized .sdf suffix)
+    core = os.path.splitext(normalized_filename)[0]
     core_no_variant = re.sub(r"_\d+$", "", core)  # strip trailing _1 if present
 
     # Expected filenames:
@@ -1217,7 +1284,7 @@ def serve_sdf_file(ligase, filename):
     variant_path = os.path.join(sdf_dir, variant_sdf)
 
     print("\n==============================")
-    print(f"🧪 [SDF Route] ligase={ligase}, filename={filename}")
+    print(f"🧪 [SDF Route] ligase={ligase}, filename={filename}, normalized={normalized_filename}")
     print(f"📂 sdf_dir: {sdf_dir}")
     print(f"🔎 core_no_variant = {core_no_variant}")
     print("==============================")
