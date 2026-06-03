@@ -8,10 +8,15 @@
 
 <!-- Bilkent layout (UMD bundle with global export) -->
 <script src="https://cdn.jsdelivr.net/npm/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.umd.js"></script>
-
-
-
-
+<style>
+  #scaffold-network-preview-svg svg,
+  .mol-tooltip-svg svg {
+    max-width: 100%;
+    max-height: 180px;
+    display: block;
+    margin: 0 auto;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -69,6 +74,28 @@
         </button>
       </div>
       <div id="scaffold-network" class="h-64 bg-slate-800 rounded"></div>
+      <div id="scaffold-network-preview"
+           class="mt-3 rounded-lg border border-slate-700 bg-slate-800/80 p-3 shadow-inner">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div id="scaffold-network-preview-title" class="text-sm font-semibold text-sky-300">
+              Scaffold preview
+            </div>
+            <div id="scaffold-network-preview-subtitle" class="mt-1 text-xs text-slate-400">
+              Hover a scaffold node to preview its structure.
+            </div>
+          </div>
+          <div id="scaffold-network-preview-badges" class="flex flex-wrap justify-end gap-1"></div>
+        </div>
+        <div id="scaffold-network-preview-svg"
+             class="mt-3 flex min-h-[180px] items-center justify-center rounded-lg border border-slate-700 bg-slate-900/80 p-3 text-sm text-slate-500">
+          Hover a scaffold to preview its structure.
+        </div>
+        <div id="scaffold-network-preview-smiles"
+             class="mt-2 text-[11px] text-slate-400 break-all">
+          Hover another scaffold to update this preview.
+        </div>
+      </div>
     </div>
 
   </div>
@@ -201,6 +228,7 @@ function renderAll(data) {
   render3DScaffoldPlot(data);
   renderScaffoldFrequencyChart(data);
   renderTopScaffolds(data);
+  resetScaffoldNetworkPreview();
   renderScaffoldNetwork(data);
 }
 
@@ -507,16 +535,20 @@ async function renderScaffoldNetwork(data) {
   /* Hover tooltip for scaffold */
   cy.on("mouseover", "node", e => {
     const node = e.target;
-    const smiles = node.data("smiles");
-    const label = node.data("label");
-
-    showMolTooltip(smiles, {
-      pageX: e.originalEvent.pageX,
-      pageY: e.originalEvent.pageY
+    showScaffoldNetworkPreview({
+      label: node.data("label"),
+      scaffoldID: node.data("label"),
+      smiles: node.data("smiles"),
+      ligases: node.data("ligases")
     });
   });
 
-  cy.on("mouseout", "node", () => hideMolTooltip());
+  cy.on("mouseout", "node", () => {
+    const previewSubtitle = document.getElementById("scaffold-network-preview-subtitle");
+    if (previewSubtitle) {
+      previewSubtitle.textContent = "Hover another scaffold to update this preview.";
+    }
+  });
 
   /* Click to open modal */
   cy.on("tap", "node", async e => {
@@ -555,6 +587,9 @@ async function renderScaffoldNetwork(data) {
 ========================================================== */
 let tooltipDiv, modalDiv;
 let hoverTimeout = null;
+let scaffoldNetworkPreviewRequestId = 0;
+let scaffoldTooltipRequestId = 0;
+let activeTooltipSmiles = null;
 
 String.prototype.hashCode = function () {
   let hash = 0;
@@ -577,37 +612,155 @@ function initTooltip() {
     color: "white",
     zIndex: 9999,
     display: "none",
+    maxWidth: "260px",
+    maxHeight: "320px",
+    overflow: "hidden",
   });
   document.body.appendChild(tooltipDiv);
+}
+
+function positionMolTooltip(event) {
+  if (!tooltipDiv || !event) return;
+
+  const sourceX = Number.isFinite(event.clientX) ? event.clientX : event.pageX;
+  const sourceY = Number.isFinite(event.clientY) ? event.clientY : event.pageY;
+
+  let x = (sourceX || 0) + 18;
+  let y = (sourceY || 0) + 18;
+
+  const tipWidth = tooltipDiv.offsetWidth || 240;
+  const tipHeight = tooltipDiv.offsetHeight || 180;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  if (x + tipWidth > vw - 20) x = vw - tipWidth - 20;
+  if (y + tipHeight > vh - 20) y = vh - tipHeight - 20;
+  if (x < 16) x = 16;
+  if (y < 16) y = 16;
+
+  tooltipDiv.style.left = `${x}px`;
+  tooltipDiv.style.top = `${y}px`;
+}
+
+function renderPreviewLigaseBadges(ligases = []) {
+  if (!Array.isArray(ligases) || !ligases.length) return "";
+  return ligases.map(l => `
+    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold text-black"
+          style="background:${ligaseColors[l] || '#94a3b8'}">
+      ${l}
+    </span>
+  `).join("");
+}
+
+function setScaffoldNetworkPreviewState({
+  title = "Scaffold preview",
+  subtitle = "Hover a scaffold node to preview its structure.",
+  svgHtml = "Hover a scaffold to preview its structure.",
+  smiles = "Hover another scaffold to update this preview.",
+  ligases = []
+} = {}) {
+  const titleEl = document.getElementById("scaffold-network-preview-title");
+  const subtitleEl = document.getElementById("scaffold-network-preview-subtitle");
+  const svgEl = document.getElementById("scaffold-network-preview-svg");
+  const smilesEl = document.getElementById("scaffold-network-preview-smiles");
+  const badgesEl = document.getElementById("scaffold-network-preview-badges");
+
+  if (titleEl) titleEl.textContent = title;
+  if (subtitleEl) subtitleEl.textContent = subtitle;
+  if (svgEl) svgEl.innerHTML = svgHtml;
+  if (smilesEl) smilesEl.textContent = smiles;
+  if (badgesEl) badgesEl.innerHTML = renderPreviewLigaseBadges(ligases);
+}
+
+function resetScaffoldNetworkPreview() {
+  setScaffoldNetworkPreviewState();
+}
+
+async function showScaffoldNetworkPreview(nodeData) {
+  const requestId = ++scaffoldNetworkPreviewRequestId;
+  const ligases = nodeData.ligases || [];
+  const title = nodeData.label || nodeData.scaffoldID || "Scaffold preview";
+  const subtitle = ligases.length
+    ? `Ligases: ${ligases.join(", ")}`
+    : "Ligase data unavailable";
+
+  setScaffoldNetworkPreviewState({
+    title,
+    subtitle,
+    svgHtml: `<div class="text-sm text-slate-400">Loading structure…</div>`,
+    smiles: nodeData.smiles || "No SMILES available for this scaffold.",
+    ligases
+  });
+
+  if (!nodeData.smiles) {
+    setScaffoldNetworkPreviewState({
+      title,
+      subtitle,
+      svgHtml: `<div class="text-sm text-slate-500">No structure available.</div>`,
+      smiles: "No SMILES available for this scaffold.",
+      ligases
+    });
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/render-smiles/${encodeURIComponent(nodeData.smiles)}`);
+    const svg = await res.text();
+    if (requestId !== scaffoldNetworkPreviewRequestId) return;
+    setScaffoldNetworkPreviewState({
+      title,
+      subtitle,
+      svgHtml: svg,
+      smiles: nodeData.smiles,
+      ligases
+    });
+  } catch {
+    if (requestId !== scaffoldNetworkPreviewRequestId) return;
+    setScaffoldNetworkPreviewState({
+      title,
+      subtitle,
+      svgHtml: `<div class="text-sm text-red-400">Failed to render structure.</div>`,
+      smiles: nodeData.smiles,
+      ligases
+    });
+  }
 }
 
 async function showMolTooltip(smiles, event) {
   if (!tooltipDiv) initTooltip();
   if (!tooltipDiv) return;
 
+  const requestId = ++scaffoldTooltipRequestId;
+  activeTooltipSmiles = smiles || null;
   tooltipDiv.style.display = "block";
-  tooltipDiv.style.left = event.pageX + 15 + "px";
-  tooltipDiv.style.top = event.pageY + 15 + "px";
-  tooltipDiv.innerHTML = "Loading...";
+  tooltipDiv.style.maxWidth = "260px";
+  tooltipDiv.innerHTML = `<div class="text-sm text-slate-300">Loading…</div>`;
+  positionMolTooltip(event);
 
   try {
     const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
-    tooltipDiv.innerHTML = await res.text();
+    const svg = await res.text();
+    if (requestId !== scaffoldTooltipRequestId || activeTooltipSmiles !== smiles) return;
+    tooltipDiv.innerHTML = `<div class="mol-tooltip-svg">${svg}</div>`;
+    positionMolTooltip(event);
   } catch {
-    tooltipDiv.innerHTML = "Failed to render";
+    if (requestId !== scaffoldTooltipRequestId || activeTooltipSmiles !== smiles) return;
+    tooltipDiv.innerHTML = `<div class="text-sm text-red-400">Failed to render</div>`;
+    positionMolTooltip(event);
   }
 }
 
 function hideMolTooltip() {
   if (!tooltipDiv) return;   // <— prevents the crash
+  scaffoldTooltipRequestId += 1;
+  activeTooltipSmiles = null;
   tooltipDiv.style.display = "none";
 }
 
 
 document.addEventListener("mousemove", (event) => {
   if (tooltipDiv && tooltipDiv.style.display === "block") {
-    tooltipDiv.style.left = event.pageX + 15 + "px";
-    tooltipDiv.style.top = event.pageY + 15 + "px";
+    positionMolTooltip(event);
   }
 });
 

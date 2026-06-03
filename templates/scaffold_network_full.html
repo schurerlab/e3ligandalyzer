@@ -175,6 +175,8 @@ let activeLigases = new Set();
 let filterSingleLigaseOnly = false;
 let minRecruiterCount = 1;
 let showSimilarityEdges = false;
+let scaffoldTooltipRequestId = 0;
+let scaffoldTooltipHoverKey = null;
 
 /* ==========================================================
    Init
@@ -563,6 +565,8 @@ function initTooltip() {
     color: "white",
     fontSize: "11px",
     maxWidth: "260px",
+    maxHeight: "340px",
+    overflow: "hidden",
     zIndex: 9999,
     display: "none",
   });
@@ -570,11 +574,33 @@ function initTooltip() {
   document.body.appendChild(tooltipDiv);
 }
 
+function positionTooltipAt(x, y) {
+  if (!tooltipDiv) return;
+
+  const tipWidth = tooltipDiv.offsetWidth || 260;
+  const tipHeight = tooltipDiv.offsetHeight || 200;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  let nextX = x;
+  let nextY = y;
+
+  if (nextX + tipWidth > vw - 20) nextX = vw - tipWidth - 20;
+  if (nextY + tipHeight > vh - 20) nextY = vh - tipHeight - 20;
+  if (nextX < 16) nextX = 16;
+  if (nextY < 16) nextY = 16;
+
+  tooltipDiv.style.left = `${nextX}px`;
+  tooltipDiv.style.top = `${nextY}px`;
+}
+
 async function showMolTooltip(nodeData, event, cyNode = null) {
   initTooltip();
 
   const node = cyNode;
   if (!node) return;
+  const requestId = ++scaffoldTooltipRequestId;
+  scaffoldTooltipHoverKey = nodeData.id || nodeData.label || node.id();
 
   // Convert node position to rendered (screen) coordinates
   const pos = node.renderedPosition();
@@ -583,9 +609,8 @@ async function showMolTooltip(nodeData, event, cyNode = null) {
   const screenX = containerRect.left + pos.x;
   const screenY = containerRect.top + pos.y;
 
-  tooltipDiv.style.left = `${screenX - 50}px`;
-  tooltipDiv.style.top = `${screenY + 20}px`;
   tooltipDiv.style.display = "block";
+  positionTooltipAt(screenX - 50, screenY + 20);
 
   const ligases = nodeData.ligases || [];
   const colorChips = ligases.map(l => {
@@ -611,28 +636,24 @@ async function showMolTooltip(nodeData, event, cyNode = null) {
     try {
       const res = await fetch(`/api/render-smiles/${encodeURIComponent(nodeData.smiles)}`);
       const svg = await res.text();
+      if (requestId !== scaffoldTooltipRequestId || scaffoldTooltipHoverKey !== (nodeData.id || nodeData.label || node.id())) return;
       const svgDiv = document.getElementById('tooltip-smiles-svg');
-      svgDiv.innerHTML = svg;
+      if (svgDiv) {
+        svgDiv.innerHTML = svg;
+        positionTooltipAt(screenX - 50, screenY + 20);
+      }
     } catch (err) {
-      document.getElementById('tooltip-smiles-svg').textContent = 'Failed to render structure';
-    }
-  }
-
-
-  if (nodeData.smiles) {
-    try {
-      const res = await fetch(`/api/render-smiles/${encodeURIComponent(nodeData.smiles)}`);
-      const svg = await res.text();
       const svgDiv = document.getElementById('tooltip-smiles-svg');
-      svgDiv.innerHTML = svg;
-    } catch (err) {
-      document.getElementById('tooltip-smiles-svg').textContent = 'Failed to render structure';
+      if (requestId !== scaffoldTooltipRequestId || scaffoldTooltipHoverKey !== (nodeData.id || nodeData.label || node.id())) return;
+      if (svgDiv) svgDiv.textContent = 'Failed to render structure';
     }
   }
 }
 
 function hideMolTooltip() {
   if (!tooltipDiv) return;
+  scaffoldTooltipRequestId += 1;
+  scaffoldTooltipHoverKey = null;
   tooltipDiv.style.display = "none";
 }
 
