@@ -2554,6 +2554,17 @@ p {
 let protacPopupStage = null;
 let protacPopupComp = null;
 
+function centerProtacPopupInViewport() {
+  const popup = document.getElementById("protac-popup");
+  if (!popup) return;
+
+  popup.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+    inline: "nearest"
+  });
+}
+
 async function openProtacPopup(sdfText, ligase, pdbFile) {
   try {
     originalSDF = sdfText;
@@ -2574,6 +2585,7 @@ async function openProtacPopup(sdfText, ligase, pdbFile) {
     }
 
     popup.classList.remove("hidden");
+    centerProtacPopupInViewport();
 
     atomInput.value = "";
     atomDropdown.innerHTML = "";
