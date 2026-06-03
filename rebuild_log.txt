@@ -1,0 +1,518 @@
+================================================================================
+🚀 CURATED E3 LIGASE DATASET BUILDER
+================================================================================
+
+Step 1: Loading existing dataset...
+✅ Loaded 15 existing ligases/PDBs
+
+Step 2: Processing curated E3 ligase list...
+
+────────────────────────────────────────────────────────────
+📌 NEDD4 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 4BBM: Checking ligands...
+  ✅ 4BBM: Found ligands: TC0
+  ✅ 4BBM: Downloaded successfully
+  🔍 4BBN: Checking ligands...
+  ❌ 4BBN: No valid ligands found
+  🔍 4I11: Checking ligands...
+  ✅ 4I11: Found ligands: 1CH
+  ✅ 4I11: Downloaded successfully
+  🔍 4N7H: Checking ligands...
+  ✅ 4N7H: Found ligands: GAI
+  ✅ 4N7H: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 NEDD4L (HECT)
+────────────────────────────────────────────────────────────
+  🔍 5HSH: Checking ligands...
+  ❌ 5HSH: No valid ligands found
+  🔍 5HSI: Checking ligands...
+  ❌ 5HSI: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 SMURF1 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 3K3Q: Checking ligands...
+  ❌ 3K3Q: No valid ligands found
+  🔍 5XW9: Checking ligands...
+  ✅ 5XW9: Found ligands: ACE
+  ✅ 5XW9: Downloaded successfully
+  🔍 6EK3: Checking ligands...
+  ✅ 6EK3: Found ligands: OUL
+  ✅ 6EK3: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 SMURF2 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 1ZVD: Checking ligands...
+  ✅ 1ZVD: Found ligands: MSE
+  ✅ 1ZVD: Downloaded successfully
+  🔍 3OQP: Checking ligands...
+  ✅ 3OQP: Found ligands: MSE, CSD, PG4
+  ✅ 3OQP: Downloaded successfully
+  🔍 6EFX: Checking ligands...
+  ✅ 6EFX: Found ligands: ANP
+  ✅ 6EFX: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 ITCH (HECT)
+────────────────────────────────────────────────────────────
+  🔍 3TUH: Checking ligands...
+  ✅ 3TUH: Found ligands: TUH
+  ✅ 3TUH: Downloaded successfully
+  🔍 2XBB: Checking ligands...
+  ❌ 2XBB: No valid ligands found
+  🔍 4P81: Checking ligands...
+  ❌ 4P81: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 WWP1 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 2XBE: Checking ligands...
+  ❌ 2XBE: No valid ligands found
+  🔍 1ND7: Checking ligands...
+  ❌ 1ND7: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 WWP2 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 1J BB: Checking ligands...
+  ❌ 1J BB: No valid ligands found
+  🔍 2DAT: Checking ligands...
+  ❌ 2DAT: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 UBE3A (HECT)
+────────────────────────────────────────────────────────────
+  🔍 1D5F: Checking ligands...
+  ❌ 1D5F: No valid ligands found
+  🔍 3AVN: Checking ligands...
+  ✅ 3AVN: Found ligands: ACY
+  ✅ 3AVN: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 UBR5 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 4P3K: Checking ligands...
+  ✅ 4P3K: Found ligands: 1PE
+  ✅ 4P3K: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 HECTD1 (HECT)
+────────────────────────────────────────────────────────────
+  🔍 5JSU: Checking ligands...
+  ✅ 5JSU: Found ligands: CSX, CSD, SF4, 6ML, FCO, H2S, NI, FE2
+  ✅ 5JSU: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 PARKIN (RBR)
+────────────────────────────────────────────────────────────
+  🔍 4K95: Checking ligands...
+  ❌ 4K95: No valid ligands found
+  🔍 4K7D: Checking ligands...
+  ✅ 4K7D: Found ligands: MLI
+  ✅ 4K7D: Downloaded successfully
+  🔍 5C1Z: Checking ligands...
+  ❌ 5C1Z: No valid ligands found
+  🔍 6GLC: Checking ligands...
+  ✅ 6GLC: Found ligands: SEP, 3CN
+  ✅ 6GLC: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 ARIH1 (RBR)
+────────────────────────────────────────────────────────────
+  🔍 4KBL: Checking ligands...
+  ❌ 4KBL: No valid ligands found
+  🔍 5D0L: Checking ligands...
+  ❌ 5D0L: No valid ligands found
+  🔍 5H0F: Checking ligands...
+  ❌ 5H0F: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 ARIH2 (RBR)
+────────────────────────────────────────────────────────────
+  🔍 5L8N: Checking ligands...
+  ✅ 5L8N: Found ligands: 6RQ, P33
+  ✅ 5L8N: Downloaded successfully
+  🔍 5L8O: Checking ligands...
+  ✅ 5L8O: Found ligands: CHD
+  ✅ 5L8O: Downloaded successfully
+  🔍 5L8P: Checking ligands...
+  ✅ 5L8P: Found ligands: 6MG
+  ✅ 5L8P: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 HOIP (RBR)
+────────────────────────────────────────────────────────────
+  🔍 4DBG: Checking ligands...
+  ❌ 4DBG: No valid ligands found
+  🔍 5EDX: Checking ligands...
+  ❌ 5EDX: No valid ligands found
+  🔍 5EDV: Checking ligands...
+  ❌ 5EDV: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 HOIL1L (RBR)
+────────────────────────────────────────────────────────────
+  🔍 4DBH: Checking ligands...
+  ✅ 4DBH: Found ligands: OXL
+  ✅ 4DBH: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 HHARI (RBR)
+────────────────────────────────────────────────────────────
+  🔍 4KBM: Checking ligands...
+  ❌ 4KBM: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 RNF4 (RING)
+────────────────────────────────────────────────────────────
+  🔍 4AP4: Checking ligands...
+  ❌ 4AP4: No valid ligands found
+  🔍 4PPE: Checking ligands...
+  ❌ 4PPE: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 RNF8 (RING)
+────────────────────────────────────────────────────────────
+  🔍 4WHV: Checking ligands...
+  ❌ 4WHV: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 RNF38 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5F3H: Checking ligands...
+  ❌ 5F3H: No valid ligands found
+  🔍 5F3I: Checking ligands...
+  ✅ 5F3I: Found ligands: 5UJ
+  ✅ 5F3I: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 RNF43 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5AJZ: Checking ligands...
+  ✅ 5AJZ: Found ligands: PHS, F6P, MJP
+  ✅ 5AJZ: Downloaded successfully
+  🔍 5AIU: Checking ligands...
+  ❌ 5AIU: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 RNF111 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5YAZ: Checking ligands...
+  ❌ 5YAZ: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 RNF146 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5BOV: Checking ligands...
+  ✅ 5BOV: Found ligands: MSE
+  ✅ 5BOV: Downloaded successfully
+  🔍 5BON: Checking ligands...
+  ❌ 5BON: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 RNF213 (RING)
+────────────────────────────────────────────────────────────
+  🔍 7VHC: Checking ligands...
+  ✅ 7VHC: Found ligands: NH2, 1PS
+  ✅ 7VHC: Downloaded successfully
+  🔍 7VHD: Checking ligands...
+  ✅ 7VHD: Found ligands: NH2, 1PS
+  ✅ 7VHD: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 RNF216 (RING)
+────────────────────────────────────────────────────────────
+  🔍 6HSA: Checking ligands...
+  ✅ 6HSA: Found ligands: ETE, SER, FLC
+  ✅ 6HSA: Downloaded successfully
+  🔍 6HS9: Checking ligands...
+  ✅ 6HS9: Found ligands: 3DS
+  ✅ 6HS9: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 TRIM5 (RING)
+────────────────────────────────────────────────────────────
+  🔍 4TN3: Checking ligands...
+  ❌ 4TN3: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 TRIM25 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5FER: Checking ligands...
+  ❌ 5FER: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 TRIM32 (RING)
+────────────────────────────────────────────────────────────
+  🔍 2CT8: Checking ligands...
+  ✅ 2CT8: Found ligands: MSP
+  ✅ 2CT8: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 TRIM33 (RING)
+────────────────────────────────────────────────────────────
+  🔍 3U5Q: Checking ligands...
+  ❌ 3U5Q: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 ZNRF3 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5AIV: Checking ligands...
+  ✅ 5AIV: Found ligands: M1W, GSH
+  ✅ 5AIV: Downloaded successfully
+  🔍 5AIW: Checking ligands...
+  ❌ 5AIW: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 HACE1 (RING)
+────────────────────────────────────────────────────────────
+  🔍 5IZY: Checking ligands...
+  ❌ 5IZY: No valid ligands found
+  🔍 5IZZ: Checking ligands...
+  ✅ 5IZZ: Found ligands: 3HP
+  ✅ 5IZZ: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXW7 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 2OVQ: Checking ligands...
+  ✅ 2OVQ: Found ligands: TPO, SEP
+  ✅ 2OVQ: Downloaded successfully
+  🔍 2OVR: Checking ligands...
+  ✅ 2OVR: Found ligands: TPO
+  ✅ 2OVR: Downloaded successfully
+  🔍 2OVP: Checking ligands...
+  ❌ 2OVP: No valid ligands found
+  🔍 5JXW: Checking ligands...
+  ✅ 5JXW: Found ligands: 6OS, NAD, P6G
+  ✅ 5JXW: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXW11 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 1P22: Checking ligands...
+  ✅ 1P22: Found ligands: SEP
+  ✅ 1P22: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXO3 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 6SZF: Checking ligands...
+  ❌ 6SZF: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 FBXO6 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 4JNL: Checking ligands...
+  ✅ 4JNL: Found ligands: PZH
+  ✅ 4JNL: Downloaded successfully
+  🔍 4JNK: Checking ligands...
+  ✅ 4JNK: Found ligands: NAI, EPE, ZHK, LAC
+  ✅ 4JNK: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXO31 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 4UWW: Checking ligands...
+  ❌ 4UWW: No valid ligands found
+  🔍 4UWX: Checking ligands...
+  ✅ 4UWX: Found ligands: NI, 144
+  ✅ 4UWX: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXL2 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 6TTU: Checking ligands...
+  ✅ 6TTU: Found ligands: SEP
+  ✅ 6TTU: Downloaded successfully
+  🔍 6TTV: Checking ligands...
+  ✅ 6TTV: Found ligands: NWW
+  ✅ 6TTV: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXL3 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 4I5X: Checking ligands...
+  ✅ 4I5X: Found ligands: FLF, NAP
+  ✅ 4I5X: Downloaded successfully
+  🔍 4I6J: Checking ligands...
+  ❌ 4I6J: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 FBXL5 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 5KKB: Checking ligands...
+  ✅ 5KKB: Found ligands: LA, 1PS, BU1
+  ✅ 5KKB: Downloaded successfully
+  🔍 5KKC: Checking ligands...
+  ✅ 5KKC: Found ligands: 6V0
+  ✅ 5KKC: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 FBXL19 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 6HC5: Checking ligands...
+  ✅ 6HC5: Found ligands: CBV, FXT
+  ✅ 6HC5: Downloaded successfully
+  🔍 6HC6: Checking ligands...
+  ❌ 6HC6: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 FBXL21 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 5JQC: Checking ligands...
+  ✅ 5JQC: Found ligands: MSE
+  ✅ 5JQC: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 SKP2 (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 1FQV: Checking ligands...
+  ❌ 1FQV: No valid ligands found
+  🔍 2ASS: Checking ligands...
+  ✅ 2ASS: Found ligands: BEN
+  ✅ 2ASS: Downloaded successfully
+  🔍 4A0K: Checking ligands...
+  ✅ 4A0K: Found ligands: 3DR
+  ✅ 4A0K: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 BTRC (CRL_F-box)
+────────────────────────────────────────────────────────────
+  🔍 1P22: Checking ligands...
+  ✅ 1P22: Found ligands: SEP
+  ✅ 1P22: Downloaded successfully
+  🔍 5I4W: Checking ligands...
+  ❌ 5I4W: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 DCAF1 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  ⚠️  5JK7: Already in dataset
+  ⚠️  5JKV: Already in dataset
+
+────────────────────────────────────────────────────────────
+📌 DCAF8 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 5V3C: Checking ligands...
+  ✅ 5V3C: Found ligands: AMH
+  ✅ 5V3C: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 DCAF11 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 6BOY: Checking ligands...
+  ✅ 6BOY: Found ligands: RN6
+  ✅ 6BOY: Downloaded successfully
+  🔍 6BOZ: Checking ligands...
+  ✅ 6BOZ: Found ligands: E1J
+  ✅ 6BOZ: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 DCAF12 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 6R6W: Checking ligands...
+  ✅ 6R6W: Found ligands: FUC, JUB
+  ✅ 6R6W: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 DCAF13 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 6RQK: Checking ligands...
+  ✅ 6RQK: Found ligands: MVL
+  ✅ 6RQK: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 DCAF16 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  ⚠️  6TNL: Already in dataset
+
+────────────────────────────────────────────────────────────
+📌 DDB2 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 4A09: Checking ligands...
+  ✅ 4A09: Found ligands: TTD
+  ✅ 4A09: Downloaded successfully
+  🔍 4A0A: Checking ligands...
+  ✅ 4A0A: Found ligands: TTD
+  ✅ 4A0A: Downloaded successfully
+  🔍 4A0B: Checking ligands...
+  ✅ 4A0B: Found ligands: TTD
+  ✅ 4A0B: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 DDA1 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 4CC9: Checking ligands...
+  ✅ 4CC9: Found ligands: PG4
+  ✅ 4CC9: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 WDTC1 (CRL_DCAF)
+────────────────────────────────────────────────────────────
+  🔍 6SWC: Checking ligands...
+  ✅ 6SWC: Found ligands: 4AC, LHH, A2M, B8H, 5MC, OMC, 5HM, UR3, 6MZ, MA6, 4SU, H2U, 5MU, PSU, MET, GNP
+  ✅ 6SWC: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 SOCS1 (CRL_SOCS)
+────────────────────────────────────────────────────────────
+  🔍 2C9W: Checking ligands...
+  ✅ 2C9W: Found ligands: NI
+  ✅ 2C9W: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 SOCS3 (CRL_SOCS)
+────────────────────────────────────────────────────────────
+  🔍 2BBU: Checking ligands...
+  ✅ 2BBU: Found ligands: PTR
+  ✅ 2BBU: Downloaded successfully
+  🔍 6D5F: Checking ligands...
+  ❌ 6D5F: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 SOCS4 (CRL_SOCS)
+────────────────────────────────────────────────────────────
+  🔍 2C9V: Checking ligands...
+  ✅ 2C9V: Found ligands: CU
+  ✅ 2C9V: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 SOCS6 (CRL_SOCS)
+────────────────────────────────────────────────────────────
+  🔍 6N9F: Checking ligands...
+  ❌ 6N9F: No valid ligands found
+
+────────────────────────────────────────────────────────────
+📌 ASB9 (CRL_SOCS)
+────────────────────────────────────────────────────────────
+  🔍 6GKN: Checking ligands...
+  ❌ 6GKN: No valid ligands found
+  🔍 6GKO: Checking ligands...
+  ✅ 6GKO: Found ligands: UMP, FGT
+  ✅ 6GKO: Downloaded successfully
+
+────────────────────────────────────────────────────────────
+📌 ASB11 (CRL_SOCS)
+────────────────────────────────────────────────────────────
+  🔍 4JGH: Checking ligands...
+  ❌ 4JGH: No valid ligands found
+
+================================================================================
+✅ PROCESSING COMPLETE
+================================================================================
+  Total PDBs checked: 105
+  Novel structures: 59
+
+Step 3: Saving manifest...
+✅ Manifest: /home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES/clean_ligase_manifest.csv
+
+Step 4: Generating report...
+✅ Report: /home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES/clean_ligase_report.md
+
+================================================================================
+✅ FINAL DATASET: 59 validated structures
+================================================================================

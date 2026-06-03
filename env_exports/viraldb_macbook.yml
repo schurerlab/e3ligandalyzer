@@ -1,0 +1,5 @@
+name: viraldb
+channels:
+  - defaults
+dependencies:
+  - python=3.10

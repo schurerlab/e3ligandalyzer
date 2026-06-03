@@ -1,0 +1,1 @@
+<script src="components/loading-indicator.js"></script>

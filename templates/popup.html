@@ -1,0 +1,83 @@
+
+<!-- ================================
+     PROTAC ATTACHMENT POPUP
+=================================== -->
+<div id="protac-popup"
+     class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+
+  <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-[650px] shadow-2xl relative">
+
+    <h2 class="text-xl font-semibold text-amber-300 mb-4">
+      Select Attachment Site for PROTAC
+    </h2>
+
+    <!-- 3D Viewer -->
+    <div id="protac-viewer"
+         class="rounded-lg border border-slate-700 relative"
+         style="width:100%; height:380px;"></div>
+
+    <!-- Atom Index Input -->
+    <div class="mt-4">
+      <label class="block text-gray-300 font-medium mb-1">
+        Enter Atom Index for Attachment Site:
+      </label>
+
+      <input id="atom-index-input"
+             type="number"
+             min="0"
+             class="w-full bg-slate-800 border border-slate-600 text-gray-200 p-2 rounded mb-2 hidden"
+             placeholder="e.g. 12">
+
+      <select id="atom-index-dropdown"
+              class="w-full bg-slate-800 border border-slate-600 text-gray-200 p-2 rounded hidden">
+      </select>
+
+      <p id="atom-index-hint"
+         class="text-sm text-gray-400 mt-1">
+        Atom numbers are displayed as labels in the 3D viewer.
+      </p>
+    </div>
+
+        <!-- Skip Convert Checkbox -->
+      <div class="mt-4 flex items-center gap-2">
+          <input id="skip-modify-checkbox"
+                type="checkbox"
+                class="w-4 h-4 accent-amber-400">
+
+          <label for="skip-modify-checkbox"
+                class="text-gray-300 text-sm">
+              Do NOT modify ligand (send original ligand)
+          </label>
+      </div>
+
+
+    <!-- Buttons -->
+    <div class="flex justify-between mt-6">
+      <div class="flex gap-2">
+        <!-- download buttons restored -->
+        <button id="download-pdb-btn"
+                class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded">
+          Download PDB
+        </button>
+
+        <button id="download-sdf-btn"
+                class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded">
+          Download SDF
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="protac-cancel"
+                class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded">
+          Cancel
+        </button>
+
+        <button id="protac-confirm"
+                class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-black rounded">
+          Send to PROTAC Builder
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

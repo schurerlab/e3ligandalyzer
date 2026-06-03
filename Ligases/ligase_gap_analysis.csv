@@ -1,0 +1,15 @@
+Ligase,Gap_Score,Missing_PDB,Missing_SDF,Missing_Crystallography,Missing_Sequence,Low_Structure_Count,Low_Ligand_Count,Priority_Gaps_String
+LIVIN,8,False,False,True,True,True,True,FEW_PDB_STRUCTURES; FEW_LIGANDS; NO_CRYSTALLOGRAPHY; NO_SEQUENCE_DATA
+HUWE1,8,False,False,True,True,True,True,FEW_PDB_STRUCTURES; FEW_LIGANDS; NO_CRYSTALLOGRAPHY; NO_SEQUENCE_DATA
+CHIP,4,False,False,False,False,True,True,FEW_PDB_STRUCTURES; FEW_LIGANDS
+DCAF15,4,False,False,False,False,True,True,FEW_PDB_STRUCTURES; FEW_LIGANDS
+SOCS2,4,False,False,False,False,True,True,FEW_PDB_STRUCTURES; FEW_LIGANDS
+DCAF16,4,False,False,False,False,True,True,FEW_PDB_STRUCTURES; FEW_LIGANDS
+DCAF1,2,False,False,False,False,False,True,FEW_LIGANDS
+cIAP1,2,False,False,False,False,False,True,FEW_LIGANDS
+CRBN,0,False,False,False,False,False,False,
+KEAP1,0,False,False,False,False,False,False,
+MDM2,0,False,False,False,False,False,False,
+TRIM21,0,False,False,False,False,False,False,
+VHL,0,False,False,False,False,False,False,
+XIAP,0,False,False,False,False,False,False,

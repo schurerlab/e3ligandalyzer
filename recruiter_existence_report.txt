@@ -1,0 +1,2456 @@
+
+=== L00491 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 18 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00492 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 18 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00493 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 41 rows
+
+=== L00494 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 19 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 29 rows
+
+=== L00495 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 18 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00496 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 68 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 102 rows
+
+=== L00497 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00498 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00499 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00500 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00501 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00502 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00503 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 10 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 12 rows
+
+=== L00504 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 18 rows
+
+=== L00505 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 18 rows
+
+=== L00507 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00508 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00509 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00510 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00511 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00512 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00513 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00515 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00516 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00517 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00518 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 17 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00519 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00520 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00521 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00522 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00523 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 10 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00524 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 10 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00525 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00526 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00527 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00528 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00529 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00530 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00531 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00532 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00533 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00534 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 28 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 29 rows
+
+=== L00535 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 62 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 64 rows
+
+=== L00536 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 62 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 64 rows
+
+=== L00537 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 51 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 54 rows
+
+=== L00538 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00539 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 26 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 29 rows
+
+=== L00540 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 25 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00541 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 17 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00542 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 17 rows
+
+=== L00543 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 42 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 48 rows
+
+=== L00544 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 26 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 30 rows
+
+=== L00545 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 26 rows
+
+=== L00546 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 25 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 27 rows
+
+=== L00547 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 35 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00548 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00549 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00550 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00551 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 35 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00553 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00554 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00555 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00556 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 41 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 44 rows
+
+=== L00557 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 26 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 29 rows
+
+=== L00558 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00559 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 61 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 65 rows
+
+=== L00560 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 75 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 79 rows
+
+=== L00561 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 67 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 71 rows
+
+=== L00562 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00563 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00564 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00565 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00566 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00567 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00568 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00569 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00570 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00571 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00572 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00573 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00574 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 22 rows
+
+=== L00575 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00576 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00577 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00578 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 10 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00579 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00580 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00581 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 27 rows
+
+=== L00582 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00583 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00584 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 21 rows
+
+=== L00585 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00586 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00587 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00588 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00589 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00590 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00591 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00592 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00593 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00594 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00595 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00596 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00597 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00598 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00599 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00600 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00601 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 26 rows
+
+=== L00602 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 25 rows
+
+=== L00603 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 31 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00604 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00605 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 48 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 51 rows
+
+=== L00606 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 29 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 32 rows
+
+=== L00607 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 28 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00608 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 42 rows
+
+=== L00611 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 17 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 17 rows
+
+=== L00613 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00614 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00615 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00616 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00617 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00618 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00619 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00620 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00621 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00622 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00623 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 29 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 32 rows
+
+=== L00624 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00625 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 39 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 44 rows
+
+=== L00626 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 45 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 47 rows
+
+=== L00627 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 66 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 70 rows
+
+=== L00631 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 79 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 81 rows
+
+=== L00632 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00633 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00634 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00635 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00636 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00637 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00638 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00639 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00640 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00641 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00642 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00643 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00644 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00645 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00646 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00647 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00648 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00649 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00650 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00651 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00652 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00653 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00654 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00655 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00656 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00657 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00658 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 42 rows
+
+=== L00659 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 42 rows
+
+=== L00660 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 42 rows
+
+=== L00661 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 42 rows
+
+=== L00662 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 42 rows
+
+=== L00663 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00664 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00665 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00666 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 14 rows
+
+=== L00667 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 16 rows
+
+=== L00668 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 16 rows
+
+=== L00669 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 16 rows
+
+=== L00670 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 21 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00671 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 21 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00672 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 21 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00673 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00674 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00675 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00678 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00679 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00680 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00681 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00682 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 30 rows
+
+=== L00683 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 30 rows
+
+=== L00684 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 30 rows
+
+=== L00685 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 12 rows
+
+=== L00686 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 12 rows
+
+=== L00687 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00688 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00689 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00690 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00691 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 41 rows
+
+=== L00692 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 35 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 41 rows
+
+=== L00693 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 35 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 41 rows
+
+=== L00694 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00695 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00696 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 10 rows
+
+=== L00697 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✘ Not in Ligase_SMILE_Codes_Atoms
+
+=== L00698 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 6 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 8 rows
+
+=== L00699 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00700 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 28 rows
+
+=== L00701 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 43 rows
+
+=== L00702 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 43 rows
+
+=== L00703 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 43 rows
+
+=== L00704 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 43 rows
+
+=== L00705 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 44 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 47 rows
+
+=== L00706 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00707 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00708 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00709 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00710 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00711 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 11 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 12 rows
+
+=== L00712 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 9 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 22 rows
+
+=== L00713 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00714 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00715 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00716 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 26 rows
+
+=== L00717 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00718 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 18 rows
+
+=== L00719 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 38 rows
+
+=== L00720 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00721 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00722 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00723 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00724 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 28 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00725 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00726 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 21 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 25 rows
+
+=== L00727 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00728 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00729 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 38 rows
+
+=== L00730 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00731 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00732 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00733 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00734 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00735 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00736 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 16 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 16 rows
+
+=== L00737 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 5 rows
+
+=== L00738 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 5 rows
+
+=== L00739 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00740 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00741 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00742 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00743 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00744 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00745 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 35 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 38 rows
+
+=== L00746 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 41 rows
+
+=== L00747 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 37 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00748 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00749 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 35 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 38 rows
+
+=== L00750 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00751 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 36 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00752 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 43 rows
+
+=== L00753 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 86 rows
+
+=== L00754 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 86 rows
+
+=== L00755 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 62 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00756 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 62 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00757 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✘ Not in Ligase_Ligands_Smiles_3DMapped
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 1 rows
+
+=== L00758 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 29 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 33 rows
+
+=== L00759 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 1 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 5 rows
+
+=== L00760 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 12 rows
+
+=== L00761 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00762 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 14 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00763 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00764 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 21 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 22 rows
+
+=== L00765 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00766 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 18 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 19 rows
+
+=== L00767 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 19 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00768 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 24 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 25 rows
+
+=== L00769 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00770 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 68 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00771 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 68 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00772 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00773 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00774 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 31 rows
+
+=== L00775 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00776 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 72 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00777 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 58 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 32 rows
+
+=== L00778 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 37 rows
+
+=== L00779 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00780 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00781 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00782 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 17 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 18 rows
+
+=== L00783 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 42 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 45 rows
+
+=== L00784 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 42 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 45 rows
+
+=== L00785 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00786 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 30 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 34 rows
+
+=== L00787 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00788 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00789 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 29 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 32 rows
+
+=== L00790 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 27 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 27 rows
+
+=== L00791 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 40 rows
+
+=== L00792 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 38 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 39 rows
+
+=== L00793 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 7 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 24 rows
+
+=== L00794 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 20 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 20 rows
+
+=== L00795 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 40 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 41 rows
+
+=== L00796 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00797 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 32 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00798 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 21 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 22 rows
+
+=== L00799 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 15 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00800 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 13 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows
+
+=== L00801 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 12 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 13 rows
+
+=== L00802 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00803 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 23 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 23 rows
+
+=== L00804 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 34 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 35 rows
+
+=== L00805 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 43 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 44 rows
+
+=== L00806 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00807 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 33 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 36 rows
+
+=== L00808 ===
+  ✔ Found in Recruiter_Master_Map: 1 rows
+  ✘ Not in Ligase_Recruiters_Scaffold
+  ✔ Found in Ligase_Chemical_Descriptors: 1 rows
+  ✔ Found in Ligase_Ligands_Smiles_3DMapped: 2 rows
+  ✔ Found in Ligase_SMILE_Codes: 1 rows
+  ✔ Found in Ligase_SMILE_Codes_Atoms: 15 rows

@@ -1,0 +1,694 @@
+{% extends 'base.html' %}
+{% block title %}Scaffold Dashboard | E3 Ligase Ligandalyzer{% endblock %}
+
+{% block head_scripts %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<!-- Cytoscape core -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js" defer></script>
+
+<!-- Bilkent layout (UMD bundle with global export) -->
+<script src="https://cdn.jsdelivr.net/npm/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.umd.js"></script>
+
+
+
+
+{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+  <div>
+    <h1 class="text-3xl font-bold mb-2 text-white">Scaffold Dashboard</h1>
+    <p class="text-slate-300">Visualize scaffold diversity metrics and network connectivity</p>
+  </div>
+  <button id="toggle-labels" class="px-4 py-2 bg-sky-700 hover:bg-sky-600 text-white rounded-lg text-sm">
+    Show Labels
+  </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+
+  <!-- Left side -->
+  <div class="lg:col-span-2 space-y-6">
+
+    <!-- 3D Scaffold Diversity -->
+    <div class="bg-slate-900 rounded-lg p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-white">3D Scaffold Diversity</h2>
+        <select id="ligase-selector" 
+                class="bg-slate-800 border border-slate-700 rounded px-3 py-1 text-sm text-white
+                       focus:outline-none focus:ring-1 focus:ring-sky-400">
+          <option value="all">All Ligases</option>
+        </select>
+      </div>
+      <div id="scaffold-3d-plot" class="h-96"></div>
+    </div>
+
+    <!-- Scaffold Frequency Chart -->
+    <div class="bg-slate-900 rounded-lg p-6">
+      <h2 class="text-xl font-semibold mb-4 text-white">Scaffold Frequency by Ligase</h2>
+      <div id="scaffold-frequency-chart" class="h-64"></div>
+    </div>
+  </div>
+
+  <!-- Top Scaffolds -->
+  <div class="bg-slate-900 rounded-lg p-6">
+    <h2 class="text-xl font-semibold mb-4">Top Scaffolds by Ligase</h2>
+    <div id="top-scaffolds"
+        class="space-y-4 max-h-96 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+      <!-- dynamically generated cards -->
+    </div>
+
+
+    <!-- Scaffold Network -->
+    <div class="bg-slate-900 rounded-lg p-6 relative group">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Scaffold Network</h2>
+        <button id="open-network-btn"
+                class="text-sky-400 hover:text-sky-300 text-sm underline opacity-80 group-hover:opacity-100 transition">
+          Open Full View
+        </button>
+      </div>
+      <div id="scaffold-network" class="h-64 bg-slate-800 rounded"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+
+
+
+
+
+
+
+
+
+<script>
+/* ==========================================================
+   Color + Shape Encoding
+========================================================== */
+const ligaseColors = {
+  MDM2:   '#ffffd6',
+  KEAP1:  '#f43f5e',
+  TRIM21: '#509c1e',
+  CRBN:   '#38bdf8',
+  cIAP1:  '#f76707',
+  XIAP:   '#8db6f0',
+  VHL:    '#facc15',
+  PARKIN: '#a3e635',
+  HUWE1:  '#60a5fa',
+  cIAP2:  '#f7f707',
+  DCAF1:  '#34d399',
+  CHIP:   '#fb923c',
+  DCAF15: '#a855f7',
+  SOCS2:  '#f0abfc',
+  RNF4:   '#fcd34d',
+  DCAF16: '#818cf8',
+  RNF114: '#fde047',
+  TRIP12: '#5eead4',
+  RNF168: '#22d3ee',
+  Others: '#94a3b8'
+};
+
+const scaffoldShapes = ['circle', 'square', 'diamond', 'cross', 'x', 'triangle-up'];
+
+/* ==========================================================
+   Fetch Helpers
+========================================================== */
+async function fetchData(url) {
+  const res = await fetch(url);
+  return await res.json();
+}
+
+async function getScaffoldData(ligase = 'all') {
+  const url = ligase === 'all'
+    ? '/api/scaffold-data'
+    : `/api/scaffold-data?ligase=${ligase}`;
+  return await fetchData(url);
+}
+
+function normalizeScaffoldRow(d) {
+  return {
+    ...d,
+    ligases: Array.isArray(d.ligases)
+      ? d.ligases
+      : d.ligase
+        ? [d.ligase]   // convert single ligase → array
+        : []           // fallback
+  };
+}
+
+
+
+/* ==========================================================
+   Initialization
+========================================================== */
+let showLabels = false;
+let scaffoldDataGlobal = [];
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    /** Load ligases into dropdown */
+    const ligases = await fetchData("/api/ligases");
+    const selector = document.getElementById("ligase-selector");
+
+    ligases.forEach(l => {
+      const opt = document.createElement("option");
+      opt.value = l;
+      opt.textContent = l;
+      selector.appendChild(opt);
+    });
+
+    /** Load full scaffold dataset */
+    scaffoldDataGlobal = (await getScaffoldData("all")).map(normalizeScaffoldRow);
+      renderAll(scaffoldDataGlobal);
+
+    console.log("SCAFFOLD DATA:", scaffoldDataGlobal);
+
+
+    /** Filtering */
+    selector.addEventListener("change", async e => {
+      const ligase = e.target.value;
+      const filtered = ligase === "all"
+        ? scaffoldDataGlobal
+        : scaffoldDataGlobal.filter(d => d.ligases.includes(ligase));
+
+
+
+
+      renderAll(filtered);
+    });
+
+    /** Label toggle */
+    document.getElementById("toggle-labels").addEventListener("click", () => {
+      showLabels = !showLabels;
+      renderAll(scaffoldDataGlobal);
+      document.getElementById("toggle-labels").textContent =
+        showLabels ? "Hide Labels" : "Show Labels";
+    });
+
+  } catch (err) {
+    console.error("❌ Error initializing dashboard:", err);
+  }
+});
+
+/* ==========================================================
+   Master Renderer (calls all plots + cards)
+========================================================== */
+function renderAll(data) {
+  render3DScaffoldPlot(data);
+  renderScaffoldFrequencyChart(data);
+  renderTopScaffolds(data);
+  renderScaffoldNetwork(data);
+}
+
+/* ==========================================================
+   3D Scatter Plot
+========================================================== */
+/* ==========================================================
+   3D Scatter Plot — WITH TOOLTIPS + MODAL CLICK
+========================================================== */
+function render3DScaffoldPlot(data) {
+
+  const shapes = ['circle', 'square', 'diamond', 'cross', 'x', 'triangle-up'];
+
+  const trace = {
+    type: 'scatter3d',
+    mode: 'markers',
+    x: data.map(d => d.recruiterDensity || 0),
+    y: data.map(d => d.shannonIndex || 0),
+    z: data.map(d => d.recruiterCount || 0),
+    marker: {
+      size: 8,
+      opacity: 0.85,
+      color: data.map(d => ligaseColors[d.ligase] || '#87CEEB'),
+      symbol: data.map(d => {
+        const label = d.scaffoldClass || 'Unknown';
+        const idx = Math.abs(label.hashCode()) % shapes.length;
+        return shapes[idx];
+      })
+    },
+    text: data.map(
+      d => `${d.ligases?.join(", ") || d.ligase} — ${d.scaffoldClass} (${d.scaffoldId})`
+    ),
+    hovertemplate:
+      "<b>%{text}</b><br>" +
+      "Density: %{x:.2f}<br>" +
+      "Shannon: %{y:.2f}<br>" +
+      "Recruiters: %{z}<extra></extra>",
+  };
+
+  const layout = {
+    scene: {
+      xaxis: { title: 'Recruiter Density', color: '#e5e7eb' },
+      yaxis: { title: 'Shannon Index', color: '#e5e7eb' },
+      zaxis: { title: 'Recruiter Count', color: '#e5e7eb' },
+      bgcolor: 'rgba(0,0,0,0)'
+    },
+    margin: { l: 0, r: 0, b: 0, t: 0 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)'
+  };
+
+  // Render plot
+  Plotly.newPlot('scaffold-3d-plot', [trace], layout);
+
+  /* ----------------------------------------------------------
+     INTERACTIVITY: hover + click
+  ---------------------------------------------------------- */
+  const plotDiv = document.getElementById("scaffold-3d-plot");
+
+  // Index lookup list
+  const byIndex = data;
+
+  // Hover → molecule tooltip
+  plotDiv.on('plotly_hover', function(ev) {
+    const pt = ev.points[0];
+    const idx = pt.pointIndex;
+    const d = byIndex[idx];
+    if (!d) return;
+
+    showMolTooltip(d.scaffoldSmiles, {
+      pageX: ev.event.clientX,
+      pageY: ev.event.clientY
+    });
+  });
+
+  // Unhover → hide tooltip
+  plotDiv.on('plotly_unhover', function() {
+    hideMolTooltip();
+  });
+
+  // Click → open scaffold modal
+  plotDiv.on('plotly_click', function(ev) {
+    const pt = ev.points[0];
+    const idx = pt.pointIndex;
+    const d = byIndex[idx];
+    if (!d) return;
+
+    const ligList = (d.ligases || [d.ligase]).join(", ");
+
+    showModal(
+      d.scaffoldSmiles,
+      ligList,
+      d.scaffoldClass,
+      d.scaffoldId
+    );
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================================
+   Frequency Chart
+========================================================== */
+function renderScaffoldFrequencyChart(data) {
+  // Aggregate recruiter count by ligase
+  const counts = {};
+
+  data.forEach(d => {
+    const lig = d.ligase || "Unknown";
+    counts[lig] = (counts[lig] || 0) + (d.recruiterCount || 0);
+  });
+
+  // Sort ligases by total recruiter count
+  const sorted = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1]);
+
+  Plotly.newPlot('scaffold-frequency-chart', [{
+    type: 'bar',
+    x: sorted.map(x => x[0]),
+    y: sorted.map(x => x[1]),
+    marker: {
+      color: sorted.map(x => ligaseColors[x[0]] || '#38bdf8')
+    }
+  }], {
+    margin: { l: 40, r: 10, b: 40, t: 10 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    xaxis: { color: '#cbd5f5', title: "Ligase" },
+    yaxis: { color: '#cbd5f5', title: 'Total Recruiter Count' }
+  });
+}
+
+
+
+
+/* ==========================================================
+   Top Scaffolds Sidebar Cards — MULTI-LIGASE ENABLED
+========================================================== */
+function renderTopScaffolds(data) {
+  data = data.map(normalizeScaffoldRow);  // ensure ligases array exists
+
+  const container = document.getElementById('top-scaffolds');
+
+  // Sort clusters globally by recruiterCount
+  const sorted = [...data].sort((a, b) => b.recruiterCount - a.recruiterCount);
+
+  container.innerHTML = sorted.map(d => {
+    const ligaseBadges = (d.ligases || [])
+      .map(l => `
+        <span class="px-2 py-0.5 text-xs rounded-full text-black"
+              style="background:${ligaseColors[l] || '#94a3b8'}">
+          ${l}
+        </span>
+      `)
+      .join(" ");
+
+    return `
+      <div class="scaffold-card bg-slate-800 p-4 rounded-lg cursor-pointer"
+           data-id="${d.scaffoldId}"
+           data-smiles="${d.scaffoldSmiles || ''}"
+           data-class="${d.scaffoldClass}"
+           data-ligases="${d.ligases.join(',')}">
+
+        <h3 class="text-lg font-semibold text-white mb-1">${d.scaffoldClass}</h3>
+
+        <p class="text-slate-400 text-sm mb-1">${d.scaffoldId}</p>
+
+        <div class="flex flex-wrap gap-1 mb-2">
+          ${ligaseBadges}
+        </div>
+
+        <span class="inline-block px-3 py-1 bg-sky-500 text-black rounded-full text-xs font-bold">
+          ${d.recruiterCount} recruiters
+        </span>
+      </div>
+    `;
+  }).join("");
+
+  // Add card listeners
+  container.querySelectorAll('.scaffold-card').forEach(card => {
+    const smiles = card.dataset.smiles;
+    const scafID = card.dataset.id;
+    const scafClass = card.dataset.class;
+
+    if (smiles) {
+      card.addEventListener('mouseenter', e => showMolTooltip(smiles, e));
+      card.addEventListener('mouseleave', hideMolTooltip);
+    }
+
+    card.addEventListener('click', () => {
+      showModal(
+        smiles,
+        card.dataset.ligases,
+        scafClass,
+        scafID
+      );
+    });
+  });
+}
+
+
+/* ==========================================================
+   Scaffold Network Graph
+========================================================== */
+/* ==========================================================
+   NEW Scaffold Network (Hash-clustered)
+   Each node = unique Scaffold_Hash cluster
+   Edges = ligase-shared scaffold groups
+========================================================== */
+async function renderScaffoldNetwork(data) {
+  // STEP 1: Load scaffold clusters from backend
+  const clusters = await fetchData("/api/scaffold-clusters");
+
+  // STEP 2: Build node list
+  const nodes = clusters.map(c => ({
+    data: {
+      id: c.scaffoldHash,
+      label: c.scaffoldIds[0],            // First scaffold ID or use hash
+      size: Math.sqrt(c.recruiterCount) * 10,
+      smiles: c.scaffoldSmiles,
+      ligases: c.ligases,
+      ligaseColor:
+        c.ligases.length === 1
+          ? ligaseColors[c.ligases[0]] || "#87CEEB"
+          : "#999"  // multi-ligase scaffolds get grey
+    }
+  }));
+
+  // STEP 3: Build edges by ligase groups
+  const edges = [];
+
+  // derive the list of all ligases present in clusters
+  const allLigases = [...new Set(clusters.flatMap(c => c.ligases))];
+
+  allLigases.forEach(ligase => {
+    const group = clusters
+      .filter(c => c.ligases.includes(ligase))
+      .sort((a, b) => b.recruiterCount - a.recruiterCount);
+
+    for (let i = 0; i < group.length - 1; i++) {
+      edges.push({
+        data: {
+          source: group[i].scaffoldHash,
+          target: group[i + 1].scaffoldHash,
+          ligase: ligase
+        }
+      });
+    }
+  });
+
+  // STEP 4: Initialize Cytoscape
+  const cy = cytoscape({
+    container: document.getElementById("scaffold-network"),
+
+    elements: {
+      nodes: nodes,
+      edges: edges
+    },
+
+    style: [
+      {
+        selector: "node",
+        style: {
+          "background-color": ele => ele.data("ligaseColor"),
+          "width": ele => ele.data("size"),
+          "height": ele => ele.data("size"),
+          "label": ele => showLabels ? ele.data("label") : "",
+          "font-size": "8px",
+          "color": "#e5e7eb",
+          "text-margin-y": -2
+        }
+      },
+      {
+        selector: "edge",
+        style: {
+          "width": 1,
+          "line-color": "#555",
+          "curve-style": "bezier",
+          "opacity": 0.35
+        }
+      }
+    ],
+
+    layout: {
+      name: "cose",            // stable force-directed layout
+      animate: true,
+      padding: 20,
+      nodeDimensionsIncludeLabels: true,
+      idealEdgeLength: 80,
+      gravity: 1.2,
+      spacingFactor: 1.2
+    }
+  });
+
+  /* Hover tooltip for scaffold */
+  cy.on("mouseover", "node", e => {
+    const node = e.target;
+    const smiles = node.data("smiles");
+    const label = node.data("label");
+
+    showMolTooltip(smiles, {
+      pageX: e.originalEvent.pageX,
+      pageY: e.originalEvent.pageY
+    });
+  });
+
+  cy.on("mouseout", "node", () => hideMolTooltip());
+
+  /* Click to open modal */
+  cy.on("tap", "node", async e => {
+    const node = e.target;
+    const smiles = node.data("smiles");
+    const ligases = node.data("ligases");
+    const nodeLabel = node.data("label");
+
+    showModal(
+      smiles,
+      ligases.join(", "),
+      "Clustered Scaffold",
+      nodeLabel
+    );
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==========================================================
+   Tooltip + Modal
+========================================================== */
+let tooltipDiv, modalDiv;
+let hoverTimeout = null;
+
+String.prototype.hashCode = function () {
+  let hash = 0;
+  for (let i = 0; i < this.length; i++) {
+    hash = ((hash << 5) - hash) + this.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+};
+
+function initTooltip() {
+  tooltipDiv = document.createElement("div");
+  Object.assign(tooltipDiv.style, {
+    position: "fixed",
+    pointerEvents: "none",
+    background: "rgba(15,23,42,0.95)",
+    padding: "6px",
+    border: "1px solid rgba(148,163,184,0.4)",
+    borderRadius: "8px",
+    color: "white",
+    zIndex: 9999,
+    display: "none",
+  });
+  document.body.appendChild(tooltipDiv);
+}
+
+async function showMolTooltip(smiles, event) {
+  if (!tooltipDiv) initTooltip();
+  if (!tooltipDiv) return;
+
+  tooltipDiv.style.display = "block";
+  tooltipDiv.style.left = event.pageX + 15 + "px";
+  tooltipDiv.style.top = event.pageY + 15 + "px";
+  tooltipDiv.innerHTML = "Loading...";
+
+  try {
+    const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
+    tooltipDiv.innerHTML = await res.text();
+  } catch {
+    tooltipDiv.innerHTML = "Failed to render";
+  }
+}
+
+function hideMolTooltip() {
+  if (!tooltipDiv) return;   // <— prevents the crash
+  tooltipDiv.style.display = "none";
+}
+
+
+document.addEventListener("mousemove", (event) => {
+  if (tooltipDiv && tooltipDiv.style.display === "block") {
+    tooltipDiv.style.left = event.pageX + 15 + "px";
+    tooltipDiv.style.top = event.pageY + 15 + "px";
+  }
+});
+
+/* Modal */
+function initModal() {
+  modalDiv = document.createElement("div");
+  modalDiv.className =
+    "fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[10000]";
+  modalDiv.innerHTML = `
+    <div class="bg-slate-900 p-6 rounded-lg border border-slate-700 w-[420px] relative">
+      <button id="modal-close" class="absolute top-3 right-3 text-white text-xl">×</button>
+
+      <div id="modal-content"></div>
+    </div>
+  `;
+  document.body.appendChild(modalDiv);
+
+  modalDiv.addEventListener("click", (e) => {
+    if (e.target === modalDiv) hideModal();
+  });
+
+  modalDiv.querySelector("#modal-close").addEventListener("click", hideModal);
+}
+
+async function showModal(smiles, ligase, scaffoldClass, scaffoldID) {
+  if (!modalDiv) initModal();
+  modalDiv.classList.remove("hidden");
+
+  const content = modalDiv.querySelector("#modal-content");
+  content.innerHTML = `
+    <h2 class="text-xl font-bold text-white mb-2">${scaffoldID}</h2>
+    <p class="text-slate-300 mb-2">Ligase: <b>${ligase}</b></p>
+
+    <a href="/scaffolds/${scaffoldID}"
+      target="_blank"
+      class="inline-block px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded mb-3">
+      Open Scaffold Page →
+    </a>
+
+    <div class="bg-slate-800 p-3 rounded mb-3" id="modal-svg">Loading...</div>
+    <p class="text-slate-500 text-xs">${smiles}</p>
+  `;
+
+  try {
+    const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
+    content.querySelector("#modal-svg").innerHTML = await res.text();
+  } catch {
+    content.querySelector("#modal-svg").innerHTML =
+      "<span class='text-red-400'>Failed to render</span>";
+  }
+}
+
+function hideModal() {
+  modalDiv.classList.add("hidden");
+}
+
+/* ==========================================================
+   Open Full Network
+========================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("open-network-btn");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      window.open("/scaffold-network-full", "_blank");
+    });
+  }
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}
+
+
+

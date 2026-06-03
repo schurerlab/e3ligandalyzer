@@ -1,0 +1,2154 @@
+{% extends "base.html" %}
+{% block title %}E3 Ligase Atlas × ELiAH Integration{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto py-10 px-6 text-slate-100">
+
+    <!-- 🧬 HERO -->
+  <div class="text-center mb-10">
+    <h1 class="text-5xl font-bold text-amber-400 mb-4 tracking-tight">
+      E3 Ligase Expression Atlas
+    </h1>
+   
+  </div>
+
+  <!-- 🌐 NAVIGATION TABS -->
+  <nav class="flex flex-wrap justify-center gap-3 mb-8 border-b border-slate-700 pb-3">
+    <button class="tab-btn active" data-target="overview">📊 Overview</button>
+    <button class="tab-btn" data-target="search">🔍 Gene/E3 Search</button>
+    <!-- <button class="tab-btn" data-target="affinity">⚗️ Binding Affinity</button> -->
+    <button class="tab-btn" data-target="expression">⚗️ Expression Filter</button>
+    <button class="tab-btn" data-target="tissue">🧠 Tissue Specificity</button>
+    <button class="tab-btn" data-target="download">⬇️ Downloads</button>
+    <button class="tab-btn" data-target="about">📘 About</button>
+  </nav>
+
+  <div id="tabContent" class="space-y-10">
+
+    <!-- 📊 OVERVIEW -->
+    <section id="overview" class="tab-panel">
+      <h2 class="text-2xl font-semibold text-amber-400 mb-4">Dataset Overview</h2>
+
+      <!-- STATS BLOCK -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 text-center">
+          <div class="text-sm text-gray-400 mb-1">Total Ligases</div>
+          <div id="statLigases" class="text-4xl font-semibold text-amber-300">—</div>
+        </div>
+
+        <!-- <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 text-center">
+          <div class="text-sm text-gray-400 mb-1">Total Genes (Selected)</div>
+          <div id="statGenes" class="text-4xl font-semibold text-amber-200">—</div>
+        </div> -->
+        <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 text-center">
+          <div class="text-sm text-gray-400 mb-1">Total Sample Count</div>
+          <div id="statSamples" class="text-4xl font-semibold text-amber-200">—</div>
+          <div id="statGenes" class="text-4xl font-semibold text-amber-200 hidden">—</div>
+        </div>
+
+
+        <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 text-center">
+          <div class="text-sm text-gray-400 mb-2">Tissue Sample Distribution</div>
+          <div id="tissueGrid" class="grid grid-cols-3 md:grid-cols-5 gap-4 justify-items-center"></div>
+        </div>
+      </div>
+      <!-- ✅ above grid now closed properly -->
+
+      <!-- GENE TABLE + EXPRESSION PLOT -->
+      <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6">
+        <div class="w-full md:w-auto mb-4">
+          <label class="block text-sm text-gray-400 mb-1">Filter Genes</label>
+          <input id="geneFilter" placeholder="Search genes (client-side)"
+                class="bg-slate-950 border border-slate-700 rounded-md px-3 py-2 w-full md:w-80 focus:outline-none focus:border-amber-400" />
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-slate-950/60 rounded-md border border-slate-800 p-4">
+            <h3 class="text-amber-300 font-medium mb-3">Genes</h3>
+            <div id="genesWrap" class="max-h-[420px] overflow-auto">
+              <table class="w-full text-sm">
+                <thead class="sticky top-0 bg-slate-950 border-b border-slate-800">
+                  <tr>
+                    <th class="text-left py-2 px-2">Gene</th>
+                  </tr>
+                </thead>
+                <tbody id="genesBody" class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 rounded-md border border-slate-800 p-4">
+            <h3 id="plotTitle" class="text-amber-300 font-medium mb-3">Expression by Sample</h3>
+            <div id="genePlot" class="h-[420px]"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <!-- 🔍 SEARCH -->
+  <section id="search" class="tab-panel hidden">
+    <h2 class="text-2xl font-semibold text-amber-400 mb-4">Gene / E3 Search</h2>
+    <p class="text-gray-400 mb-6">
+      Explore genes and ligases across all tissues in the ELiAH Atlas.
+    </p>
+
+    <!-- 🔍 Search with Autocomplete -->
+    <div class="relative mb-6 flex gap-3">
+      <input
+        id="searchGeneInput"
+        type="text"
+        placeholder="Start typing a gene (e.g. TRIM63)"
+        class="flex-grow bg-slate-900 text-slate-200 px-4 py-2 rounded-lg border border-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+      />
+      <button id="searchGeneBtn" class="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400 text-amber-200 px-4 py-2 rounded-lg font-medium transition-colors">
+        Search
+      </button>
+      <button id="clearSearchBtn" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-gray-300 px-4 py-2 rounded-lg font-medium transition-colors">
+        Clear
+      </button>
+      <ul
+        id="autocompleteList"
+        class="absolute left-0 right-0 top-full z-10 bg-slate-900 border border-slate-700 rounded-lg mt-1 hidden max-h-48 overflow-y-auto"
+      ></ul>
+    </div>
+
+
+    <input id="pvalInput" type="hidden" value="1.0" />
+
+    <!-- 🧫 Tissue Checkboxes -->
+    <div class="flex flex-wrap gap-4 mb-6 text-gray-300">
+      <label><input type="checkbox" class="tissue-check" value="Muscle_Skeletal" checked /> Muscle Skeletal</label>
+      <label><input type="checkbox" class="tissue-check" value="Whole_Blood" checked /> Whole Blood</label>
+      <label><input type="checkbox" class="tissue-check" value="Thyroid" checked /> Thyroid</label>
+      <label><input type="checkbox" class="tissue-check" value="Lung" checked /> Lung</label>
+      <label><input type="checkbox" class="tissue-check" value="Heart_Atrial_Appendage" checked /> Heart (Atrial Appendage)</label>
+      <label><input type="checkbox" class="tissue-check" value="Heart_Left_Ventricle" checked /> Heart (Left Ventricle)</label>
+      <label><input type="checkbox" class="tissue-check" value="Colon_Transverse" checked /> Colon Transverse</label>
+      <label><input type="checkbox" class="tissue-check" value="Colon_Sigmoid" checked /> Colon Sigmoid</label>
+      <label><input type="checkbox" class="tissue-check" value="Stomach" checked /> Stomach</label>
+      <label><input type="checkbox" class="tissue-check" value="Pancreas" checked /> Pancreas</label>
+    </div>
+
+    <!-- 🧠 Ligase Specificity Summary (hidden until search) -->
+    <div
+      id="specificitySummary"
+      class="bg-slate-900/60 border border-slate-700 rounded-lg p-4 text-center mb-4 hidden"
+    >
+      <div class="text-sm text-gray-400 mb-1">Ligase Specificity Index</div>
+      <div id="specificityValue" class="text-3xl font-semibold text-purple-300">—</div>
+      <div class="text-xs text-gray-500 italic">1 = broad expression, 0 = tissue-specific</div>
+    </div>
+
+    <!-- 📊 Results Table (hidden by default) -->
+    <div class="overflow-x-auto hidden">
+      <table
+        id="searchResultsTable"
+        class="min-w-full bg-slate-900 border border-slate-800 rounded-lg text-sm"
+      >
+        <thead class="bg-slate-800 text-amber-300">
+          <tr>
+            <th class="px-3 py-2 text-left">Ligase</th>
+            <th class="px-3 py-2 text-left">Tissue</th>
+            <th class="px-3 py-2 text-left">Mean Z-score</th>
+            <th class="px-3 py-2 text-left">Enrichment Z</th>
+          </tr>
+        </thead>
+        <tbody
+          id="searchResultsBody"
+          class="divide-y divide-slate-800 text-slate-200"
+        >
+          <tr>
+            <td colspan="4" class="px-4 py-3 text-center text-gray-500">
+              Start typing to search.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ⚗️ EXPRESSION WINDOW EXPLORER -->
+  <section id="expression" class="tab-panel hidden fade-section">
+    <h2 class="text-2xl font-semibold text-amber-400 mb-4">Expression Filter Explorer</h2>
+
+    <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 text-slate-200 space-y-6">
+
+      <!-- 🧬 Filter Controls -->
+      <div class="flex flex-wrap items-end gap-4">
+        <!-- Tissue Dropdown (custom) -->
+        <div class="relative">
+          <label class="block text-sm text-gray-400 mb-1">Tissue Type</label>
+          <button id="tissueDropdownBtn"
+            class="flex items-center justify-between bg-slate-950 border border-slate-700 rounded-md px-3 py-2 w-56 text-gray-200 hover:border-amber-400 transition">
+            <span id="selectedTissueLabel" class="flex items-center gap-2">
+              <img src="/static/icons/tissues/pancreas.svg" class="w-5 h-5" alt="Pancreas">
+              <span>Pancreas</span>
+            </span>
+            <i data-feather="chevron-down" class="w-4 h-4 text-gray-400"></i>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="tissueDropdown"
+            class="hidden absolute z-50 mt-1 w-56
+                  bg-slate-950 border border-slate-700 
+                  rounded-md shadow-lg
+                  max-h-[340px] overflow-y-scroll
+                  overscroll-contain scroll-smooth
+                  touch-pan-y select-none
+                  isolate will-change-scroll">
+          </div>
+
+          <!-- Hidden native select -->
+          <select id="tissueSelect" class="hidden">
+            <option value="">All Tissues</option>
+          </select>
+        </div>
+
+        <!-- Min/Max Z Controls -->
+        <div>
+          <label for="minZ" class="block text-sm text-gray-400 mb-1">Min Z-score</label>
+          <input id="minZ" type="number" step="0.1" value="0"
+            class="bg-slate-950 border border-slate-700 rounded-md px-3 py-2 w-28 text-gray-200">
+        </div>
+        <div>
+          <label for="maxZ" class="block text-sm text-gray-400 mb-1">Max Z-score</label>
+          <input id="maxZ" type="number" step="0.1" value="0.5"
+            class="bg-slate-950 border border-slate-700 rounded-md px-3 py-2 w-28 text-gray-200">
+        </div>
+
+        <!-- Apply Button -->
+        <button id="applyFilterBtn"
+          class="px-4 py-2 rounded-md bg-amber-500 text-slate-900 font-semibold hover:bg-amber-400 transition">
+          Apply Filter
+        </button>
+      </div>
+
+      <!-- 📊 Plot Area -->
+      <div id="expressionPlotContainer"
+        class="relative w-full flex flex-col items-center justify-center min-h-[320px] border border-slate-800 rounded-lg bg-slate-950/40">
+        <p class="text-gray-500 italic text-sm">Select a tissue and range, then click Apply.</p>
+      </div>
+
+      <!-- 🧬 Default Tissue Badge -->
+      <div id="defaultTissueBadge"
+        class="hidden flex items-center gap-2 mb-1 text-xs font-medium 
+              text-amber-300 bg-slate-800/60 border border-slate-700 
+              px-3 py-1.5 rounded-full w-fit backdrop-blur-sm relative group">
+        <i data-feather="aperture" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span id="defaultTissueLabel">Default Tissue: Pancreas</span>
+        <span class="absolute left-1/2 -translate-x-1/2 top-full mt-2 
+                    hidden group-hover:block bg-slate-900 text-gray-300 
+                    text-[10px] px-2 py-1 rounded border border-slate-700 
+                    whitespace-nowrap shadow-lg">
+          You can change the tissue using the dropdown above.
+        </span>
+      </div>
+
+      <!-- 📊 Results Summary -->
+      <div id="expressionSummary"
+        class="hidden mt-2 mb-2 text-sm text-gray-300 bg-slate-900/60 px-4 py-3 rounded-md border border-slate-700 flex items-center justify-between">
+        <div>
+          <span id="resultCount" class="font-semibold text-amber-300">0</span> genes found
+          <span id="resultContext" class="text-gray-400"></span>
+        </div>
+        <div class="text-xs text-slate-400 italic flex items-center gap-1">
+          <i data-feather="info" class="w-3 h-3 text-slate-400"></i>
+          Hover icons for column descriptions
+        </div>
+      </div>
+
+      <!-- 📋 Filtered Results Table -->
+      <div id="expressionResultsWrapper"
+        class="hidden max-h-[400px] overflow-y-auto border border-slate-700 rounded-lg bg-slate-900/40 backdrop-blur-sm shadow-inner">
+        <table class="min-w-full text-sm text-left text-slate-200 relative z-[1000]">
+            <thead class="sticky top-0 bg-slate-800 text-amber-300 text-xs uppercase tracking-wider z-[1000]">
+                <tr>
+                <th class="relative px-3 py-2">
+                    Gene
+                    <span class="relative group cursor-help inline-flex items-center">
+                    <i data-feather="info" class="w-3 h-3 ml-1 text-gray-400 hover:text-amber-400"></i>
+                    <span class="tooltip">
+                        Gene symbol associated with ligase or target
+                    </span>
+                    </span>
+                </th>
+                <th class="relative px-3 py-2">
+                    Tissue
+                    <span class="relative group cursor-help inline-flex items-center">
+                    <i data-feather="info" class="w-3 h-3 ml-1 text-gray-400 hover:text-amber-400"></i>
+                    <span class="tooltip">
+                        Tissue group or organ where expression is measured
+                    </span>
+                    </span>
+                </th>
+                <th class="relative px-3 py-2">
+                    Average Z
+                    <span class="relative group cursor-help inline-flex items-center">
+                    <i data-feather="info" class="w-3 h-3 ml-1 text-gray-400 hover:text-amber-400"></i>
+                    <span class="tooltip">
+                        Mean normalized Z-score across samples
+                    </span>
+                    </span>
+                </th>
+                <th class="relative px-3 py-2">
+                    Enrichment Z
+                    <span class="relative group cursor-help inline-flex items-center">
+                    <i data-feather="info" class="w-3 h-3 ml-1 text-gray-400 hover:text-amber-400"></i>
+                    <span class="tooltip">
+                        Z-score representing tissue-specific enrichment
+                    </span>
+                    </span>
+                </th>
+                <th class="relative px-3 py-2">
+                    Specificity
+                    <span class="relative group cursor-help inline-flex items-center">
+                    <i data-feather="info" class="w-3 h-3 ml-1 text-gray-400 hover:text-amber-400"></i>
+                    <span class="tooltip">
+                        Expression specificity index (higher = more selective)
+                    </span>
+                    </span>
+                </th>
+                </tr>
+            </thead>
+            <tbody id="expressionResultsBody"></tbody>
+            </table>
+         </div>
+      </div>
+    </div>
+  </section>
+
+
+  
+
+
+
+
+    <!-- ⚗️ AFFINITY -->
+    <!-- <section id="affinity" class="tab-panel hidden">
+      <h2 class="text-2xl font-semibold text-amber-400 mb-4">Predicted Binding Affinity</h2>
+      <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 text-gray-400">
+        Affinity visualization will appear here when available.
+      </div>
+    </section> -->
+
+  <!-- 🧠 TISSUE -->
+  <section id="tissue" class="tab-panel hidden fade-section">
+    <h2 class="text-2xl font-semibold text-amber-400 mb-4">Tissue Specificity</h2>
+
+    <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6">
+      <p class="text-gray-400 mb-6 leading-relaxed text-center">
+        Mean Z-score expression across tissues. Select a gene in the Overview tab to render its tissue profile.
+      </p>
+
+      <!-- 🧩 Tissue Selector Bar -->
+      <div id="tissueToggleBar"
+          class="flex flex-wrap justify-center gap-3 mb-8 mt-4"></div>
+
+      <!-- 📊 Unified Plot Container -->
+      <div id="tissuePlotContainer" class="relative w-full flex flex-col items-center justify-center">
+
+
+        <!-- 🎨 Plotly chart area -->
+        <div id="tissuePlotInner"
+            class="w-full h-[520px] rounded-lg overflow-hidden flex items-center justify-center bg-slate-950/40 border border-slate-800">
+          <p class="text-gray-500 italic text-sm">
+            Select a gene to display its tissue expression profile.
+          </p>
+        </div>
+
+        <!-- 🌐 Overlay (same parent, hidden by default) -->
+        <div id="tissueOverlay"
+            class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center hidden rounded-lg">
+          <div class="animate-spin h-10 w-10 border-4 border-amber-400 border-t-transparent rounded-full mb-4"></div>
+          <p class="text-amber-300 text-sm tracking-wide">Loading tissue data...</p>
+        </div>
+      </div>
+
+      <!-- 💡 Hint -->
+      <p id="legendHint" class="text-gray-500 text-xs text-center mt-4 italic select-none">
+        🧬 Select a tissue above to filter expression profiles.  
+        Click <span id="hintAllTissues" class="text-amber-300 cursor-pointer hover:underline hover:text-amber-200 transition-colors">
+          All Tissues
+        </span> to view combined data.
+      </p>
+
+    </div>
+  </section>
+
+
+
+
+   <!-- 📦 DOWNLOAD SECTION -->
+  <section id="download" class="tab-panel hidden fade-section">
+    <h2 class="text-2xl font-semibold text-amber-400 mb-6">Downloads</h2>
+
+    <!-- 🎓 Citation + Authors -->
+    <div class="bg-slate-900/60 border border-slate-700 rounded-lg p-6 mb-6 text-slate-200 shadow-md space-y-3">
+      <p class="text-sm text-slate-400 leading-relaxed">
+        Data and resources presented here are derived from the publication
+        <span class="italic text-amber-300">
+          “ELiAH: the atlas of E3 ligases in human tissues for targeted protein degradation with reduced off-target effect”
+        </span>,
+        published in <span class="text-sky-400 font-medium">Database (Oxford)</span>, 2024.
+      </p>
+
+      <p class="text-sm">
+        We extend our sincere gratitude to the authors:
+        <span class="text-amber-300">
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Hyojung&nbsp;Paik</a>,
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Chunryong&nbsp;Oh</a>,
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Sajid&nbsp;Hussain</a>,
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Sangjae&nbsp;Seo</a>,
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Soon&nbsp;Woo&nbsp;Park</a>,
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Tae&nbsp;Lyun&nbsp;Ko</a>,
+          and
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="hover:underline">Ari&nbsp;Lee</a>.
+        </span>
+      </p>
+
+      <div class="pt-2">
+        <a href="https://doi.org/10.1093/database/baae111" target="_blank"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 
+                  text-slate-900 font-semibold rounded-md transition shadow-sm">
+          <i data-feather="book-open" class="w-4 h-4"></i>
+          View Published Paper
+        </a>
+      </div>
+    </div>
+
+    <!-- 📊 Dataset Downloads -->
+    <div class="grid gap-4 md:grid-cols-2">
+      <!-- E3 Ligase List -->
+      <a href="https://eliahdb.org/static/download/ELiAH_E3_ligase_list.csv"
+        target="_blank"
+        class="download-card group">
+        <div class="flex items-center justify-between w-full">
+          <div>
+            <h3 class="text-amber-300 font-semibold text-lg">E3 Ligase List</h3>
+            <p class="text-gray-400 text-sm">Full catalog of E3 ligases curated in ELiAH</p>
+          </div>
+          <i data-feather="download" class="w-5 h-5 text-slate-400 group-hover:text-amber-300 transition"></i>
+        </div>
+      </a>
+
+      <!-- Z-Score Normalized Expression -->
+      <a href="https://eliahdb.org/static/download/ELiAH_Z_score_normalized_gene_expression_V5.csv"
+        target="_blank"
+        class="download-card group">
+        <div class="flex items-center justify-between w-full">
+          <div>
+            <h3 class="text-amber-300 font-semibold text-lg">Z-Score Normalized Expression</h3>
+            <p class="text-gray-400 text-sm">Tissue-normalized transcript levels (Z-score scaled)</p>
+          </div>
+          <i data-feather="download" class="w-5 h-5 text-slate-400 group-hover:text-amber-300 transition"></i>
+        </div>
+      </a>
+
+      <!-- Raw Gene Expression -->
+      <a href="https://eliahdb.org/static/download/ELiAH_Gene_expression.csv"
+        target="_blank"
+        class="download-card group">
+        <div class="flex items-center justify-between w-full">
+          <div>
+            <h3 class="text-amber-300 font-semibold text-lg">Raw Gene Expression</h3>
+            <p class="text-gray-400 text-sm">Unnormalized TPM-based gene expression matrix</p>
+          </div>
+          <i data-feather="download" class="w-5 h-5 text-slate-400 group-hover:text-amber-300 transition"></i>
+        </div>
+      </a>
+    </div>
+
+  </section>
+
+    <!-- 📘 ABOUT -->
+  <section id="about" class="tab-panel hidden fade-section">
+    <h2 class="text-2xl font-semibold text-amber-400 mb-4">About This Integration</h2>
+
+    <div class="bg-slate-900/60 rounded-lg border border-slate-700 p-6 space-y-5 text-gray-300 leading-relaxed shadow-md">
+      <p>
+        The <span class="text-amber-300 font-semibold">E3 Ligase Expression Atlas</span> module
+        streamlines a curated subset of data from the 
+        <a href="https://eliahdb.org" target="_blank" class="text-amber-300 hover:underline font-medium">ELiAH database</a>,
+        originally published in 
+        <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-sky-400 hover:underline italic">
+          Database (Oxford), 2024
+        </a>.
+        It focuses exclusively on <span class="text-amber-300">tissue-resolved expression patterns</span> 
+        of E3 ubiquitin ligases across human organs.
+      </p>
+
+      <p>
+        Each ligase’s <strong>mean Z-score</strong> is computed per tissue from normalized transcript data, 
+        allowing fast comparison of <span class="text-amber-300">expression abundance</span> and 
+        <span class="text-amber-300">tissue selectivity</span>. 
+        This streamlined dataset underpins the 
+        <span class="text-amber-300">E3 Ligase Atlas Explorer</span> visualization tool, linking tissue context
+        to structural and functional ligand data.
+      </p>
+
+      <div class="p-4 rounded-lg bg-slate-800/70 border border-slate-700">
+        <p class="text-sm text-gray-400 leading-relaxed">
+          We gratefully acknowledge the original authors of the ELiAH resource — 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Hyojung&nbsp;Paik</a>, 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Chunryong&nbsp;Oh</a>, 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Sajid&nbsp;Hussain</a>, 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Sangjae&nbsp;Seo</a>, 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Soon&nbsp;Woo&nbsp;Park</a>, 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Tae&nbsp;Lyun&nbsp;Ko</a>, and 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-amber-300 hover:underline">
+            Ari&nbsp;Lee</a>.
+        </p>
+        <p class="text-sm text-gray-400 mt-2">
+          If you use this integration in your research or applications, please cite their publication: 
+          <em>“ELiAH: the atlas of E3 ligases in human tissues for targeted protein degradation with reduced off-target effect”</em>, 
+          <a href="https://doi.org/10.1093/database/baae111" target="_blank" class="text-sky-400 hover:underline">
+            DOI: 10.1093/database/baae111
+          </a>.
+        </p>
+      </div>
+
+      <div class="mt-4 grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+        <a href="https://eliahdb.org/Data_statistics" target="_blank" class="eliah-link-card group">
+          <i data-feather="bar-chart-2" class="w-5 h-5 text-sky-300"></i>
+          <span>Data Statistics</span>
+        </a>
+        <a href="https://eliahdb.org/E3_Gene_search" target="_blank" class="eliah-link-card group">
+          <i data-feather="search" class="w-5 h-5 text-sky-300"></i>
+          <span>Gene/E3 Search</span>
+        </a>
+        <a href="https://eliahdb.org/E3_Gene_association" target="_blank" class="eliah-link-card group">
+          <i data-feather="git-branch" class="w-5 h-5 text-sky-300"></i>
+          <span>E3-Gene Association</span>
+        </a>
+        <a href="https://eliahdb.org/E3_Gene_binding_affinity" target="_blank" class="eliah-link-card group">
+          <i data-feather="activity" class="w-5 h-5 text-sky-300"></i>
+          <span>Binding Affinity Tool</span>
+        </a>
+        <a href="https://eliahdb.org/Tissue_specificity" target="_blank" class="eliah-link-card group">
+          <i data-feather="layers" class="w-5 h-5 text-sky-300"></i>
+          <span>Tissue Specificity</span>
+        </a>
+        <a href="https://eliahdb.org/Downloads" target="_blank" class="eliah-link-card group">
+          <i data-feather="download" class="w-5 h-5 text-sky-300"></i>
+          <span>ELiAH Downloads</span>
+        </a>
+      </div>
+
+      <div class="mt-6 text-center">
+        <a href="https://doi.org/10.1093/database/baae111" target="_blank"
+          class="inline-flex items-center gap-2 bg-amber-500 text-slate-900 font-semibold px-5 py-2 rounded-md 
+                  hover:bg-amber-400 transition shadow-md hover:shadow-amber-400/20">
+          <i data-feather="external-link" class="w-4 h-4"></i>
+          View Original Publication
+        </a>
+      </div>
+    </div>
+  </section>
+
+  </div>
+</section>
+<script src="https://unpkg.com/feather-icons"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+  let currentGene = null;
+
+  // === Inline tissue SVG icons ===
+  const tissueIcons = {
+    "Lung": `<img src="/static/icons/tissues/lung.svg" class="w-10 h-10 text-cyan-400" alt="Lung">`,
+    "Heart (Atrial Appendage)": `<img src="/static/icons/tissues/heart-atrial.svg" class="w-10 h-10 text-rose-400" alt="Heart Atrial">`,
+    "Heart (Left Ventricle)": `<img src="/static/icons/tissues/heart-ventricle.svg" class="w-10 h-10 text-sky-400" alt="Heart Ventricle">`,
+    "Muscle—Skeletal": `<img src="/static/icons/tissues/muscle.svg" class="w-10 h-10 text-amber-400" alt="Muscle Skeletal">`,
+    "Whole Blood": `<img src="/static/icons/tissues/blood.svg" class="w-10 h-10 text-red-500" alt="Whole Blood">`,
+    "Thyroid": `<img src="/static/icons/tissues/thyroid.svg" class="w-10 h-10 text-purple-400" alt="Thyroid">`,
+    "Colon—Sigmoid": `<img src="/static/icons/tissues/colon-sigmoid.svg" class="w-10 h-10 text-lime-400" alt="Colon Sigmoid">`,
+    "Colon—Transverse": `<img src="/static/icons/tissues/colon-transverse.svg" class="w-10 h-10 text-emerald-400" alt="Colon Transverse">`,
+    "Pancreas": `<img src="/static/icons/tissues/pancreas.svg" class="w-10 h-10 text-yellow-400" alt="Pancreas">`,
+    "Stomach": `<img src="/static/icons/tissues/stomach.svg" class="w-10 h-10 text-orange-400" alt="Stomach">`
+  };
+
+  // 🌴 Key West × Tron Pastel Palette (Alphabetical Order)
+  const tissueColorMap = {
+    "Colon—Sigmoid": "#ff00f7",         // magenta-pink neon
+    "Colon—Transverse": "#caff00",      // lime-yellow pastel
+    "Heart (Atrial Appendage)": "#ff7a00", // warm coral orange
+    "Heart (Left Ventricle)": "#ffb3a7", // light peach
+    "Lung": "#00e5ff",                 // cyan-blue
+    "Muscle—Skeletal": "#00ff80",      // seafoam green
+    "Pancreas": "#ffc300",             // golden yellow
+    "Stomach": "#f79cf7",              // soft pink
+    "Thyroid": "#b19cff",              // lavender violet
+    "Whole Blood": "#ff4d6d"           // bright coral red
+  };
+
+
+  function getMatchedKey(dbValue) {
+    let clean = normalizeName(dbValue);
+    if (tissueMapAliases[clean]) {
+      clean = normalizeName(tissueMapAliases[clean]);
+    }
+
+    const matchKey = Object.keys(tissueIconSrc).find(
+      k => normalizeName(k) === clean
+    );
+
+    return matchKey || "Pancreas";  // fallback if truly unmatched
+  }
+
+
+  // 🧠 Handle click-to-pin tooltips (for mobile or detailed reading)
+  function toggleTooltip(icon) {
+    const tooltip = icon.nextElementSibling;
+    const allTooltips = document.querySelectorAll(".tooltip");
+    allTooltips.forEach(t => {
+      if (t !== tooltip) t.classList.remove("pinned");
+    });
+    tooltip.classList.toggle("pinned");
+  }
+
+  
+  (function () {
+    const URL_LIGASES = "/api/eliah/ligases";
+    const URL_GENES = (ligase) => `/api/eliah/genes?ligase=${encodeURIComponent(ligase)}`;
+    const URL_EXPRESSION = (gene) => `/api/eliah/expression?gene=${encodeURIComponent(gene)}`;
+
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => Array.from(document.querySelectorAll(s));
+    
+    function normalizeName(name) {
+      return name
+        .toLowerCase()
+        .replace(/[_—–\-]/g, " ")   // underscores/dashes → space
+        .replace(/\s+/g, " ")       // collapse multiple spaces
+        .trim();
+    }
+
+
+  // Keep grid and toggle bar visually synced
+  function syncTissueSelection(tissue) {
+    // Normalize for consistent matching
+    const norm = tissue ? tissue.toLowerCase().replace(/[_—–\-]/g, " ").trim() : null;
+
+    // 1️⃣ Highlight toggle bar
+    document.querySelectorAll(".tissue-btn").forEach(btn => {
+      const btnNorm = btn.dataset.tissue
+        ? btn.dataset.tissue.toLowerCase().replace(/[_—–\-]/g, " ").trim()
+        : "";
+      btn.classList.toggle("active", norm && btnNorm === norm);
+    });
+
+    // 2️⃣ Highlight grid icon
+    document.querySelectorAll("#tissueGrid > div").forEach(icon => {
+      const iconNorm = icon.dataset.tissue
+        ? icon.dataset.tissue.toLowerCase().replace(/[_—–\-]/g, " ").trim()
+        : "";
+      icon.classList.toggle("ring-2", norm && iconNorm === norm);
+    });
+
+    // 3️⃣ If no tissue → clear all highlights
+    if (!tissue) {
+      document.querySelectorAll(".tissue-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll("#tissueGrid > div").forEach(icon => icon.classList.remove("ring-2"));
+      const allBtn = document.querySelector('.tissue-btn[data-tissue=""]');
+      if (allBtn) allBtn.classList.add("active");
+    }
+  }
+
+
+  // Aliases — make sure everything maps to your SVG filenames
+  const tissueMapAliases = {
+    "heart atrial appendage": "Heart (Atrial Appendage)",
+    "heart atrial": "Heart (Atrial Appendage)",
+    "heart left ventricle": "Heart (Left Ventricle)",
+    "heart ventricle": "Heart (Left Ventricle)",
+    "whole blood": "Whole Blood",
+    "muscle skeletal": "Muscle—Skeletal",
+    "colon sigmoid": "Colon—Sigmoid",
+    "colon transverse": "Colon—Transverse",
+    "thyroid": "Thyroid",
+    "lung": "Lung",
+    "stomach": "Stomach",
+    "pancreas": "Pancreas"
+  };
+
+  async function getInlineSVG(path) {
+    const res = await fetch(path);
+    return await res.text();
+  }
+
+
+  
+  async function loadTissueStats() {
+    const res = await fetch("/api/eliah/tissues");
+    const data = await res.json();
+    const grid = document.getElementById("tissueGrid");
+    grid.innerHTML = "";
+
+    for (const d of data) {
+      let cleanName = normalizeName(d.tissue);
+      if (tissueMapAliases[cleanName]) {
+        cleanName = normalizeName(tissueMapAliases[cleanName]);
+      }
+
+      const matchKey = Object.keys(tissueIcons).find(
+        k => normalizeName(k) === cleanName
+      );
+
+      console.log("🫀 Clean:", cleanName, "→ MatchKey:", matchKey);
+
+      // === determine filename and Tailwind color ===
+      let fileName = "";
+      let tailwindColor = "slate-400";
+
+      switch (matchKey) {
+        case "Lung": fileName = "lung"; tailwindColor = "cyan-400"; break;
+        case "Heart (Atrial Appendage)": fileName = "heart-atrial"; tailwindColor = "rose-400"; break;
+        case "Heart (Left Ventricle)": fileName = "heart-ventricle"; tailwindColor = "sky-400"; break;
+        case "Muscle—Skeletal": fileName = "muscle"; tailwindColor = "amber-400"; break;
+        case "Whole Blood": fileName = "blood"; tailwindColor = "red-500"; break;
+        case "Thyroid": fileName = "thyroid"; tailwindColor = "purple-400"; break;
+        case "Colon—Sigmoid": fileName = "colon-sigmoid"; tailwindColor = "lime-400"; break;
+        case "Colon—Transverse": fileName = "colon-transverse"; tailwindColor = "emerald-400"; break;
+        case "Pancreas": fileName = "pancreas"; tailwindColor = "yellow-400"; break;
+        case "Stomach": fileName = "stomach"; tailwindColor = "orange-400"; break;
+        default: fileName = "default"; break;
+      }
+
+      // === inline the SVG file ===
+      let svgMarkup;
+      try {
+        svgMarkup = await getInlineSVG(`/static/icons/tissues/${fileName}.svg`);
+      } catch (e) {
+        console.warn(`Missing SVG for ${fileName}`, e);
+        svgMarkup = defaultIcon;
+      }
+
+      grid.innerHTML += `
+        <div
+          class="relative group cursor-pointer flex flex-col items-center text-${tailwindColor}"
+          data-tissue="${d.tissue}"
+        >
+          ${svgMarkup}
+          <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:flex
+                      flex-col items-center bg-slate-900/90 border border-slate-700
+                      rounded-md px-3 py-2 text-xs text-amber-200 shadow-lg">
+            <span class="font-semibold text-amber-300">${d.tissue}</span>
+            <span class="text-gray-400">${d.count} samples</span>
+          </div>
+        </div>`;
+
+    }
+    // 🧮 Compute total sample count
+    const totalSamples = data.reduce((sum, d) => sum + (d.count || 0), 0);
+    document.getElementById("statSamples").textContent = totalSamples.toLocaleString();
+
+
+    document.querySelectorAll("#tissueGrid > div").forEach(icon => {
+      icon.addEventListener("click", async () => {
+        const tissue = icon.dataset.tissue;
+        console.log(`🧠 TissueGrid → Selected tissue: ${tissue}`);
+
+        // Ensure we have an active gene (either random or user-selected)
+        const gene = window.currentGene || null;
+        if (!gene) {
+          console.warn("⚠️ No gene currently loaded. Selecting a random one...");
+          if (typeof fullGeneTable !== "undefined" && fullGeneTable.length > 0) {
+            window.currentGene = fullGeneTable[Math.floor(Math.random() * fullGeneTable.length)].Gene;
+          } else {
+            alert("No gene data available to plot.");
+            return;
+          }
+        }
+
+        // Switch to Tissue tab if not already active
+        const tissueTab = document.querySelector('[data-target="tissue"]');
+        if (!tissueTab.classList.contains("active")) {
+          tissueTab.click();
+          await new Promise(r => setTimeout(r, 250)); // allow panel to render
+        }
+
+        
+
+        // Smooth scroll into view
+        document.getElementById("tissue").scrollIntoView({ behavior: "smooth" });
+
+        // Plot with smooth fade transitions
+        await plotTissueSpecificity(window.currentGene, tissue);
+        syncTissueSelection(tissue);
+
+        console.log(`✅ Tissue grid → Rendered ${window.currentGene} (${tissue})`);
+      });
+    });
+
+
+
+  }
+
+
+
+
+
+
+// fallback if tissue not in map
+const defaultIcon = `
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-500"
+       fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+  </svg>`;
+
+
+  // === Tabs ===
+  $$(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      // Remove active styles from all buttons
+      $$(".tab-btn").forEach(b => 
+        b.classList.remove("active", "bg-amber-500/20", "border-amber-400", "text-amber-300")
+      );
+      btn.classList.add("active", "bg-amber-500/20", "border-amber-400", "text-amber-300");
+
+      const target = btn.dataset.target;
+      const allPanels = $$(".tab-panel");
+      const targetPanel = $("#" + target);
+
+      // Fade out currently visible panel
+      const visiblePanel = [...allPanels].find(p => !p.classList.contains("hidden"));
+      if (visiblePanel) {
+        visiblePanel.style.transition = "opacity 0.4s ease-in-out";
+        visiblePanel.style.opacity = 0;
+        await new Promise(r => setTimeout(r, 300));
+        visiblePanel.classList.add("hidden");
+      }
+
+      // Show and fade in new panel
+      targetPanel.classList.remove("hidden");
+      targetPanel.style.opacity = 0;
+      targetPanel.style.transition = "opacity 0.4s ease-in-out";
+      requestAnimationFrame(() => {
+        targetPanel.style.opacity = 1;
+      });
+
+      console.log(`🌟 Switched to tab → ${target}`);
+    });
+  });
+
+
+  let fullGeneTable = [];
+
+
+
+  // === Gene Table ===
+  async function loadLigases() {
+    const r = await fetch(URL_LIGASES);
+    const data = await r.json();
+    const ligaseList = data.ligases || [];
+    $("#statLigases").textContent = (1+ data.total_rows) || ligaseList.length || "—";
+    if (ligaseList.length > 0) {
+      const firstLigase = typeof ligaseList[0] === "string" ? ligaseList[0] : Object.values(ligaseList[0])[0];
+      await loadGenesForLigase(firstLigase);
+    }
+  }
+
+  function renderGenesTable(rows) {
+    const tbody = $("#genesBody");
+    tbody.innerHTML = rows.map(r => `
+      <tr class="hover:bg-slate-800/40 cursor-pointer" data-gene="${r.Gene}">
+        <td class="py-2 px-2">${r.Gene}</td>
+      </tr>`).join("");
+
+    $("#statGenes").textContent = rows.length || "0";
+
+    // Update event listener for gene selection
+    $$("#genesBody tr[data-gene]").forEach(tr => {
+      tr.addEventListener("click", async () => {
+        const gene = tr.dataset.gene;
+
+        // Update the global currentGene variable
+        window.currentGene = gene;
+        console.log(`🧬 Selected gene → ${gene}`);
+
+        // Update the plots with the new gene
+        await plotGeneExpression(gene);
+        await plotTissueSpecificity(gene);
+
+        // Switch to the tissue tab if not already active
+        const tissueTab = document.querySelector('[data-target="tissue"]');
+        if (!tissueTab.classList.contains("active")) {
+          tissueTab.click();
+        }
+      });
+    });
+  }
+
+  async function loadGenesForLigase(ligase) {
+    const r = await fetch(URL_GENES(ligase));
+    const raw = await r.json();
+    fullGeneTable = raw.map(row => ({ Gene: row.Gene ?? row.gene ?? "—" }));
+
+    renderGenesTable(fullGeneTable);
+  }
+
+  async function plotGeneExpression(gene) {
+    const plot = $("#genePlot");
+    $("#plotTitle").textContent = `Expression by Sample — ${gene}`;
+    try {
+      const r = await fetch(URL_EXPRESSION(gene));
+      const data = await r.json();
+      if (!data.length) throw new Error("No data");
+      Plotly.newPlot(plot, [{
+        x: data.map(d => d.Sample),
+        y: data.map(d => d.Z_score),
+        type: "bar",
+        marker: { color: "rgba(251,191,36,0.7)" }
+      }], {
+        yaxis: { title: "Z-score" },
+        xaxis: { title: "Sample", automargin: true },
+        margin: { t: 10, l: 50, r: 10, b: 60 },
+        font: { color: "#e2e8f0" },
+        plot_bgcolor: "rgba(0,0,0,0)",
+        paper_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false });
+    } catch {
+      plot.innerHTML = `<p class="text-gray-400 text-sm italic">No expression data available for ${gene}.</p>`;
+    }
+  }
+
+
+
+
+  // === 🧬 FINAL STABLE VERSION: Color-Mapped + Fade-Smooth + Center-Safe ===
+  async function plotTissueSpecificity(gene, tissue = null) {
+    const container = document.getElementById("tissuePlotContainer");
+    const plotArea = document.getElementById("tissuePlotInner");
+    const overlay = document.getElementById("tissueOverlay");
+
+    // Debugging log to trace the gene and tissue passed to this function
+    console.log(`🧬 [DEBUG] plotTissueSpecificity → gene: ${gene}, tissue: ${tissue}`);
+
+    // 🧼 Clear previous content safely
+    plotArea.style.display = "block"; // disable flex while plotting
+    Plotly.purge(plotArea);
+    plotArea.innerHTML = "";
+
+    // 🌀 Show overlay
+    if (overlay) {
+      overlay.classList.remove("hidden");
+      overlay.style.opacity = 1;
+    }
+
+    // 🌈 Matching Fallback Palette (Tron Key West Harmony)
+    const colorPalette = [
+      "#ff00f7", "#caff00", "#ff7a00", "#ffb3a7", "#00e5ff",
+      "#00ff80", "#ffc300", "#f79cf7", "#b19cff", "#ff4d6d"
+    ];
+
+
+    try {
+      const url = `/api/eliah/tissue_profile?gene=${encodeURIComponent(gene)}${
+        tissue ? `&tissue=${encodeURIComponent(tissue)}` : ""
+      }`;
+      console.log(`🧬 Fetching profile → ${url}`);
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error(`No data available for gene: ${gene}${tissue ? `, tissue: ${tissue}` : ""}`);
+      }
+
+      const uniqueTissues = [...new Set(data.map(d => d.Tissgrp || d.tissue))];
+
+      // 🎨 Build traces
+      const traces = (tissue ? [tissue] : uniqueTissues).map((tiss, idx) => {
+        const subset = data.filter(d => (d.Tissgrp || d.tissue) === tiss);
+        const color =
+          tissueColorMap[tiss] || colorPalette[idx % colorPalette.length];
+
+        return {
+          name: tiss,
+          x: subset.map(d => d.Sample),
+          y: subset.map(d => d.Z_score ?? d.avg_z),
+          mode: "markers",
+          type: "scatter",
+          marker: {
+            size: 9,
+            color: color,
+            line: { width: 0.6, color: "#0e7490" },
+            opacity: 0.9,
+          },
+          hovertemplate: `<b>Tissue:</b> ${tiss}<br><b>Sample:</b> %{x}<br><b>Z-score:</b> %{y:.3f}<extra></extra>`,
+        };
+      });
+
+      // 📊 Layout (legend removed)
+      const layout = {
+        title: {
+          text: `${gene} — ${tissue || "All Tissues"}`,
+          font: { color: "#fbbf24", size: 18 },
+        },
+        xaxis: {
+          title: "Sample",
+          tickangle: -45,
+          automargin: true,
+          showgrid: false,
+        },
+        yaxis: {
+          title: "Z-score",
+          zeroline: true,
+          zerolinecolor: "#475569",
+        },
+        plot_bgcolor: "rgba(0,0,0,0)",
+        paper_bgcolor: "rgba(0,0,0,0)",
+        font: { color: "#e2e8f0" },
+        margin: { t: 40, l: 60, r: 30, b: 90 },
+        hovermode: "closest",
+        showlegend: true,
+      };
+
+      // ✨ Fade-smooth transition: fade OUT container before redraw
+      await fadeOut(container);
+
+      // 🚀 Render new plot
+      await Plotly.newPlot(plotArea, traces, layout, {
+        displayModeBar: true,
+        responsive: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: [
+          "lasso2d", "select2d", "resetScale2d", "zoomIn2d", "zoomOut2d"
+        ],
+      });
+
+      // ✨ Fade IN container after plot load
+      fadeIn(container);
+      // ✨ After fadeIn(container);
+      // setTimeout(() => Plotly.Plots.resize(plotArea), 600);
+      // 🧭 Auto-rescale plot after fade-in (simulates the "autoscale" toolbar button)
+      setTimeout(() => {
+        Plotly.relayout(plotArea, {
+          'xaxis.autorange': true,
+          'yaxis.autorange': true
+        });
+        Plotly.Plots.resize(plotArea);
+      }, 600);
+
+
+
+    } catch (err) {
+      console.error("plotTissueSpecificity error:", err);
+
+      // Debugging log to trace errors
+      console.log(`🧬 [DEBUG] Error details → gene: ${gene}, tissue: ${tissue}, error: ${err.message}`);
+
+      plotArea.style.display = "flex"; // restore flex for message centering
+      plotArea.innerHTML = `<p class="text-gray-400 text-sm italic">
+        No tissue-specific data available for ${gene}${
+          tissue ? " (" + tissue + ")" : ""
+        }.
+      </p>`;
+    } finally {
+      // 🔄 Hide overlay smoothly
+      if (overlay) {
+        overlay.style.transition = "opacity 0.4s ease";
+        overlay.style.opacity = 0;
+        setTimeout(() => overlay.classList.add("hidden"), 400);
+      }
+    }
+  }
+
+
+
+  // ==================== PAGE INITIALIZATION ====================
+  (async function initPage() {
+    console.log("🚀 Initializing ELiAH Atlas page...");
+
+    await loadLigases();
+    await loadTissueStats();
+    await buildTissueToggleBar();
+    await initExpressionExplorer();  // ✅ must be here
+
+
+    // ==================== Build Tissue Toggle Bar ====================
+    async function buildTissueToggleBar() {
+      const res = await fetch("/api/eliah/tissues");
+      const data = await res.json();
+      const bar = document.getElementById("tissueToggleBar");
+      bar.innerHTML = "";
+
+      // ✅ "All Tissues" button first
+      const allBtn = document.createElement("button");
+      allBtn.textContent = "All Tissues";
+      allBtn.className = "tissue-btn active";
+      allBtn.dataset.tissue = "";
+      bar.appendChild(allBtn);
+
+      // ✅ Create each tissue button
+      data.forEach((d) => {
+        const btn = document.createElement("button");
+        btn.textContent = d.tissue.replace(/_/g, " ");
+        btn.dataset.tissue = d.tissue;
+        btn.className = "tissue-btn";
+        bar.appendChild(btn);
+
+        // 🧠 Click handler for each button
+        btn.addEventListener("click", async () => {
+          document.querySelectorAll(".tissue-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const tissue = btn.dataset.tissue;
+
+          if (window.currentGene) {
+            await plotTissueSpecificity(window.currentGene, tissue || null);
+          }
+          syncTissueSelection(tissue);
+        });
+
+      });
+
+      // ✅ Handle the "All Tissues" button
+      allBtn.addEventListener("click", async () => {
+        document.querySelectorAll(".tissue-btn").forEach((b) => b.classList.remove("active"));
+        allBtn.classList.add("active");
+
+        if (window.currentGene) {
+          await fadeOut(document.getElementById("tissuePlotContainer"));
+          await plotTissueSpecificity(window.currentGene, null);
+          fadeIn(document.getElementById("tissuePlotContainer"));
+        }
+
+        syncTissueSelection(null);
+      });
+    }
+
+    // ==================== Gene Expression Filter ====================
+    async function initExpressionExplorer() {
+      const minZInput = document.getElementById("minZ");
+      const maxZInput = document.getElementById("maxZ");
+      const applyBtn = document.getElementById("applyFilterBtn");
+      const plotContainer = document.getElementById("expressionPlotContainer");
+      const tableWrapper = document.getElementById("expressionResultsWrapper");
+      const tableBody = document.getElementById("expressionResultsBody");
+      const summaryBox = document.getElementById("expressionSummary");
+      const resultCount = document.getElementById("resultCount");
+      const resultContext = document.getElementById("resultContext");
+      const badge = document.getElementById("defaultTissueBadge");
+      const label = document.getElementById("defaultTissueLabel");
+
+      // 🧠 Default filter values
+      const defaultTissue = "Pancreas";
+      const defaultMinZ = 0.0;
+      const defaultMaxZ = 0.5;
+      minZInput.value = defaultMinZ;
+      maxZInput.value = defaultMaxZ;
+
+      // 🧩 Show badge
+      if (badge) {
+        badge.classList.remove("hidden");
+        fadeIn(badge);
+        lucide.createIcons();
+      }
+
+      // ⚡ Fetch data
+      async function fetchExpression(tissue, minZ, maxZ) {
+        const query = new URLSearchParams({ tissue, minZ, maxZ });
+        const res = await fetch(`/api/eliah/expression_filter?${query.toString()}`);
+        return res.json();
+      }
+
+      // 🧩 Render function
+      function renderTable(results, tissue, minZ, maxZ) {
+        if (!Array.isArray(results) || results.length === 0) {
+          plotContainer.innerHTML = `<p class="text-gray-400 italic">No genes found in this range.</p>`;
+          return;
+        }
+
+        plotContainer.classList.add("hidden");
+        tableBody.innerHTML = results.map(r => `
+          <tr>
+            <td class="px-3 py-2 text-amber-300 font-semibold">${r.Ligase}</td>
+            <td class="px-3 py-2">${r.Tissgrp.replace(/_/g, " ")}</td>
+            <td class="px-3 py-2 text-sky-300">${r.avg_z?.toFixed(2) ?? "—"}</td>
+            <td class="px-3 py-2 text-emerald-300">${r.enrichment_z?.toFixed(2) ?? "—"}</td>
+            <td class="px-3 py-2 text-purple-300">${r.Specificity?.toFixed(2) ?? "—"}</td>
+          </tr>`).join("");
+
+        tableWrapper.classList.remove("hidden");
+        fadeIn(tableWrapper);
+
+        resultCount.textContent = results.length.toLocaleString();
+        resultContext.textContent = `in ${tissue || "All Tissues"} (Z: ${minZ} – ${maxZ})`;
+        summaryBox.classList.remove("hidden");
+        fadeIn(summaryBox);
+      }
+
+      // 🧩 Default view
+      plotContainer.innerHTML = `<div class="animate-spin h-8 w-8 border-4 border-amber-400 border-t-transparent rounded-full"></div>`;
+      const defaultResults = await fetchExpression(defaultTissue, defaultMinZ, defaultMaxZ);
+      renderTable(defaultResults, defaultTissue, defaultMinZ, defaultMaxZ);
+
+      // ⚡ Apply Filter Button
+      applyBtn.addEventListener("click", async () => {
+        const tissue = document.querySelector("#selectedTissueLabel span")?.textContent || defaultTissue;
+        const minZ = parseFloat(minZInput.value);
+        const maxZ = parseFloat(maxZInput.value);
+
+        tableWrapper.classList.add("hidden");
+        plotContainer.classList.remove("hidden");
+        plotContainer.innerHTML = `<div class="animate-spin h-8 w-8 border-4 border-amber-400 border-t-transparent rounded-full"></div>`;
+
+        try {
+          const results = await fetchExpression(tissue, minZ, maxZ);
+          renderTable(results, tissue, minZ, maxZ);
+          label.textContent = `Tissue: ${tissue}`;
+        } catch (err) {
+          console.error("Expression Filter Error:", err);
+          plotContainer.innerHTML = `<p class="text-red-400">⚠️ Failed to fetch results.</p>`;
+        }
+      });
+    }
+
+
+
+
+
+
+    // ==================== Random Gene Initialization ====================
+    if (fullGeneTable.length > 0) {
+      const randomGene =
+        fullGeneTable[Math.floor(Math.random() * fullGeneTable.length)].Gene;
+      window.currentGene = randomGene;
+
+      // Update title
+      document.getElementById("plotTitle").textContent =
+        `Expression by Sample — ${randomGene}`;
+
+      console.log(`🎲 Random gene on load → ${randomGene}`);
+
+      // Fade-in effect on both plots
+      const plotContainer = document.getElementById("tissuePlotContainer");
+      plotContainer.style.opacity = 0;
+
+      // Draw plots
+      await plotGeneExpression(randomGene);
+      await plotTissueSpecificity(randomGene);
+      await initExpressionExplorer();
+
+
+      // Fade in both after render
+      fadeIn(plotContainer);
+
+      // Highlight "All Tissues" by default
+      const allBtn = document.querySelector(".tissue-btn[data-tissue='']");
+      if (allBtn) {
+        document.querySelectorAll(".tissue-btn").forEach((b) => b.classList.remove("active"));
+        allBtn.classList.add("active");
+      }
+    }
+
+    console.log("✅ ELiAH Atlas fully loaded.");
+  })();
+
+  // ==================== Helper Fade Animations ====================
+  function fadeIn(el) {
+    el.style.transition = "opacity 0.5s ease-in-out";
+    el.style.opacity = 1;
+  }
+
+  function fadeOut(el) {
+    return new Promise((resolve) => {
+      el.style.transition = "opacity 0.5s ease-in-out";
+      el.style.opacity = 0;
+      setTimeout(() => resolve(), 500);
+    });
+  }
+
+
+
+  // =================== Autocomplete ===================
+  const input = document.getElementById("searchGeneInput");
+  const list = document.getElementById("autocompleteList");
+  const searchBtn = document.getElementById("searchGeneBtn");
+
+  // === Autocomplete handler ===
+  input.addEventListener("input", async () => {
+    const query = input.value.trim();
+    if (query.length < 1) {   // ✅ start after typing 1 letter
+      list.classList.add("hidden");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/eliah/autocomplete?q=${encodeURIComponent(query)}`);
+      const suggestions = await res.json();
+
+      if (suggestions.length === 0) {
+        list.classList.add("hidden");
+        return;
+      }
+
+      list.innerHTML = suggestions
+        .map(g => `<li class="px-3 py-1.5 hover:bg-amber-400/10 cursor-pointer">${g}</li>`)
+        .join("");
+      list.classList.remove("hidden");
+
+      // click a suggestion
+      list.querySelectorAll("li").forEach(li => {
+        li.addEventListener("click", () => {
+          input.value = li.textContent;
+          list.classList.add("hidden");
+          searchBtn.click();
+        });
+      });
+    } catch (err) {
+      console.error("Autocomplete error:", err);
+    }
+  });
+
+
+  // === Press Enter to trigger search ===
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      list.classList.add("hidden");
+      searchBtn.click();
+    }
+  });
+
+  // === Hide suggestions on outside click ===
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !list.contains(e.target)) {
+      list.classList.add("hidden");
+    }
+  });
+
+
+
+  // =================== Gene / E3 Search ===================
+  document.getElementById("searchGeneBtn").addEventListener("click", async () => {
+    const q = document.getElementById("searchGeneInput").value.trim();
+    const pval = parseFloat(document.getElementById("pvalInput").value);
+    const tissues = [...document.querySelectorAll(".tissue-check:checked")].map(cb => cb.value);
+
+    if (!q) {
+      alert("Please enter a gene symbol (e.g., TRIM63).");
+      return;
+    }
+
+    const tableWrapper = document.querySelector("#search .overflow-x-auto");
+    const tableBody = document.getElementById("searchResultsBody");
+    const specBox = document.getElementById("specificitySummary");
+    const specText = document.getElementById("specificityValue");
+
+    // Hide results and box while loading
+    tableWrapper.classList.add("hidden");
+    specBox.classList.add("hidden");
+
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="px-4 py-3 text-center text-gray-400 italic">
+          Searching for <b>${q}</b>...
+        </td>
+      </tr>`;
+
+    try {
+      const res = await fetch(`/api/eliah/search?q=${encodeURIComponent(q)}&pval=${pval}&tissues=${tissues.join(",")}`);
+      const data = await res.json();
+
+      if (!data || data.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-3 text-center text-gray-400">
+              No results found for <b>${q}</b>.
+            </td>
+          </tr>`;
+        tableWrapper.classList.remove("hidden");
+        fadeIn(tableWrapper);
+        return;
+      }
+
+      // ✅ Build table rows
+      tableBody.innerHTML = data.map(r => `
+        <tr style="transition: background 0.2s ease;">
+          <td class="px-3 py-2 font-semibold text-amber-300">${r.Ligase}</td>
+          <td class="px-3 py-2">${r.Tissue}</td>
+          <td class="px-3 py-2 text-sky-300">${r.Mean_Zscore ?? "—"}</td>
+          <td class="px-3 py-2 text-emerald-300">${r.Enrichment_Z ?? "—"}</td>
+        </tr>
+      `).join("");
+
+      // ✅ Reveal results
+      tableWrapper.classList.remove("hidden");
+      fadeIn(tableWrapper);
+
+      // ✅ Show specificity box if available
+      if (data[0].Specificity !== undefined) {
+        const specValue = parseFloat(data[0].Specificity);
+        specText.textContent = isFinite(specValue) ? specValue.toFixed(3) : "—";
+        const hue = 270 - (specValue * 180);
+        specText.style.color = `hsl(${hue}, 80%, 70%)`;
+        specBox.classList.remove("hidden");
+      }
+
+      // ✅ Smooth scroll into view
+      document.getElementById("searchResultsTable").scrollIntoView({ behavior: "smooth" });
+
+    } catch (err) {
+      console.error("Search error:", err);
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-4 py-3 text-center text-red-400">
+            ⚠️ Error fetching results. Please try again later.
+          </td>
+        </tr>`;
+      tableWrapper.classList.remove("hidden");
+      fadeIn(tableWrapper);
+    }
+  });
+
+
+  // =================== Clear Search Button (with fade) ===================
+  document.getElementById("clearSearchBtn").addEventListener("click", async () => {
+    const input = document.getElementById("searchGeneInput");
+    const tableWrapper = document.querySelector("#search .overflow-x-auto");
+    const tableBody = document.getElementById("searchResultsBody");
+    const specBox = document.getElementById("specificitySummary");
+
+    // fade out
+    await fadeOut(tableWrapper);
+
+    input.value = "";
+    specBox.classList.add("hidden");
+    tableWrapper.classList.add("hidden");
+
+    // reset checkboxes
+    document.querySelectorAll(".tissue-check").forEach(cb => cb.checked = true);
+
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="px-4 py-3 text-center text-gray-500">
+          Start typing to search.
+        </td>
+      </tr>`;
+  });
+
+
+  // =================== Helper Animations ===================
+  function fadeIn(el) {
+    el.style.opacity = 0;
+    el.style.transition = "opacity 0.4s ease-in-out";
+    requestAnimationFrame(() => { el.style.opacity = 1; });
+  }
+
+  function fadeOut(el) {
+    return new Promise(resolve => {
+      el.style.transition = "opacity 0.4s ease-in-out";
+      el.style.opacity = 0;
+      setTimeout(() => resolve(), 400);
+    });
+  }
+
+
+
+
+
+
+  // 🧬 Make "All Tissues" in the hint clickable
+  document.getElementById("hintAllTissues")?.addEventListener("click", async () => {
+    const allBtn = document.querySelector('.tissue-btn[data-tissue=""]');
+    if (!allBtn) {
+      console.warn("⚠️ 'All Tissues' button not found in toggle bar.");
+      return;
+    }
+
+    // Visually activate "All Tissues"
+    document.querySelectorAll(".tissue-btn").forEach(b => b.classList.remove("active"));
+    allBtn.classList.add("active");
+
+    // If a gene is loaded, re-plot with smooth transition
+    if (window.currentGene) {
+      const container = document.getElementById("tissuePlotContainer");
+      await fadeOut(container);
+      await plotTissueSpecificity(window.currentGene, null);
+      fadeIn(container);
+    } else {
+      console.warn("⚠️ No gene loaded when clicking 'All Tissues' hint.");
+    }
+
+    // Sync with grid and toggle bar
+    syncTissueSelection(null);
+
+    // Smooth scroll back to the top of the tissue section
+    document.getElementById("tissue").scrollIntoView({ behavior: "smooth" });
+
+    console.log("🎯 Hint → 'All Tissues' view activated.");
+  });
+
+
+
+
+})();
+
+
+
+
+</script>
+
+
+<script>
+  const tissueDropdown = document.getElementById("tissueDropdown");
+  const tissueBtn      = document.getElementById("tissueDropdownBtn");
+  const selectedLabel  = document.getElementById("selectedTissueLabel");
+  const hiddenSelect   = document.getElementById("tissueSelect");
+  const applyBtn       = document.getElementById("applyFilterBtn");
+
+  // Default tissue
+  let currentTissue = "Pancreas";
+
+  /* ----------------------------
+  🧠 Normalization + Aliases
+  ---------------------------- */
+  function normalizeName(name) {
+    return (name || "")
+      .toLowerCase()
+      .replace(/[_—–\-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const tissueMapAliases = {
+    "colon sigmoid": "colon—sigmoid",
+    "colon transverse": "colon—transverse",
+    "heart atrial appendage": "heart (atrial appendage)",
+    "heart left ventricle": "heart (left ventricle)",
+    "muscle skeletal": "muscle—skeletal"
+  };
+
+  /* ----------------------------
+  🧬 Icons and Glow Colors
+  ---------------------------- */
+  const tissueDropdownIcons = {
+    "Lung": "/static/icons/tissues/lung.svg",
+    "Heart (Atrial Appendage)": "/static/icons/tissues/heart-atrial.svg",
+    "Heart (Left Ventricle)": "/static/icons/tissues/heart-ventricle.svg",
+    "Muscle—Skeletal": "/static/icons/tissues/muscle.svg",
+    "Whole Blood": "/static/icons/tissues/blood.svg",
+    "Thyroid": "/static/icons/tissues/thyroid.svg",
+    "Colon—Sigmoid": "/static/icons/tissues/colon-sigmoid.svg",
+    "Colon—Transverse": "/static/icons/tissues/colon-transverse.svg",
+    "Pancreas": "/static/icons/tissues/pancreas.svg",
+    "Stomach": "/static/icons/tissues/stomach.svg"
+  };
+
+  const tissueGlow = {
+    "Lung": "34,211,238",
+    "Heart (Atrial Appendage)": "251,113,133",
+    "Heart (Left Ventricle)": "56,189,248",
+    "Muscle—Skeletal": "251,191,36",
+    "Whole Blood": "239,68,68",
+    "Thyroid": "168,85,247",
+    "Colon—Sigmoid": "163,230,53",
+    "Colon—Transverse": "52,211,153",
+    "Pancreas": "250,204,21",
+    "Stomach": "251,146,60"
+  };
+
+  /* ----------------------------
+  🧩 Reusable matching helper
+  ---------------------------- */
+  function getMatchedKey(rawName) {
+    let clean = normalizeName(rawName);
+    if (tissueMapAliases[clean]) {
+      clean = normalizeName(tissueMapAliases[clean]);
+    }
+    const matchKey = Object.keys(tissueIcons).find(
+      k => normalizeName(k) === clean
+    );
+    return matchKey || "Pancreas";
+  }
+
+  // 🔹 Renders inline SVGs in white with soft glow
+  async function getIconHTML(dbValue) {
+    const key = getMatchedKey(dbValue);
+    const src = tissueDropdownIcons[key];
+    const glow = tissueGlow[key];
+
+    try {
+      const res = await fetch(src);
+      const svgText = await res.text();
+      return `
+        <span class="w-5 h-5 inline-block"
+              style="color: white; 
+                    filter: drop-shadow(0 0 6px rgba(${glow},0.6)); 
+                    vertical-align: middle;">
+          ${svgText.replace(/fill="[^"]*"/g, 'fill="currentColor"')}
+        </span>`;
+    } catch {
+      return `<img src="/static/icons/tissues/pancreas.svg" 
+                  class="w-5 h-5" 
+                  style="filter: drop-shadow(0 0 6px rgba(250,204,21,0.5));" 
+                  alt="fallback">`;
+    }
+  }
+
+  /* ----------------------------
+🧬 Tissue Dropdown Setup
+---------------------------- */
+async function populateDropdown() {
+  try {
+    const res = await fetch("/api/eliah/tissues");
+    const data = await res.json();
+
+    // 🧩 Build dropdown buttons (no feather checkmarks)
+    const buttonHTML = await Promise.all(
+      data.map(async (t) => {
+        const key = getMatchedKey(t.tissue);
+        const label = key.replace(/_/g, " ");
+        const iconHTML = await getIconHTML(t.tissue);
+
+        return `
+          <button class="flex items-center w-full text-left px-3 py-2 text-gray-300 
+                         hover:bg-slate-800 hover:text-amber-300 transition group"
+                  data-tissue="${t.tissue}">
+            <span class="flex items-center gap-2">
+              ${iconHTML}
+              <span>${label}</span>
+            </span>
+          </button>`;
+      })
+    );
+
+    // 🧠 Inject buttons
+    tissueDropdown.innerHTML = buttonHTML.join("");
+
+    // 🪶 Refresh Feather icons (only for any remaining non-check icons elsewhere)
+    feather.replace();
+
+    // 🎯 Click listeners
+    tissueDropdown.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const tissue = btn.dataset.tissue;
+        currentTissue = tissue;
+
+        // Replace dropdown label with icon + name
+        const iconHTML = await getIconHTML(tissue);
+        selectedLabel.innerHTML = `${iconHTML} <span>${getMatchedKey(tissue)}</span>`;
+
+        // Update hidden select and close dropdown
+        hiddenSelect.value = tissue;
+        tissueDropdown.classList.add("hidden");
+
+        // Trigger the filter refresh
+        if (applyBtn) applyBtn.click();
+      });
+    });
+
+  } catch (err) {
+    console.error("⚠️ Failed to populate tissue dropdown:", err);
+    tissueDropdown.innerHTML = `
+      <div class="px-3 py-2 text-red-400 italic">Error loading tissues.</div>`;
+  }
+}
+
+/* ----------------------------
+🧭 Dropdown Toggle Behavior
+---------------------------- */
+tissueBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  tissueDropdown.classList.toggle("hidden");
+});
+
+// Prevent closing when clicking inside the dropdown
+tissueDropdown.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+// Close dropdown if clicking anywhere else on page
+document.addEventListener("click", (e) => {
+  if (!tissueDropdown.contains(e.target) && !tissueBtn.contains(e.target)) {
+    tissueDropdown.classList.add("hidden");
+  }
+});
+
+/* ----------------------------
+🚀 Initialize on load
+---------------------------- */
+populateDropdown();
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  // 1️⃣ Wait until Feather icons are replaced
+  feather.replace();
+
+  // 2️⃣ Wait just a bit to ensure DOM + SVGs are ready
+  setTimeout(() => {
+    console.log("🔍 Wrapping info icons and enabling tooltip debug...");
+
+    const icons = document.querySelectorAll('#expression [data-feather="info"][title], #search [data-feather="info"][title]');
+
+    console.log(`Found ${icons.length} info icons to wrap`);
+
+    icons.forEach(icon => {
+      const title = icon.getAttribute("title");
+      icon.removeAttribute("title");
+
+      const wrapper = document.createElement("span");
+      wrapper.className = "relative group cursor-help inline-flex items-center";
+
+      const tooltip = document.createElement("span");
+      tooltip.className = "tooltip";
+      tooltip.textContent = title;
+
+      icon.parentNode.insertBefore(wrapper, icon);
+      wrapper.appendChild(icon);
+      wrapper.appendChild(tooltip);
+
+      wrapper.addEventListener("mouseenter", () =>
+        console.log("🟡 Tooltip hover triggered for:", title)
+      );
+      wrapper.addEventListener("mouseleave", () =>
+        console.log("⚪ Tooltip hover ended for:", title)
+      );
+    });
+
+    console.log("✅ Tooltip wrapping complete!");
+  }, 800);
+});
+</script>
+
+
+
+
+
+
+
+
+
+<style>
+/* =========================================================
+🌟 E3 Ligase Atlas — Unified Visual Theme
+========================================================= */
+
+/* ======================
+🔸 Global Tab Buttons
+====================== */
+.tab-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgb(51, 65, 85);
+  border-radius: 0.375rem;
+  background-color: rgba(15, 23, 42, 0.6);
+  color: rgb(226, 232, 240);
+  transition: all 0.2s ease-in-out;
+}
+.tab-btn:hover {
+  background-color: rgba(30, 41, 59, 0.9);
+}
+.tab-btn.active {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgb(251, 191, 36);
+  color: rgb(253, 224, 71);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+}
+
+/* ======================
+🔸 Tissue Selector Buttons
+====================== */
+.tissue-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(51, 65, 85);
+  background: rgba(30, 41, 59, 0.6);
+  color: #d1d5db;
+  backdrop-filter: blur(8px);
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+.tissue-btn:hover {
+  color: rgb(251, 191, 36);
+  border-color: rgb(251, 191, 36);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+.tissue-btn.active {
+  background: linear-gradient(135deg,
+    rgba(251, 191, 36, 0.15),
+    rgba(59, 130, 246, 0.15));
+  border-color: rgb(251, 191, 36);
+  color: rgb(255, 251, 235);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  transform: scale(0.98);
+}
+
+
+
+/* ======================
+🔸 Tissue Grid Icons
+====================== */
+#tissueGrid svg {
+  transition: transform 0.25s ease, filter 0.25s ease;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.15));
+}
+#tissueGrid svg:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 14px currentColor);
+}
+#tissueGrid > div {
+  position: relative;
+  cursor: pointer;
+}
+#tissueGrid > div.ring-2 {
+  outline: 2px solid rgba(251, 191, 36, 0.7);
+  border-radius: 9999px;
+  transform: scale(1.05);
+}
+
+/* ======================
+🔸 Plot Container & Overlay
+====================== */
+#tissuePlotContainer {
+  transition: opacity 0.3s ease-in-out;
+  position: relative;
+}
+#tissuePlotInner {
+  min-height: 520px;
+  height: 520px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.4);
+  transition: opacity 0.3s ease-in-out;
+  overflow: hidden;
+}
+#tissueOverlay {
+  transition: opacity 0.4s ease-in-out;
+  z-index: 20;
+}
+
+/* ======================
+🔸 Search Results Table
+====================== */
+#searchResultsTable {
+  transition: opacity 0.3s ease-in-out;
+}
+#searchResultsTable tr:hover {
+  background-color: rgba(255, 200, 0, 0.2) !important;
+  transition: background 0.15s ease;
+}
+#searchResultsTable th,
+#searchResultsTable td {
+  white-space: nowrap;
+}
+
+/* ======================
+🔸 Autocomplete Dropdown
+====================== */
+#autocompleteList {
+  background-color: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(6px);
+}
+#autocompleteList li {
+  border-bottom: 1px solid rgba(100, 100, 100, 0.2);
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+#autocompleteList li:last-child {
+  border-bottom: none;
+}
+#autocompleteList li:hover {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+/* ======================
+🔸 Fade + Transitions
+====================== */
+.fade-section {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+🌈 Tissue Dropdown — Consistent Color, Size & Width
+========================================================= */
+
+#tissueDropdown {
+  position: absolute;
+  inset-inline-start: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 0 18px rgba(56, 189, 248, 0.25),
+    0 0 28px rgba(250, 204, 21, 0.12);
+  width: 14rem;                    /* matches .w-56 button width */
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 0.25rem 0;
+  color: #e5e7eb;                  /* ensures SVGs use same color */
+}
+
+/* Each tissue button row */
+#tissueDropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, filter 0.15s ease;
+}
+
+#tissueDropdown button:hover {
+  background: rgba(251, 191, 36, 0.1);
+  color: rgb(251, 191, 36);
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.35));
+}
+
+/* Inline icons (dropdown & selected label) */
+#tissueDropdown button span svg,
+#tissueDropdown button span img,
+#selectedTissueLabel svg,
+#selectedTissueLabel img {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  display: inline-block;
+  filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+}
+
+/* Label text */
+#tissueDropdown button span:last-child {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Scrollbar glow */
+#tissueDropdown::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    rgba(250,204,21,0.9) 0%,
+    rgba(56,189,248,0.9) 100%);
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(250,204,21,0.3);
+}
+
+
+/* =========================================================
+🪶 Tooltip Styling
+========================================================= */
+.tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  margin-bottom: 0.5rem;
+  background: rgba(15, 23, 42, 0.95);
+  color: #d1d5db;
+  font-size: 10px;
+  font-weight: 400;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  z-index: 50;
+  pointer-events: none;
+  transition: opacity 0.15s ease-in-out;
+}
+.group:hover .tooltip {
+  opacity: 1;
+}
+.tooltip.pinned {
+  opacity: 1 !important;
+  pointer-events: all;
+}
+
+#expressionResultsWrapper {
+  position: relative;
+  z-index: 15;              /* keep this low so dropdown/tooltips can stack above */
+  overflow-y: auto;         /* re-enable vertical scrolling */
+  overflow-x: hidden;
+  max-height: 420px;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 12px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(251, 191, 36, 0.05);
+}
+
+
+
+.group {
+  pointer-events: none;
+}
+.group > * {
+  pointer-events: auto;
+}
+
+
+/* =========================================================
+📊 Expression Results Table — Scrollable, Clean Layout
+========================================================= */
+
+#expressionResultsWrapper {
+  max-height: 420px;                     /* Limit height */
+  overflow-y: auto;                      /* Enable vertical scroll */
+  overflow-x: hidden;                    /* Prevent sideways scroll */
+  border-radius: 0.5rem;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 12px rgba(0, 0, 0, 0.4),
+    0 0 18px rgba(251, 191, 36, 0.05);
+  margin-top: 0.5rem;
+  position: relative;
+  z-index: 15;
+}
+
+/* Make the table fill the wrapper */
+#expressionResultsWrapper table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Sticky table header for scrollable content */
+#expressionResultsWrapper thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(251, 191, 36, 0.25);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Zebra striping for clarity */
+#expressionResultsWrapper tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Hover highlight */
+#expressionResultsWrapper tbody tr:hover {
+  background: rgba(251, 191, 36, 0.08);
+  transition: background 0.15s ease;
+}
+
+/* Tighten cell padding a little */
+#expressionResultsWrapper td {
+  padding: 0.5rem 0.75rem;
+  vertical-align: middle;
+}
+
+/* Nice glowing scrollbar */
+#expressionResultsWrapper::-webkit-scrollbar {
+  width: 10px;
+}
+#expressionResultsWrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    rgba(250, 204, 21, 0.9) 0%,
+    rgba(56, 189, 248, 0.9) 100%);
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+
+/* =========================================================
+🧩 Unified Hover Zone for Download Cards
+========================================================= */
+.download-card {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  position: relative;
+}
+
+.download-card:hover {
+  background: rgba(251, 191, 36, 0.05);
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.1);
+}
+
+.download-card:hover h3 {
+  color: rgb(253, 224, 71);
+  text-shadow: 0 0 5px rgba(251, 191, 36, 0.4);
+}
+
+.download-card i {
+  pointer-events: none; /* 👈 critical fix — makes the icon part of the hover zone */
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.download-card:hover i {
+  transform: translateY(-2px);
+  color: rgb(251, 191, 36);
+}
+
+
+/* =========================================================
+🌟 ABOUT SECTION — ELiAH Credit & Tool Links
+========================================================= */
+
+.eliah-link-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.9);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #d1d5db;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0);
+}
+
+.eliah-link-card:hover {
+  border-color: rgba(251, 191, 36, 0.6);
+  background: rgba(251, 191, 36, 0.05);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.1);
+  color: rgb(253, 224, 71);
+}
+
+.eliah-link-card:hover i {
+  transform: scale(1.1);
+  color: rgb(251, 191, 36);
+}
+
+.eliah-link-card i {
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+
+
+</style>
+
+
+
+{% endblock %}

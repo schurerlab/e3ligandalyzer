@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block title %}Scaffold {{ scaffold.Scaffold_ID }} — E3 Ligase Atlas{% endblock %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto px-6 md:px-12 py-10">
+
+  <!-- Header -->
+  <div class="mb-8 text-center">
+    <h1 class="text-4xl font-bold text-amber-400 tracking-tight">
+      Scaffold: {{ scaffold.Scaffold_ID }}
+    </h1>
+    <p class="text-gray-400 mt-2">
+      Shared chemical scaffold linking multiple recruiter molecules.
+    </p>
+  </div>
+
+  <!-- Scaffold Visualization -->
+  <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-xl mb-10">
+    <h2 class="text-xl font-semibold text-white mb-4">Scaffold Structure</h2>
+
+    <div id="scaffold-2d-box"
+         class="bg-slate-800 border border-slate-700 rounded-lg p-4 flex items-center justify-center h-[320px]">
+      <span class="text-gray-500 text-sm">Rendering scaffold…</span>
+    </div>
+
+    <div class="mt-5 bg-slate-800/60 rounded-lg p-3 border border-slate-700 flex items-center justify-between">
+      <div class="text-gray-300 text-sm">
+        <span class="text-gray-400">SMILES:</span> {{ scaffold.Scaffold_SMILES }}
+      </div>
+
+      <button onclick="copyScaffoldSmiles('{{ scaffold.Scaffold_SMILES }}')"
+              class="px-3 py-1 rounded bg-sky-600 text-white hover:bg-sky-500 text-xs">
+        Copy
+      </button>
+    </div>
+  </div>
+
+  <!-- Recruiters -->
+  <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-xl">
+    <h2 class="text-xl font-semibold text-white mb-4">Associated Recruiters</h2>
+
+    {% if recruiters %}
+      <table class="min-w-full text-sm text-gray-300">
+        <thead class="border-b border-slate-700 text-gray-400">
+          <tr>
+            <th class="text-left py-2 px-2">Recruiter Code</th>
+            <th class="text-left py-2 px-2">Ligase</th>
+            <th class="text-left py-2 px-2">View</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for r in recruiters %}
+          <tr class="border-b border-slate-800 hover:bg-slate-800/60 recruiter-row"
+              data-code="{{ r.RECRUITER_CODE }}">
+            <td class="py-2 px-2 font-mono text-amber-300">{{ r.RECRUITER_CODE }}</td>
+            <td class="py-2 px-2">
+              <span class="px-2 py-1 rounded-full bg-slate-700 text-gray-200">
+                {{ r.Ligase }}
+              </span>
+            </td>
+            <td class="py-2 px-2">
+              <a href="/ligand/{{ r.RECRUITER_CODE }}" class="text-sky-400 hover:text-sky-300">
+                Open →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-gray-400 text-sm">No recruiters found for this scaffold.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Tooltip UI -->
+<div id="mol-tooltip"
+     class="fixed hidden pointer-events-none"
+     style="
+        width: 360px;
+        background: rgba(15,23,42,0.95);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(148,163,184,0.3);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 0 20px rgba(0,200,255,0.25),
+                    0 0 8px rgba(0,200,255,0.30);
+        z-index: 999999;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity .15s ease, transform .15s ease;
+     ">
+  <!-- Molecule Render -->
+  <div id="tooltip-mol-container"
+       class="w-full h-[220px] p-3 rounded-lg bg-slate-800 border border-slate-700 mb-4 flex items-center justify-center">
+      <span class="text-gray-500 text-sm">Loading…</span>
+  </div>
+
+  <!-- Descriptor / Metadata Block -->
+  <div id="mol-tooltip-data"
+       style="font-size: 12px; color:#d1d5db; line-height:1.35;"></div>
+</div>
+
+
+<!-- ========================================================= -->
+<!-- FULL JAVASCRIPT (All fixes included)                      -->
+<!-- ========================================================= -->
+<script>
+
+let activeTooltipCode = null;
+
+/* ======================================================================
+   EXISTING FUNCTIONS (unchanged)
+   ====================================================================== */
+
+function sanitizeSvg(svg) {
+  return svg
+    .replace(/xmlns:xlink="[^"]*"/, "")
+    .replace(/width="[^"]+"/, "")
+    .replace(/height="[^"]+"/, "")
+    .replace(/<rect[^>]*>/gi, "")
+    .replace(/<rect[^>]*<\/rect>/gi, "")
+    .replace("<svg", '<svg preserveAspectRatio="xMidYMid meet" class="w-full h-full"');
+}
+
+
+
+// ---------------------------
+// RECOLOR SVG TO DARK THEME
+// ---------------------------
+function recolorSvg(svgEl) {
+
+  // 1) Bonds — path/line/polyline/polygon
+  svgEl.querySelectorAll("path, line, polyline, polygon").forEach(el => {
+
+    // A) stroke attribute
+    const stroke = el.getAttribute("stroke") || "";
+    if (/^#?000000$/i.test(stroke) || /black/i.test(stroke)) {
+      el.setAttribute("stroke", "#ffffff");
+    }
+
+    // B) stroke in style=""
+    let style = el.getAttribute("style") || "";
+    if (/stroke\s*:\s*(#000000|black)/i.test(style)) {
+      el.setAttribute("style",
+        style.replace(/stroke\s*:\s*(#000000|black)/gi, "stroke:#ffffff")
+      );
+    }
+  });
+
+
+  // 2) Atom labels (text)
+  svgEl.querySelectorAll("text").forEach(t => {
+    const txt = (t.textContent || "").trim();
+
+    if (txt === "C" || txt === "H") {
+      t.setAttribute("fill", "#ffffff");
+      t.setAttribute("stroke", "#ffffff");
+    }
+    if (txt === "N") {
+      t.setAttribute("fill", "#22D3EE");
+      t.setAttribute("stroke", "#22D3EE");
+    }
+    if (txt === "O") {
+      t.setAttribute("fill", "#F87171");
+      t.setAttribute("stroke", "#F87171");
+    }
+  });
+
+
+  // 3) Paths / shapes representing atoms
+  svgEl.querySelectorAll("*").forEach(el => {
+
+  let style  = el.getAttribute("style")  || "";
+  let stroke = el.getAttribute("stroke") || "";
+  let fill   = el.getAttribute("fill")   || "";
+  let combo  = (style + stroke + fill).toLowerCase();
+
+
+  // ---------------------------------------------------
+  // 1) Detect RDKit Nitrogen shades (cyan family)
+  // ---------------------------------------------------
+  // Matches: rgb(20–80, 150–255, 180–255) → bright cyan family
+  if (/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i.test(combo)) {
+    let [_, r, g, b] = combo.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+    r = +r; g = +g; b = +b;
+
+    // Heuristic: nitrogen-like (your #22D3EE)
+    if (r < 80 && g > 140 && b > 150) {
+      el.setAttribute("fill", "#22D3EE");
+      el.setAttribute("stroke", "#22D3EE");
+      return;
+    }
+
+    // Oxygen-like (your coral #F87171)
+    if (r > 180 && g < 120 && b < 120) {
+      el.setAttribute("fill", "#F87171");
+      el.setAttribute("stroke", "#F87171");
+      return;
+    }
+  }
+
+
+  // ---------------------------------------------------
+  // 2) Detect raw hex-like RDKit outputs
+  // ---------------------------------------------------
+  if (/#23cfe9|#21d3ee|#22d3ee/i.test(combo)) {
+    el.setAttribute("fill", "#22D3EE");
+    el.setAttribute("stroke", "#22D3EE");
+    return;
+  }
+
+  if (/#f87171|#f77070|#f55a5a/i.test(combo)) {
+    el.setAttribute("fill", "#F87171");
+    el.setAttribute("stroke", "#F87171");
+    return;
+  }
+
+
+  // ---------------------------------------------------
+  // 3) Catch dark gray/black for carbon & bonds
+  // ---------------------------------------------------
+  if (/rgb\(\s*(0|1|2|3|4|5)\s*,\s*(0|1|2|3|4|5)\s*,\s*(0|1|2|3|4|5)\s*\)/i.test(combo)
+      || /#000000|#111111|#222222|black/.test(combo)) {
+
+    el.setAttribute("stroke", "#ffffff");
+
+    if (!/fill:none/i.test(combo)) {
+      el.setAttribute("fill", "#ffffff");
+    }
+
+    return;
+  }
+
+
+  // ---------------------------------------------------
+  // 4) Keep text cleanup separate (no regex needed)
+  // ---------------------------------------------------
+  if (el.tagName === "text") {
+    const atom = el.textContent.trim();
+
+    if (atom === "C" || atom === "H") {
+      el.setAttribute("fill", "#ffffff");
+      el.setAttribute("stroke", "#ffffff");
+    }
+    if (atom === "N") {
+      el.setAttribute("fill", "#22D3EE");
+      el.setAttribute("stroke", "#22D3EE");
+    }
+    if (atom === "O") {
+      el.setAttribute("fill", "#F87171");
+      el.setAttribute("stroke", "#F87171");
+    }
+  }
+
+});
+
+}
+
+
+/* ======================================================================
+   Scaffold Render (unchanged)
+   ====================================================================== */
+async function renderScaffoldSVG(smiles) {
+  const box = document.getElementById("scaffold-2d-box");
+  box.innerHTML = "<span class='text-gray-500'>Rendering…</span>";
+
+  try {
+    const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
+    let svg = await res.text();
+
+    svg = sanitizeSvg(svg);
+    box.innerHTML = svg;
+
+    const svgEl = box.querySelector("svg");
+    if (!svgEl) {
+      box.innerHTML = "<span class='text-red-400'>Failed to render</span>";
+      return;
+    }
+
+    recolorSvg(svgEl);
+
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = "<span class='text-red-400'>Error rendering molecule</span>";
+  }
+}
+
+function copyScaffoldSmiles(smiles) {
+  navigator.clipboard.writeText(smiles);
+  alert("SMILES copied!");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const smiles = `{{ scaffold.Scaffold_SMILES }}`;
+  if (smiles) renderScaffoldSVG(smiles);
+});
+
+
+
+
+/* -----------------------------------------------------------
+   FETCH TOOLTIP DATA (YOUR NEW BACKEND)
+----------------------------------------------------------- */
+async function fetchTooltipData(code) {
+  const res = await fetch(`/api/tooltip/all/${code}`);
+  return await res.json();
+}
+
+
+/* -----------------------------------------------------------
+   MOLECULE RENDER IN TOOLTIP
+----------------------------------------------------------- */
+async function renderTooltipMolecule(smiles) {
+  const box = document.getElementById("tooltip-mol-container");
+  if (!smiles) {
+    box.innerHTML = `<div class="text-gray-500 text-sm">No SMILES available</div>`;
+    return;
+  }
+
+  box.innerHTML = `<div class="text-gray-500 text-sm">Rendering…</div>`;
+
+  try {
+    const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
+    let svg = await res.text();
+    svg = sanitizeSvg(svg);
+    box.innerHTML = svg;
+
+    const svgEl = box.querySelector("svg");
+    if (svgEl) recolorSvg(svgEl);
+
+  } catch (err) {
+    console.error(err);
+    box.innerHTML = `<div class="text-red-400 text-sm">Render error</div>`;
+  }
+}
+
+
+/* -----------------------------------------------------------
+   FILL TOOLTIP TEXT
+----------------------------------------------------------- */
+function fillTooltipData(desc, meta) {
+  const box = document.getElementById("mol-tooltip-data");
+  desc = desc || {};
+  meta = meta || {};
+
+  box.innerHTML = `
+    <div><span class="text-amber-300">Recruiter Code:</span> ${activeTooltipCode}</div>
+    <div><span class="text-amber-300">Name:</span> ${meta.Name ?? "Unknown"}</div>
+    <div><span class="text-amber-300">Formula:</span> ${meta.Formula ?? "—"}</div>
+    <div><span class="text-amber-300">Type:</span> ${meta.Type ?? "—"}</div>
+
+    <hr class="border-slate-700 my-2">
+
+    <div><span class="text-amber-300">MW:</span> ${desc.MW ?? "—"}</div>
+    <div><span class="text-amber-300">LogP:</span> ${desc.LogP ?? "—"}</div>
+    <div><span class="text-amber-300">TPSA:</span> ${desc.TPSA ?? "—"}</div>
+    <div><span class="text-amber-300">HBA/HBD:</span> ${desc.HBA ?? "—"} / ${desc.HBD ?? "—"}</div>
+    <div><span class="text-amber-300">Rings:</span> ${desc.Ring_Count ?? "—"}</div>
+    <div><span class="text-amber-300">QED:</span> ${desc.QED ?? "—"}</div>
+
+    <hr class="border-slate-700 my-2">
+
+    <div><span class="text-amber-300">Lipinski:</span>
+      ${desc.Lipinski_Pass ? "✓" : "✗"}
+    </div>
+  `;
+}
+
+
+/* -----------------------------------------------------------
+   POSITION TOOLTIP (viewport-safe)
+----------------------------------------------------------- */
+function positionTooltip(e) {
+  const tip = document.getElementById("mol-tooltip");
+
+  const w = tip.offsetWidth;
+  const h = tip.offsetHeight;
+
+  let x = e.clientX + 18;
+  let y = e.clientY + 18;
+
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  if (x + w > vw - 20) x = vw - w - 20;
+  if (y + h > vh - 20) y = vh - h - 20;
+
+  tip.style.left = `${x}px`;
+  tip.style.top  = `${y}px`;
+}
+
+
+/* -----------------------------------------------------------
+   HOVER BINDINGS — FIXED VERSION
+----------------------------------------------------------- */
+document.querySelectorAll(".recruiter-row").forEach(row => {
+
+  row.addEventListener("mouseenter", async (e) => {
+    const code = row.dataset.code;
+    activeTooltipCode = code;
+
+    const tip = document.getElementById("mol-tooltip");
+    tip.classList.remove("hidden");
+    tip.style.opacity = "1";
+
+    const data = await fetchTooltipData(code);
+
+    if (activeTooltipCode !== code) return;  
+
+    fillTooltipData(data.descriptors, data.metadata);
+    await renderTooltipMolecule(data.smiles);
+
+    positionTooltip(e);
+  });
+
+  row.addEventListener("mousemove", e => {
+    if (activeTooltipCode === row.dataset.code) positionTooltip(e);
+  });
+
+  row.addEventListener("mouseleave", (e) => {
+    // If moving INTO another recruiter-row → DO NOT HIDE
+    const toElement = e.relatedTarget;
+    if (toElement && toElement.closest(".recruiter-row")) return;
+
+    // Otherwise hide normally
+    const tip = document.getElementById("mol-tooltip");
+    activeTooltipCode = null;
+    tip.style.opacity = "0";
+    setTimeout(() => tip.classList.add("hidden"), 150);
+  });
+
+
+});
+
+</script>
+
+{% endblock %}

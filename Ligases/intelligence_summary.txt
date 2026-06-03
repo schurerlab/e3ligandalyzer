@@ -1,0 +1,55 @@
+================================================================================
+LIGASE RECRUITER INTELLIGENCE MAP - SUMMARY REPORT
+Generated: 2026-04-14 23:37:50
+================================================================================
+
+Total Ligases Analyzed: 14
+Total PDB Structures: 655
+Total SDF Ligands: 623
+
+READINESS DISTRIBUTION:
+  PRECLINICAL     :  5 ligases
+  RESEARCH        :  3 ligases
+  CLINICAL        :  2 ligases
+  EXPLORATORY     :  2 ligases
+  NASCENT         :  2 ligases
+
+================================================================================
+TOP 5 PROTAC EXPANSION OPPORTUNITIES
+================================================================================
+
+1. CRBN
+   Feasibility Score: 18.0
+   Readiness: CLINICAL
+   Expansion Priority: MAINTAIN
+   Recommendation: MAINTAIN_CURRENT
+   Rationale: Well-established; continue current development trajectory
+
+2. VHL
+   Feasibility Score: 18.0
+   Readiness: CLINICAL
+   Expansion Priority: MAINTAIN
+   Recommendation: MAINTAIN_CURRENT
+   Rationale: Well-established; continue current development trajectory
+
+3. MDM2
+   Feasibility Score: 16.0
+   Readiness: PRECLINICAL
+   Expansion Priority: MAINTAIN
+   Recommendation: MAINTAIN_CURRENT
+   Rationale: Well-established; continue current development trajectory
+
+4. TRIM21
+   Feasibility Score: 16.0
+   Readiness: PRECLINICAL
+   Expansion Priority: MAINTAIN
+   Recommendation: MAINTAIN_CURRENT
+   Rationale: Well-established; continue current development trajectory
+
+5. XIAP
+   Feasibility Score: 15.0
+   Readiness: PRECLINICAL
+   Expansion Priority: MAINTAIN
+   Recommendation: MAINTAIN_CURRENT
+   Rationale: Well-established; continue current development trajectory
+

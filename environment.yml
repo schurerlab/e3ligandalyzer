@@ -1,0 +1,13 @@
+name: e3ligandalyzer
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - flask
+  - gunicorn
+  - pandas
+  - numpy
+  - rdkit
+  - biopython
+  - sqlalchemy
+  - matplotlib

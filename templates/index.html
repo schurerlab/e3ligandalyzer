@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+{% block title %}E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="text-center mb-12">
+  <h1 class="text-4xl font-bold mb-4 text-sky-300">E3 Recruiter Builder</h1>
+  <p class="text-silver-300 text-lg max-w-2xl mx-auto">
+    Design and explore E3 ligase recruiter compounds with intuitive visualization tools.
+  </p>
+</div>
+
+<!-- Filters Section -->
+<div class="bg-slate-900 p-6 rounded-lg mb-10">
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Ligase</label>
+      <select id="ligase-filter" class="w-full p-2 rounded bg-slate-800 text-gray-200"></select>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Scaffold Class</label>
+      <select id="scaffold-filter" class="w-full p-2 rounded bg-slate-800 text-gray-200"></select>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Recruiter Class</label>
+      <select id="recruiter-filter" class="w-full p-2 rounded bg-slate-800 text-gray-200"></select>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1 flex items-center gap-1">
+        Min QED
+        <span class="relative group cursor-help">
+          <i data-feather="info" class="w-3 h-3 text-sky-400"></i>
+          <span class="absolute left-4 top-[-5px] hidden group-hover:block bg-slate-800 text-gray-300 text-xs rounded px-2 py-1 w-56 z-50">
+            <strong>QED</strong> — Quantitative Estimate of Drug-likeness (0–1). Combines key physicochemical metrics.
+          </span>
+        </span>
+      </label>
+      <input id="min-qed" type="number" step="0.05" min="0" max="1" value="0.6" class="w-full p-2 rounded bg-slate-800 text-gray-200">
+    </div>
+
+    <div>
+      <button id="apply-filters" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2 px-4 rounded transition">
+        Apply Filters
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Two-column layout -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <!-- Left Ligand Preview -->
+  <div id="ligand-preview" class="bg-slate-900 rounded-lg p-8 flex flex-col items-center justify-center hidden">
+    <div id="ligand-svg" class="w-full flex items-center justify-center mb-6"></div>
+    <div id="ligand-name" class="text-center text-sky-300 font-semibold"></div>
+  </div>
+
+  <!-- Right Plot -->
+  <div class="bg-slate-900 rounded-lg p-8 col-span-1 lg:col-span-1">
+    <h2 class="text-2xl font-semibold mb-6">Featured Recruiters</h2>
+    <div id="featured-recruiters-chart" class="h-[85vh] min-h-[650px]"></div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+feather.replace();
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await populateFilters();
+  await loadFeaturedRecruiters();
+  document.getElementById("apply-filters").addEventListener("click", loadFeaturedRecruiters);
+});
+
+async function populateFilters() {
+  try {
+    const ligaseSel = document.getElementById("ligase-filter");
+    const scafSel = document.getElementById("scaffold-filter");
+    const recSel = document.getElementById("recruiter-filter");
+
+    const [ligases, scafs, recs] = await Promise.all([
+      fetch("/api/ligases").then(r => r.json()),
+      fetch("/api/scaffold-class-summary").then(r => r.json()),
+      fetch("/api/recruiter-class-summary").then(r => r.json())
+    ]);
+
+    ligaseSel.innerHTML = `<option value="">All</option>` + ligases.map(l => `<option value="${l}">${l}</option>`).join("");
+    scafSel.innerHTML = `<option value="">All</option>` +
+      [...new Set(scafs.map(s => s.Scaffold_Class))].filter(Boolean)
+        .map(s => `<option value="${s}">${s}</option>`).join("");
+    recSel.innerHTML = `<option value="">All</option>` +
+      [...new Set(recs.map(r => r.Recruiter_Class))].filter(Boolean)
+        .map(r => `<option value="${r}">${r}</option>`).join("");
+  } catch (err) {
+    console.error("Error populating filters:", err);
+  }
+}
+
+async function loadFeaturedRecruiters() {
+  try {
+    const ligase = document.getElementById("ligase-filter").value;
+    const scaffold_class = document.getElementById("scaffold-filter").value;
+    const recruiter_class = document.getElementById("recruiter-filter").value;
+    const min_qed = document.getElementById("min-qed").value;
+
+    const params = new URLSearchParams({
+      ligase,
+      scaffold_class,
+      recruiter_class,
+      min_qed,
+      limit: 1000
+    });
+
+    const res = await fetch(`/api/featured-recruiters?${params}`);
+    if (!res.ok) throw new Error("Failed to fetch recruiters");
+
+    let recruiters = await res.json();
+    recruiters = recruiters.filter(r => r.Ligase && r.Ligase !== "Unknown Ligase");
+
+    const processed = recruiters.map(r => ({
+      recruiterCode: r.RECRUITER_CODE || "Unknown",
+      ligase: r.Ligase || "Unknown",
+      logP: parseFloat(r.LogP) || 0,
+      mw: parseFloat(r.MW) || 0,
+      qed: parseFloat(r.QED) || 0,
+      scaffold_class: r.Scaffold_Class || "N/A",
+      recruiter_class: r.Recruiter_Class || "N/A",
+      percent_exposed: r.Percent_Exposed || 0,
+      percent_buried: r.Percent_Buried || 0,
+      smiles: r.SMILES || ""
+    }));
+
+    // 🚀 all files are now valid — no filtering needed
+    renderRecruiterPlot(processed);
+
+  } catch (err) {
+    console.error("Error loading featured recruiters:", err);
+  }
+}
+
+
+function renderRecruiterPlot(processed) {
+  const grouped = {};
+  processed.forEach(d => {
+    if (!grouped[d.ligase]) grouped[d.ligase] = [];
+    grouped[d.ligase].push(d);
+  });
+
+  const ligaseColors = {
+    "CRBN": "#3B82F6", "DCAF1": "#8B5CF6", "DCAF15": "#A855F7",
+    "VHL": "#10B981", "MDM2": "#EF4444", "XIAP": "#F59E0B",
+    "cIAP1": "#EC4899", "cIAP2": "#FB7185", "KEAP1": "#06B6D4",
+    "PARKIN": "#F472B6", "TRIM21": "#84CC16", "HUWE1": "#EAB308"
+  };
+
+  const data = Object.entries(grouped).map(([lig, arr]) => ({
+    type: "scatter3d",
+    mode: "markers",
+    name: lig,
+    x: arr.map(d => d.logP),
+    y: arr.map(d => d.mw),
+    z: arr.map(d => d.qed),
+    text: arr.map(d => d.recruiterCode),
+    customdata: arr.map(d => [
+      d.ligase, d.scaffold_class, d.recruiter_class,
+      d.percent_exposed, d.percent_buried, d.smiles
+    ]),
+    hovertemplate: `
+      <b>%{text}</b><br>
+      Ligase: %{customdata[0]}<br>
+      MW: %{y:.1f} g/mol<br>
+      LogP: %{x:.2f}<br>
+      QED: %{z:.2f}<br>
+      Scaffold: %{customdata[1]}<br>
+      Recruiter Class: %{customdata[2]}<br>
+      Exposed: %{customdata[3]}% | Buried: %{customdata[4]}%<extra></extra>
+    `,
+    marker: {
+      size: 8,
+      color: ligaseColors[lig] || "#999",
+      opacity: 0.9,
+      line: { width: 0.5, color: "#000" }
+    }
+  }));
+
+  const layout = {
+    scene: {
+      xaxis: { title: "LogP", color: "#ccc" },
+      yaxis: { title: "MW (g/mol)", color: "#ccc" },
+      zaxis: { title: "QED Score", color: "#ccc" },
+      aspectmode: "manual",   // allow vertical stretching
+      aspectratio: { x: 1, y: 1.2, z: 0.9 } // taller Y axis look
+    },
+    autosize: true,
+    margin: { l: 10, r: 10, t: 40, b: 180, pad: 10 },
+    height: window.innerHeight * 0.75, // dynamic based on viewport
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    legend: {
+      title: { text: "Ligase" },
+      font: { color: "#ddd", size: 12 },
+      bgcolor: "rgba(0,0,0,0)",
+      orientation: "h",
+      xanchor: "center",
+      x: 0.5,
+      yanchor: "top",
+      y: -0.35,
+      traceorder: "normal",
+      itemwidth: 70,
+      valign: "middle"
+    },
+  };
+
+  const config = {
+    responsive: true,
+    displaylogo: false,
+    modeBar: { remove: ["autoScale2d", "resetScale2d"] }
+  };
+
+  const chart = document.getElementById("featured-recruiters-chart");
+  Plotly.newPlot(chart, data, layout, config);
+
+  // 🌟 Random initial recruiter render
+  const randomLigand = processed[Math.floor(Math.random() * processed.length)];
+  showLigandPreview(randomLigand.recruiterCode, randomLigand.smiles, randomLigand.ligase);
+  glowDot(chart, randomLigand.recruiterCode);
+
+  // 🕐 Hover logic: wait 1s to render SVG
+  let hoverTimer = null;
+  let lastHovered = null;
+
+    chart.on("plotly_hover", evt => {
+      const pt = evt.points[0];
+      const code = pt.text;
+      const smiles = pt.customdata[5];
+      const lig = pt.customdata[0];
+
+      if (lastHovered === code) return;
+      clearTimeout(hoverTimer);
+
+      hoverTimer = setTimeout(() => {
+        lastHovered = code;
+        showLigandPreview(code, smiles, lig);
+        glowDot(chart, code);
+      }, 1000);
+    });
+
+    chart.on("plotly_unhover", () => clearTimeout(hoverTimer));
+
+    // 🖱️ Click → open detailed page
+    chart.on("plotly_click", evt => {
+      const pt = evt.points[0];
+      const code = pt.text;
+      if (code) {
+        window.open(`/ligand/${encodeURIComponent(code)}`, "_blank");
+      }
+    });
+  }
+
+
+
+
+async function showLigandPreview(code, smiles, lig) {
+  const preview = document.getElementById("ligand-preview");
+  const svgContainer = document.getElementById("ligand-svg");
+  const nameContainer = document.getElementById("ligand-name");
+  preview.classList.remove("hidden");
+
+  svgContainer.innerHTML = `<div class="text-gray-400 text-sm mb-1">Rendering ${code}...</div>`;
+  nameContainer.textContent = "";
+
+  try {
+    const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
+    let svg = await res.text();
+
+    // 🧬 Strip RDKit's hardcoded sizing and recolor for dark mode
+    svg = svg
+      .replace(/width="[^"]+"/, "")
+      .replace(/height="[^"]+"/, "")
+      .replace(/xmlns:xlink="[^"]*"/, "")
+      .replace(/viewBox="[^"]+"/, 'viewBox="0 0 300 300"')
+      .replace(/<svg/, '<svg preserveAspectRatio="xMidYMid meet" class="w-full h-full"')
+      // 🎨 Recolor bonds & hydrogens for dark background
+      .replace(/#000000|black/g, "#ffffff")   // bonds & hydrogens → white
+      .replace(/#0000FF|rgb\(0,0,255\)/g, "#22D3EE") // nitrogens → cyan-blue (sky-400)
+      .replace(/#FF0000|rgb\(255,0,0\)/g, "#F87171") // oxygens → softer coral red (optional)
+      .replace(/#FFFFFF/g, "#0f172a");        // background → dark base
+
+
+    // 🧭 Center & scale up molecule to nearly fill the card
+    svgContainer.innerHTML = `
+      <div class="w-full h-[600px] flex justify-center items-center">
+        <div class="w-[90%] h-[90%] flex justify-center items-center bg-slate-800/70 rounded-2xl p-4 shadow-[0_0_25px_rgba(56,189,248,0.35)]">
+          ${svg.replace(/#FFFFFF|white/g, '#0f172a')}
+        </div>
+      </div>
+    `;
+
+    
+
+    nameContainer.innerHTML = `
+      <div class="text-sky-300 text-2xl font-extrabold tracking-widest uppercase mt-6
+                  drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]">
+        ${code} – ${lig}
+      </div>
+    `;
+
+  } catch {
+    svgContainer.innerHTML = `<div class="text-red-500 text-sm">Failed to render ${code}</div>`;
+  }
+}
+
+
+
+function glowDot(chart, code) {
+  Plotly.restyle(chart, {
+    "marker.line.color": "gold",
+    "marker.line.width": 2
+  });
+}
+</script>
+{% endblock %}

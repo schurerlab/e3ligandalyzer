@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Missing Datapiece 🧩{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center h-screen text-center text-slate-200 bg-slate-950">
+  <h1 class="text-5xl font-bold text-sky-400 mb-4">Oops — Missing Datapiece 🧩</h1>
+
+  <p class="text-gray-400 mb-4 max-w-lg">
+    Like Miami traffic and roadwork, we’re <span class="text-sky-300">always under construction</span> —
+    looks like this recruiter or structure is still finding its way home.
+  </p>
+
+  <div id="missingDetails"
+       class="bg-slate-800/70 border border-slate-700 rounded-lg px-5 py-3 mb-4 text-sm text-sky-300 font-mono hidden">
+    Loading missing details...
+  </div>
+
+  <div class="bg-slate-900/60 border border-slate-800 rounded-lg px-5 py-3 mb-4 text-xs text-gray-300 max-w-lg break-words hidden"
+       id="copyBox">
+    <p><strong>Missing Report:</strong></p>
+    <pre id="reportText" class="whitespace-pre-wrap"></pre>
+    <button id="copyButton"
+            class="mt-2 px-3 py-1 bg-sky-700 hover:bg-sky-600 rounded text-white text-xs">
+      📋 Copy Report
+    </button>
+  </div>
+
+  <p class="text-gray-400 mb-6">
+    If you think this data should exist, send this report to
+    <a href="mailto:{{ SUPPORT_EMAIL }}" class="text-sky-400 underline">{{ SUPPORT_EMAIL }}</a>.
+  </p>
+
+  <a href="/" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 rounded text-white">
+    🏠 Return to Dashboard
+  </a>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const detailsDiv = document.getElementById("missingDetails");
+  const copyBox = document.getElementById("copyBox");
+  const reportText = document.getElementById("reportText");
+
+  if (params.size > 0) {
+    const pdb = params.get("pdb") || "N/A";
+    const ligand = params.get("ligand") || "N/A";
+    let variant = params.get("variant");
+
+    // 🧩 Infer variant from PDB file pattern if not provided
+    if (!variant || variant.trim() === "") {
+      const variantMatch = pdb.match(/_(\d+)\.pdb$/i);
+      variant = variantMatch ? variantMatch[1] : "1"; // default variant 1
+    }
+
+    const readable = `PDB: ${pdb} · LIGAND: ${ligand} · VARIANT: ${variant}`;
+    detailsDiv.textContent = `Missing Context → ${readable}`;
+    detailsDiv.classList.remove("hidden");
+
+    const timestamp = new Date().toLocaleString();
+    const report = `🚨 Missing Data Event
+Time: ${timestamp}
+URL: ${window.location.href}
+Details: ${readable}
+
+User Agent: ${navigator.userAgent}`;
+    reportText.textContent = report;
+    copyBox.classList.remove("hidden");
+
+    // 📋 Copy to clipboard
+    document.getElementById("copyButton").onclick = () => {
+      navigator.clipboard.writeText(report);
+      const btn = document.getElementById("copyButton");
+      btn.textContent = "✅ Copied!";
+      setTimeout(() => (btn.textContent = "📋 Copy Report"), 1500);
+    };
+
+    console.warn("🧩 Missing datapiece logged:", report);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}E3 Ligase Ligandalyzer{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon2.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/favicon2.png') }}">
+
+
+
+    <!-- Local CSS + Fonts -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Framework -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- Plotly (shared for dashboards) -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js" charset="utf-8"></script>
+
+    {% block head_scripts %}{% endblock %}
+</head>
+
+<body class="bg-black text-white font-inter">
+    <!-- Navbar -->
+    <custom-navbar></custom-navbar>
+
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <div id="global-search-modal"
+        class="fixed inset-0 bg-black/80 backdrop-blur hidden z-[9999] flex items-center justify-center">
+
+        <div id="global-search-panel"
+            class="
+                bg-slate-900 border border-slate-700
+                rounded-2xl p-4
+                w-full max-w-[1100px]
+                h-[90vh]
+                flex flex-col
+                md:flex-row
+                gap-4
+            ">
+
+
+
+            <!-- LEFT: FILTERS -->
+            <div class="w-[320px] space-y-4">
+            <h2 class="text-xl text-amber-300 font-semibold">Search E3 Recruiters</h2>
+
+            <!-- Ligase (REQUIRED) -->
+            <select id="filter-ligase" class="w-full bg-slate-800 p-2 rounded">
+                <option value="">Select Ligase (required)</option>
+            </select>
+
+
+            <div id="mobile-filter-block">
+
+
+            <div id="filter-controls"
+                class="opacity-0 -translate-y-2 pointer-events-none transition-all duration-500 ease-out">
+
+
+                <div class="w-full md:w-[320px] space-y-4">
+                    <button
+                      class="md:hidden w-full py-2 bg-slate-800 rounded text-sky-300"
+                      onclick="this.nextElementSibling.classList.toggle('hidden')"
+                    >
+                      Filters
+                    </button>
+                  
+                    <div class="space-y-4 hidden md:block">
+
+
+            <!-- Filters -->
+            <div class="space-y-1">
+                <label class="text-sm text-gray-400 flex items-center gap-2">
+                  QED ≥
+                  <span id="qed-value" class="text-sky-400 font-mono text-xs">0.00</span>
+              
+                  <!-- tooltip icon -->
+                  <span
+                    class="relative group cursor-help text-gray-500"
+                    aria-label="What is QED?"
+                  >
+                    ⓘ
+                    <div class="absolute left-0 top-full mt-2 w-72 bg-slate-800 text-gray-200 text-xs p-3 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-50">
+                      Quantitative Estimate of Drug-likeness (QED): combines molecular
+                      weight, lipophilicity (LogP), polar surface area, hydrogen bond
+                      counts, and rotatable bonds into a 0–1 score (higher = more drug-like).
+                    </div>
+                  </span>
+                </label>
+              
+                <input
+                  type="range"
+                  id="filter-qed"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                  class="w-full"
+                />
+              </div>
+              
+
+            <!-- MW SLIDER (hidden, advanced-style) -->
+            <div class="space-y-1 hidden" id="mw-slider-block">
+                <label class="text-sm text-gray-400 flex items-center gap-2">
+                MW ≥
+                <span id="mw-value" class="text-sky-400 font-mono text-xs">0</span>
+                </label>
+            
+                <input
+                type="range"
+                id="filter-mw"
+                min="0"
+                max="1200"
+                step="10"
+                value="0"
+                class="w-full"
+                />
+            </div>
+  
+
+            <!-- ================= ADVANCED FILTERS ================= -->
+            <details class="group mt-3">
+                <summary class="cursor-pointer text-sm text-sky-400 hover:text-sky-300">
+                Advanced Filters
+                </summary>
+            
+                <div class="mt-3 space-y-3 text-sm text-gray-400">
+            
+                <!-- LogP -->
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="adv-toggle" data-target="filter-logp">
+                    <label class="w-20">Max LogP (lipophilicity)</label>
+                    <input type="number" id="filter-logp"
+                        class="flex-1 bg-slate-800 p-1 rounded opacity-50"
+                        disabled>
+                </div>
+            
+                <!-- TPSA -->
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="adv-toggle" data-target="filter-tpsa">
+                    <label class="w-20">Max TPSA (Å²)</label>
+                    <input type="number" id="filter-tpsa"
+                        class="flex-1 bg-slate-800 p-1 rounded opacity-50"
+                        disabled>
+                </div>
+            
+                <!-- HBA / HBD -->
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="adv-toggle" data-target="filter-hba">
+                    <label class="w-20">Max HBA (hydrogen bond acceptors)</label>
+                    <input type="number" id="filter-hba"
+                        class="flex-1 bg-slate-800 p-1 rounded opacity-50"
+                        disabled>
+                </div>
+            
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="adv-toggle" data-target="filter-hbd">
+                    <label class="w-20">Max HBD (hydrogen bond donors)</label>
+                    <input type="number" id="filter-hbd"
+                        class="flex-1 bg-slate-800 p-1 rounded opacity-50"
+                        disabled>
+                </div>
+            
+                <!-- Rotatable bonds -->
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="adv-toggle" data-target="filter-rotb">
+                    <label class="w-20">Max Rotatable Bonds</label>
+                    <input type="number" id="filter-rotb"
+                        class="flex-1 bg-slate-800 p-1 rounded opacity-50"
+                        disabled>
+                </div>
+            
+                <!-- Fsp3 -->
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" class="adv-toggle" data-target="filter-fsp3">
+                    <label class="w-20">Min Fsp³ (0–1, higher = more 3D)</label>
+                    <input type="number" step="0.05" min="0" max="1"
+                        id="filter-fsp3"
+                        class="flex-1 bg-slate-800 p-1 rounded opacity-50"
+                        disabled>
+                </div>
+            
+                    
+            
+                </div>
+            </details>
+            </div>
+            </div>
+            </div>
+
+            <div id="apply-controls"
+                class="opacity-0 -translate-y-2 pointer-events-none transition-all duration-500 ease-out delay-150 mt-3">
+
+            
+            <button id="search-apply"
+                    disabled
+                    class="w-full py-2 bg-slate-700 text-gray-400 rounded">
+                Apply Filters
+            </button>
+            
+            </div>  
+            </div>
+
+
+            
+            </div>
+
+            <!-- RIGHT: RESULTS (ACCORDION WRAPPER) -->
+            <div id="results-panel"
+            class="flex-1 overflow-hidden
+                max-h-0 opacity-0
+                translate-y-[-12px]
+                transition-all duration-700 ease-out">
+
+            <div class="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-full">
+
+
+
+            <!-- RESULT LIST -->
+            <div id="search-results"
+                class="overflow-y-auto border-r border-slate-700 pr-4 h-full">
+
+            <p class="text-gray-500 text-sm">Apply filters to begin.</p>
+            </div>
+
+            <!-- PREVIEW -->
+            <div class="flex flex-col gap-3">
+
+            <div id="search-preview-2d"
+                class="bg-slate-800 rounded-lg h-[300px] flex items-center justify-center">
+            <span class="text-gray-500">Hover a ligand</span>
+            </div>
+
+            <div class="flex gap-2">
+            <button id="preview-normal"
+                    class="px-3 py-1 bg-sky-700 rounded text-white">
+                2D
+            </button>
+            <button id="preview-sasa"
+                    class="px-3 py-1 bg-slate-700 rounded text-gray-300">
+                SASA
+            </button>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+                Press <span class="font-mono text-sky-400">S</span> to toggle SASA
+              </div>
+              
+
+            </div>
+
+            </div>
+            </div>
+
+        </div>
+        </div>
+
+        <div id="mobile-preview"
+  class="fixed inset-x-0 bottom-0 h-[45vh]
+         bg-slate-900 border-t border-slate-700
+         hidden z-[9999] rounded-t-xl">
+</div>
+
+
+
+    <!-- Footer -->
+    <custom-footer></custom-footer>
+
+    <!-- Shared Scripts -->
+    <script src="{{ url_for('static', filename='components/navbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='components/footer.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>feather.replace();</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script>
+    // 🌐 Global base URL for PROTAC Builder Suite
+    window.PROTACSUITE = "https://kyle.rove-vernier.ts.net/copy/COPYindex";
+    </script>
+
+<script>
+    /* ============================================================
+       GLOBAL SEARCH MODAL — FIXED + SAFE
+       ============================================================ */
+    
+    let activeCode = null;
+    let activeSmiles = null;
+    let ligasesLoaded = false;
+    let previewMode = "2d"; // "2d" | "sasa"
+    let cached2DSVG = null;
+    let cachedSASASVG = null;
+    let activeResultIndex = -1;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+
+
+    
+    /* ------------------------------
+       Modal open / close
+    -------------------------------- */
+    document.addEventListener("open-global-search", () => {
+      document.getElementById("global-search-modal").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      loadLigases();
+    });
+    
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape") {
+            document.getElementById("global-search-modal").classList.add("hidden");
+            document.body.style.overflow = "";
+            resetResultsPanel();
+        }
+    });
+
+    
+    /* ------------------------------
+       Minimal SVG sanitizer (required)
+    -------------------------------- */
+    /* ------------------------------
+    MODAL-ONLY SVG SANITIZER
+    -------------------------------- */
+    function sanitizeSVGmodal(svg) {
+    return svg
+        .replace(/xmlns:xlink="[^"]*"/gi, "")
+        .replace(/width="[^"]+"/gi, "")
+        .replace(/height="[^"]+"/gi, "")
+
+        // remove RDKit background rects
+        .replace(/<rect[^>]*\/?>/gi, "")
+        .replace(/<rect[^>]*>[\s\S]*?<\/rect>/gi, "")
+
+        // kill inline background styles
+        .replace(/background[^;"]*:[^;"]*;?/gi, "")
+
+        // force transparent SVG root
+        .replace(
+        "<svg",
+        `<svg class="w-full h-full"
+                preserveAspectRatio="xMidYMid meet"
+                style="background:none !important;"`
+        );
+    }
+
+    
+function revealResultsPanel() {
+    const panel = document.getElementById("results-panel");
+
+    panel.classList.remove(
+        "max-h-0",
+        "opacity-0",
+        "translate-y-[-12px]"
+    );
+
+    panel.classList.add(
+        "max-h-[70vh]",   // matches modal height
+        "opacity-100",
+        "translate-y-0"
+    );
+
+    }
+
+
+
+
+
+    function resetResultsPanel() {
+  const panel = document.getElementById("results-panel");
+
+  panel.classList.add(
+    "max-h-0",
+    "opacity-0",
+    "translate-y-[-12px]"
+  );
+
+  panel.classList.remove(
+    "max-h-[1000px]",
+    "opacity-100",
+    "translate-y-0"
+  );
+}
+
+
+
+
+// ---------------------------
+// RECOLOR SVG TO DARK THEME
+// ---------------------------
+function recolorSVGModal(svgEl) {
+
+  // 1) Bonds — path/line/polyline/polygon
+  svgEl.querySelectorAll("path, line, polyline, polygon").forEach(el => {
+
+    // A) stroke attribute
+    const stroke = el.getAttribute("stroke") || "";
+    if (/^#?000000$/i.test(stroke) || /black/i.test(stroke)) {
+      el.setAttribute("stroke", "#ffffff");
+    }
+
+    // B) stroke in style=""
+    let style = el.getAttribute("style") || "";
+    if (/stroke\s*:\s*(#000000|black)/i.test(style)) {
+      el.setAttribute("style",
+        style.replace(/stroke\s*:\s*(#000000|black)/gi, "stroke:#ffffff")
+      );
+    }
+  });
+
+
+  // 2) Atom labels (text)
+  svgEl.querySelectorAll("text").forEach(t => {
+    const txt = (t.textContent || "").trim();
+
+    if (txt === "C" || txt === "H") {
+      t.setAttribute("fill", "#ffffff");
+      t.setAttribute("stroke", "#ffffff");
+    }
+    if (txt === "N") {
+      t.setAttribute("fill", "#22D3EE");
+      t.setAttribute("stroke", "#22D3EE");
+    }
+    if (txt === "O") {
+      t.setAttribute("fill", "#F87171");
+      t.setAttribute("stroke", "#F87171");
+    }
+  });
+
+
+  // 3) Paths / shapes representing atoms
+  svgEl.querySelectorAll("*").forEach(el => {
+
+  let style  = el.getAttribute("style")  || "";
+  let stroke = el.getAttribute("stroke") || "";
+  let fill   = el.getAttribute("fill")   || "";
+  let combo  = (style + stroke + fill).toLowerCase();
+
+
+  // ---------------------------------------------------
+  // 1) Detect RDKit Nitrogen shades (cyan family)
+  // ---------------------------------------------------
+  // Matches: rgb(20–80, 150–255, 180–255) → bright cyan family
+  if (/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i.test(combo)) {
+    let [_, r, g, b] = combo.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+    r = +r; g = +g; b = +b;
+
+    // Heuristic: nitrogen-like (your #22D3EE)
+    if (r < 80 && g > 140 && b > 150) {
+      el.setAttribute("fill", "#22D3EE");
+      el.setAttribute("stroke", "#22D3EE");
+      return;
+    }
+
+    // Oxygen-like (your coral #F87171)
+    if (r > 180 && g < 120 && b < 120) {
+      el.setAttribute("fill", "#F87171");
+      el.setAttribute("stroke", "#F87171");
+      return;
+    }
+  }
+
+
+  // ---------------------------------------------------
+  // 2) Detect raw hex-like RDKit outputs
+  // ---------------------------------------------------
+  if (/#23cfe9|#21d3ee|#22d3ee/i.test(combo)) {
+    el.setAttribute("fill", "#22D3EE");
+    el.setAttribute("stroke", "#22D3EE");
+    return;
+  }
+
+  if (/#f87171|#f77070|#f55a5a/i.test(combo)) {
+    el.setAttribute("fill", "#F87171");
+    el.setAttribute("stroke", "#F87171");
+    return;
+  }
+
+
+  // ---------------------------------------------------
+  // 3) Catch dark gray/black for carbon & bonds
+  // ---------------------------------------------------
+  if (/rgb\(\s*(0|1|2|3|4|5)\s*,\s*(0|1|2|3|4|5)\s*,\s*(0|1|2|3|4|5)\s*\)/i.test(combo)
+      || /#000000|#111111|#222222|black/.test(combo)) {
+
+    el.setAttribute("stroke", "#ffffff");
+
+    if (!/fill:none/i.test(combo)) {
+      el.setAttribute("fill", "#ffffff");
+    }
+
+    return;
+  }
+
+
+  // ---------------------------------------------------
+  // 4) Keep text cleanup separate (no regex needed)
+  // ---------------------------------------------------
+  if (el.tagName === "text") {
+    const atom = el.textContent.trim();
+
+    if (atom === "C" || atom === "H") {
+      el.setAttribute("fill", "#ffffff");
+      el.setAttribute("stroke", "#ffffff");
+    }
+    if (atom === "N") {
+      el.setAttribute("fill", "#22D3EE");
+      el.setAttribute("stroke", "#22D3EE");
+    }
+    if (atom === "O") {
+      el.setAttribute("fill", "#F87171");
+      el.setAttribute("stroke", "#F87171");
+    }
+  }
+
+});
+
+}
+
+    
+    /* ------------------------------
+       Preview renderers
+    -------------------------------- */
+    
+    
+    
+    async function previewLigand(smiles) {
+        if (!smiles) return;
+
+        const box = document.getElementById("search-preview-2d");
+        box.innerHTML = "<span class='text-gray-500'>Rendering…</span>";
+
+        try {
+            const svgText = await fetch(
+            `/api/render-smiles/${encodeURIComponent(smiles)}`
+            ).then(r => r.text());
+
+            cached2DSVG = svgText;
+
+            if (previewMode === "2d") {
+            renderSVG(svgText);
+            }
+        } catch (err) {
+            console.error(err);
+            box.innerHTML = "<span class='text-red-400'>Render error</span>";
+        }
+    }
+
+
+
+
+
+
+
+
+    
+    async function previewSASA(code) {
+        if (!code) return;
+
+        const box = document.getElementById("search-preview-2d");
+        box.innerHTML = "<span class='text-gray-500'>Rendering SASA…</span>";
+
+        try {
+            const svgText = await fetch(
+            `/api/render-2d-sasa/${code}`
+            ).then(r => r.text());
+
+            cachedSASASVG = svgText;
+
+            if (previewMode === "sasa") {
+            renderSVG(svgText);
+            }
+        } catch (err) {
+            console.error(err);
+            box.innerHTML = "<span class='text-red-400'>SASA render error</span>";
+        }
+    }
+
+    /* ------------------------------
+       Search validation
+    -------------------------------- */
+    function validateSearch() {
+        const ligase = document.getElementById("filter-ligase").value;
+        const btn = document.getElementById("search-apply");
+        const filters = document.getElementById("filter-controls");
+        const apply = document.getElementById("apply-controls"); // 👈 NEW
+
+        if (ligase) {
+            btn.disabled = false;
+            btn.className = "w-full py-2 bg-sky-700 text-white rounded";
+
+            // reveal filters
+            filters.classList.remove("opacity-0", "-translate-y-2", "pointer-events-none");
+            filters.classList.add("opacity-100", "translate-y-0");
+
+            // reveal apply button
+            apply.classList.remove("opacity-0", "-translate-y-2", "pointer-events-none");
+            apply.classList.add("opacity-100", "translate-y-0");
+
+          
+            
+
+        } else {
+            btn.disabled = true;
+            btn.className = "w-full py-2 bg-slate-700 text-gray-400 rounded";
+
+            // hide filters
+            filters.classList.add("opacity-0", "-translate-y-2", "pointer-events-none");
+            filters.classList.remove("opacity-100", "translate-y-0");
+
+            // hide apply button
+            apply.classList.add("opacity-0", "-translate-y-2", "pointer-events-none");
+            apply.classList.remove("opacity-100", "translate-y-0");
+        }
+    }
+
+
+    /* ------------------------------
+       Load ligases (once)
+    -------------------------------- */
+    async function loadLigases() {
+      if (ligasesLoaded) return;
+    
+      const res = await fetch("/api/ligases");
+      const ligases = await res.json();
+      const sel = document.getElementById("filter-ligase");
+    
+      ligases.forEach(l => {
+        const opt = document.createElement("option");
+        opt.value = l;
+        opt.textContent = l;
+        sel.appendChild(opt);
+      });
+    
+      ligasesLoaded = true;
+    }
+    
+    /* ------------------------------
+       Bind validation events
+    -------------------------------- */
+    document.getElementById("filter-ligase").addEventListener("change", () => {
+        validateSearch();
+
+        // ✅ If user changes ligase on mobile, bring filters back
+        if (window.innerWidth <= 768) {
+            document
+            .getElementById("mobile-filter-block")
+            ?.classList.remove("collapsed");
+        }
+    });
+
+    document.getElementById("filter-qed").addEventListener("input", validateSearch);
+    const mwSlider = document.getElementById("filter-mw");
+    const mwValue  = document.getElementById("mw-value");
+
+    mwSlider.addEventListener("input", () => {
+    mwValue.textContent = mwSlider.value;
+    });
+
+    
+    /* ------------------------------
+       Execute search
+    -------------------------------- */
+    document.getElementById("search-apply").addEventListener("click", async () => {
+    setTimeout(revealResultsPanel, 150);
+    // ✅ MOBILE UX: collapse filters after apply
+    if (window.innerWidth <= 768) {
+        document
+        .getElementById("mobile-filter-block")
+        ?.classList.add("collapsed");
+    }
+
+
+      const ligase = document.getElementById("filter-ligase").value;
+      const qed = document.getElementById("filter-qed").value || 0;
+      const mw = document.getElementById("filter-mw").value || 0;
+
+    let params = new URLSearchParams({
+        ligase,
+        min_qed: qed,
+        min_mw: mw
+    });
+
+
+            
+            // advanced filters (checkbox-controlled)
+        document.querySelectorAll(".adv-toggle").forEach(cb => {
+        if (!cb.checked) return;
+
+        const param = cb.dataset.target.replace("filter-", "");
+        const input = document.getElementById(cb.dataset.target);
+
+        if (input && input.value !== "") {
+            params.append(param, input.value);
+        }
+        });
+
+        const res = await fetch(`/api/search/recruiters?${params.toString()}`);
+
+    
+      const data = await res.json();
+      renderSearchResults(data);
+    });
+    
+    /* ------------------------------
+       Render results
+    -------------------------------- */
+    
+    function renderSearchResults(rows) {
+  const box = document.getElementById("search-results");
+  box.innerHTML = "";
+
+  rows.forEach((r, idx) => {
+    const sig = qedSignal(Number(r.QED));
+
+    const div = document.createElement("div");
+    div.dataset.index = idx;
+    div.dataset.code = r.RECRUITER_CODE;
+    div.dataset.smiles = r.SMILES;
+
+    div.className =
+      "result-row p-2 rounded cursor-pointer transition-all " +
+      "hover:bg-slate-800";
+
+    div.style.opacity = sig.opacity;
+
+    div.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="text-xs">${sig.dot}</span>
+        <span class="font-mono text-sky-300">${r.RECRUITER_CODE}</span>
+      </div>
+      <div class="text-xs text-gray-400">
+        QED ${Number(r.QED).toFixed(2)} · MW ${Math.round(r.MW)}
+      </div>
+    `;
+
+    // hover → preview
+    div.addEventListener("mouseenter", () => {
+        if (!isMobile) setActiveIndex(idx);
+    });
+
+
+    // click → recruiter page
+    div.addEventListener("click", () => {
+        if (isMobile) {
+            previewLigand(r.SMILES);
+        } else {
+            window.location.href = `/ligand/${r.RECRUITER_CODE}`;
+        }
+    });
+
+
+    box.appendChild(div);
+  });
+
+  // initialize keyboard focus
+  if (rows.length > 0) {
+    setActiveIndex(0);
+  }
+}
+
+
+    
+    /* ------------------------------
+       Preview toggle buttons
+    -------------------------------- */
+    document.getElementById("preview-normal").onclick = () => {
+        previewMode = "2d";
+
+        setPreviewButtonState();
+        if (cached2DSVG) {
+            renderSVG(cached2DSVG);
+        } else if (activeSmiles) {
+            previewLigand(activeSmiles);
+        }
+    };
+
+    document.getElementById("preview-sasa").onclick = () => {
+        previewMode = "sasa";
+
+        setPreviewButtonState();
+        if (cachedSASASVG) {
+            renderSVG(cachedSASASVG);
+        } else if (activeCode) {
+            previewSASA(activeCode);
+        }
+    };
+
+
+    const qedSlider = document.getElementById("filter-qed");
+    const qedValue  = document.getElementById("qed-value");
+
+    function updateQEDLabel() {
+    qedValue.textContent = Number(qedSlider.value).toFixed(2);
+    }
+
+    // initialize
+    updateQEDLabel();
+
+    // live update while dragging
+    qedSlider.addEventListener("input", updateQEDLabel);
+
+    // click outside modal to close
+    document.getElementById("global-search-modal").addEventListener("click", (e) => {
+        const panel = document.getElementById("global-search-panel");
+        if (!panel.contains(e.target)) {
+            document.getElementById("global-search-modal").classList.add("hidden");
+            document.body.style.overflow = "";
+            resetResultsPanel();
+        }
+    });
+
+
+    function setPreviewButtonState() {
+        document.getElementById("preview-normal").className =
+            previewMode === "2d"
+            ? "px-3 py-1 bg-sky-700 rounded text-white"
+            : "px-3 py-1 bg-slate-700 rounded text-gray-300";
+
+        document.getElementById("preview-sasa").className =
+            previewMode === "sasa"
+            ? "px-3 py-1 bg-sky-700 rounded text-white"
+            : "px-3 py-1 bg-slate-700 rounded text-gray-300";
+    }
+
+
+    function renderSVG(svgText) {
+        const box = document.getElementById("search-preview-2d");
+        box.innerHTML = sanitizeSVGmodal(svgText);
+
+        const svgEl = box.querySelector("svg");
+        if (svgEl) recolorSVGModal(svgEl);
+    }
+
+
+    document.addEventListener("keydown", (e) => {
+
+        // Only when modal is open
+        const modal = document.getElementById("global-search-modal");
+        if (modal.classList.contains("hidden")) return;
+
+        // Ignore typing inside inputs
+        const tag = document.activeElement.tagName.toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+        // Toggle SASA with "S"
+        if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+
+        // Nothing to preview yet
+        if (!activeCode && !activeSmiles) return;
+
+        // Toggle mode
+        previewMode = previewMode === "2d" ? "sasa" : "2d";
+        setPreviewButtonState();
+
+        // Render appropriate view
+        if (previewMode === "2d") {
+            if (cached2DSVG) {
+            renderSVG(cached2DSVG);
+            } else if (activeSmiles) {
+            previewLigand(activeSmiles);
+            }
+        } else {
+            if (cachedSASASVG) {
+            renderSVG(cachedSASASVG);
+            } else if (activeCode) {
+            previewSASA(activeCode);
+            }
+        }
+        }
+    });
+
+
+    document.addEventListener("keydown", (e) => {
+
+const modal = document.getElementById("global-search-modal");
+if (modal.classList.contains("hidden")) return;
+
+const tag = document.activeElement.tagName.toLowerCase();
+if (["input", "textarea", "select"].includes(tag)) return;
+
+const rows = getResultRows();
+if (!rows.length) return;
+
+if (e.key === "ArrowDown") {
+  e.preventDefault();
+  setActiveIndex(activeResultIndex + 1);
+}
+
+if (e.key === "ArrowUp") {
+  e.preventDefault();
+  setActiveIndex(activeResultIndex - 1);
+}
+
+if (e.key === "Enter" && activeResultIndex >= 0) {
+  e.preventDefault();
+  window.location.href = `/ligand/${rows[activeResultIndex].dataset.code}`;
+}
+});
+
+
+
+    function qedSignal(qed) {
+  if (qed >= 0.6) return { dot: "🟢", opacity: 1.0 };
+  if (qed >= 0.4) return { dot: "🟡", opacity: 0.92 };
+  return { dot: "🔴", opacity: 0.85 };
+}
+
+
+
+function getResultRows() {
+  return Array.from(document.querySelectorAll(".result-row"));
+}
+
+function setActiveIndex(idx) {
+  const rows = getResultRows();
+  if (!rows.length) return;
+
+  idx = Math.max(0, Math.min(idx, rows.length - 1));
+  activeResultIndex = idx;
+
+  rows.forEach((r, i) => {
+    r.classList.toggle("bg-slate-800", i === idx);
+  });
+
+  const row = rows[idx];
+  row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+
+  activeCode = row.dataset.code;
+  activeSmiles = row.dataset.smiles;
+
+  cached2DSVG = null;
+  cachedSASASVG = null;
+
+  if (previewMode === "2d") {
+    previewLigand(activeSmiles);
+  } else {
+    previewSASA(activeCode);
+  }
+}
+
+
+function openMobilePreview(svg) {
+  const panel = document.getElementById("mobile-preview");
+  panel.innerHTML = svg;
+  panel.classList.remove("hidden");
+}
+
+/* ===============================
+   ADVANCED FILTER TOGGLE WIRING
+   =============================== */
+   document.querySelectorAll(".adv-toggle").forEach(cb => {
+  cb.addEventListener("change", () => {
+    const targetId = cb.dataset.target;
+    const input = document.getElementById(targetId);
+
+    if (!input) return;
+
+    if (cb.checked) {
+      input.disabled = false;
+      input.classList.remove("opacity-50");
+      input.focus();
+    } else {
+      input.disabled = true;
+      input.value = "";
+      input.classList.add("opacity-50");
+    }
+  });
+});
+
+
+
+document.querySelector("details").addEventListener("toggle", e => {
+  document.getElementById("mw-slider-block").classList.toggle(
+    "hidden",
+    !e.target.open
+  );
+});
+
+    </script>
+
+
+
+
+
+
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

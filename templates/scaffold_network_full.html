@@ -1,0 +1,741 @@
+{% extends 'base.html' %}
+{% block title %}Full Scaffold Network | E3 Ligase Ligandalyzer{% endblock %}
+
+{% block head_scripts %}
+  <!-- Cytoscape core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto py-10 px-6 text-slate-100">
+  <!-- HEADER -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-sky-400 mb-2">Full Scaffold Network</h1>
+      <p class="text-slate-400">
+        Interactive exploration of scaffold clusters across all E3 ligases.
+        Hover to preview structures, click to open a detailed view.
+      </p>
+    </div>
+  </div>
+
+  <!-- FILTER + CONTROLS PANEL -->
+  <div class="mb-6 p-4 bg-slate-900 rounded-lg border border-slate-700 space-y-4">
+    <!-- Ligase Toggles -->
+    <div>
+      <h2 class="text-lg font-semibold text-white mb-2">Ligase Filters</h2>
+      <div id="ligase-toggle-container" class="flex flex-wrap gap-2">
+        <!-- Buttons injected by JS -->
+      </div>
+      <p class="text-slate-400 text-xs mt-2">
+        <span class="text-amber-300 font-semibold">Yellow</span> = included •
+        <span class="text-sky-300 font-semibold">Blue</span> = excluded
+      </p>
+    </div>
+
+    <!-- Additional Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+      <!-- Min Recruiter Slider -->
+      <div>
+        <label for="min-recruiter-range" class="block text-sm font-medium text-slate-200 mb-1">
+          Minimum recruiter count
+          <span id="min-recruiter-value" class="ml-1 text-amber-300 font-semibold">1</span>
+        </label>
+        <input
+          id="min-recruiter-range"
+          type="range"
+          min="1"
+          max="10"
+          value="1"
+          class="w-full accent-amber-400"
+        >
+      </div>
+
+      <!-- Single-ligase-only -->
+      <div class="flex items-center gap-2">
+        <input
+          id="filter-single-ligase"
+          type="checkbox"
+          class="h-4 w-4 rounded border-slate-500 bg-slate-800 text-amber-400 focus:ring-amber-400"
+        >
+        <label for="filter-single-ligase" class="text-sm text-slate-200">
+          Show only <span class="font-semibold text-amber-300">single-ligase</span> scaffolds
+        </label>
+      </div>
+
+      <!-- Global toggle buttons -->
+      <div class="flex gap-3 mb-3">
+        <button id="ligase-enable-all"
+          class="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-semibold shadow">
+          Enable All
+        </button>
+
+        <button id="ligase-disable-all"
+          class="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-semibold shadow">
+          Disable All
+        </button>
+      </div>
+
+
+      <!-- Similarity edges -->
+      <div class="flex items-center gap-2">
+        <input
+          id="toggle-similarity-edges"
+          type="checkbox"
+          class="h-4 w-4 rounded border-slate-500 bg-slate-800 text-sky-400 focus:ring-sky-400"
+        >
+        <label for="toggle-similarity-edges" class="text-sm text-slate-200">
+          Show <span class="font-semibold text-sky-300">similarity edges</span>
+          <span class="text-xs text-slate-400">(if available)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Layout Controls + Legend -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2 border-t border-slate-700 mt-4">
+      <!-- Layout Buttons -->
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-slate-300 mr-1">Layout:</span>
+        <button
+          class="layout-btn px-3 py-1 rounded-full text-xs font-semibold bg-sky-700 hover:bg-sky-600 border border-slate-600"
+          data-layout="cose"
+        >
+          Force (cose)
+        </button>
+        <button
+          class="layout-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-600"
+          data-layout="grid"
+        >
+          Grid
+        </button>
+        <button
+          class="layout-btn px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-600"
+          data-layout="concentric"
+        >
+          Radial
+        </button>
+      </div>
+
+      <!-- Legend -->
+      <div class="bg-slate-950/60 border border-slate-700 rounded-lg px-3 py-2 text-xs max-w-lg">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-slate-300 font-semibold">Ligase Legend</span>
+          <span id="legend-total" class="text-slate-400 text-[0.65rem]"></span>
+        </div>
+        <div id="ligase-legend" class="flex flex-wrap gap-x-3 gap-y-1">
+          <!-- chips injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN NETWORK VIEW -->
+  <div
+    id="scaffold-network-full"
+    class="w-full h-[70vh] bg-slate-900 rounded-lg border border-slate-700 shadow-lg">
+  </div>
+</section>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+/* ==========================================================
+   🎨 Ligase Color Palette
+   ========================================================== */
+const ligaseColors = {
+  MDM2:   '#ffffd6',
+  KEAP1:  '#f43f5e',
+  TRIM21: '#509c1e',
+  CRBN:   '#38bdf8',
+  cIAP1:  '#f76707',
+  XIAP:   '#8db6f0',
+  VHL:    '#facc15',
+  PARKIN: '#a3e635',
+  HUWE1:  '#60a5fa',
+  cIAP2:  '#f7f707',
+  DCAF1:  '#34d399',
+  CHIP:   '#fb923c',
+  DCAF15: '#a855f7',
+  SOCS2:  '#f0abfc',
+  RNF4:   '#fcd34d',
+  DCAF16: '#818cf8',
+  RNF114: '#fde047',
+  TRIP12: '#5eead4',
+  RNF168: '#22d3ee',
+  Others: '#94a3b8'
+};
+
+
+/* ==========================================================
+   Global state
+   ========================================================== */
+let cy = null;
+let clusterData = [];
+let activeLigases = new Set();
+let filterSingleLigaseOnly = false;
+let minRecruiterCount = 1;
+let showSimilarityEdges = false;
+
+/* ==========================================================
+   Init
+   ========================================================== */
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    console.log("🧬 Fetching scaffold clusters…");
+    const res = await fetch('/api/scaffold-clusters');
+    clusterData = await res.json();
+    console.log(`✅ Retrieved ${clusterData.length} clusters`);
+
+    // Infer unique ligases from the data
+    const ligaseSet = new Set();
+    clusterData.forEach(c => {
+      (c.ligases || []).forEach(l => ligaseSet.add(l || 'Others'));
+    });
+
+    if (ligaseSet.size === 0) {
+      Object.keys(ligaseColors).forEach(l => ligaseSet.add(l));
+    }
+
+    // Initialize active ligases
+    ligaseSet.forEach(l => activeLigases.add(l));
+
+    // Setup slider max
+    const maxRecruiters = Math.max(
+      1,
+      ...clusterData.map(c => c.recruiterCount || 0)
+    );
+    const slider = document.getElementById('min-recruiter-range');
+    const sliderLabel = document.getElementById('min-recruiter-value');
+    slider.max = maxRecruiters;
+    slider.value = 1;
+    sliderLabel.textContent = "1";
+
+    slider.addEventListener('input', (e) => {
+      minRecruiterCount = parseInt(e.target.value) || 1;
+      sliderLabel.textContent = minRecruiterCount;
+      updateGraph();
+    });
+
+    // Checkbox: single-ligase only
+    document.getElementById('filter-single-ligase').addEventListener('change', (e) => {
+      filterSingleLigaseOnly = e.target.checked;
+      updateGraph();
+    });
+
+    // Checkbox: similarity edges
+    document.getElementById('toggle-similarity-edges').addEventListener('change', (e) => {
+      showSimilarityEdges = e.target.checked;
+      updateGraph();
+    });
+
+    // Layout buttons
+    document.querySelectorAll('.layout-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const layoutName = btn.dataset.layout;
+        runLayout(layoutName);
+        // visual state
+        document.querySelectorAll('.layout-btn').forEach(b => {
+          b.classList.remove('bg-sky-700');
+          b.classList.add('bg-slate-800');
+        });
+        btn.classList.add('bg-sky-700');
+        btn.classList.remove('bg-slate-800');
+      });
+    });
+
+    // Render ligase toggles
+    renderLigaseToggles(Array.from(ligaseSet));
+
+    // Initial graph render
+    updateGraph();
+
+  } catch (err) {
+    console.error("❌ Failed to initialize full network:", err);
+  }
+});
+
+/* ==========================================================
+   Ligase Toggle Buttons
+   ========================================================== */
+function renderLigaseToggles(ligases) {
+  const container = document.getElementById('ligase-toggle-container');
+  container.innerHTML = '';
+
+  ligases.sort().forEach(l => {
+    const isActive = activeLigases.has(l);
+    const bg  = isActive ? '#facc15' : '#38bdf8';
+    const txt = isActive ? '#000000' : '#0f172a';
+
+    const btn = document.createElement('button');
+    btn.className =
+      'px-3 py-1 rounded-full text-xs font-semibold border border-slate-700 shadow-sm transition';
+    btn.style.backgroundColor = bg;
+    btn.style.color = txt;
+    btn.innerHTML = `
+      <span class="inline-flex items-center gap-1">
+        <span class="inline-block w-2 h-2 rounded-full" 
+              style="background-color:${ligaseColors[l] || ligaseColors.Others}"></span>
+        <span>${l}</span>
+      </span>
+    `;
+
+    btn.addEventListener('click', () => {
+      if (activeLigases.has(l)) {
+        activeLigases.delete(l);
+      } else {
+        activeLigases.add(l);
+      }
+      renderLigaseToggles(ligases);
+      updateGraph();
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+/* ==========================================================
+   Build + Render Cytoscape Graph
+   ========================================================== */
+function updateGraph() {
+  // Filter clusters
+  const filtered = clusterData.filter(c => {
+    const ligs = c.ligases || [];
+    const hasActiveLigase = ligs.some(l => activeLigases.has(l));
+
+    if (!hasActiveLigase) return false;
+    if (filterSingleLigaseOnly && ligs.length !== 1) return false;
+    if ((c.recruiterCount || 0) < minRecruiterCount) return false;
+
+    return true;
+  });
+
+  console.log(`📊 Clusters after filters: ${filtered.length}`);
+
+  // Build nodes
+  const nodes = filtered.map(c => {
+    const ligs = c.ligases && c.ligases.length ? c.ligases : ['Others'];
+    const primary = ligs[0];
+    const color = ligaseColors[primary] || ligaseColors.Others;
+
+    const labelBase = (c.scaffoldIds && c.scaffoldIds.length)
+      ? c.scaffoldIds[0]
+      : c.scaffoldHash;
+
+    const extraCount = (c.scaffoldIds?.length || 1) - 1;
+    const label = extraCount > 0
+      ? `${labelBase} (+${extraCount})`
+      : labelBase;
+
+    return {
+      data: {
+        id: c.scaffoldHash,
+        label: label,
+        scaffoldID: c.scaffoldIds?.[0] || c.scaffoldHash,   // use real ID if available
+        smiles: c.scaffoldSmiles,
+        ligases: ligs,
+        recruiterCount: c.recruiterCount || 0,
+        size: Math.sqrt(c.recruiterCount || 1) * 6,
+        color: color
+      }
+
+    };
+  });
+
+  // Build edges:
+  const edges = [];
+
+  // 1) Ligase-chain edges (ordered by recruiterCount)
+  activeLigases.forEach(l => {
+    const group = filtered
+      .filter(c => (c.ligases || []).includes(l))
+      .sort((a, b) => (b.recruiterCount || 0) - (a.recruiterCount || 0));
+
+    for (let i = 0; i < group.length - 1; i++) {
+      edges.push({
+        data: {
+          source: group[i].scaffoldHash,
+          target: group[i + 1].scaffoldHash,
+          ligase: l,
+          type: 'ligase'
+        }
+      });
+    }
+  });
+
+  // 2) Similarity edges (if provided by backend)
+  if (showSimilarityEdges) {
+    filtered.forEach(c => {
+      if (Array.isArray(c.similarHashes)) {
+        c.similarHashes.forEach(targetHash => {
+          edges.push({
+            data: {
+              source: c.scaffoldHash,
+              target: targetHash,
+              type: 'similarity'
+            }
+          });
+        });
+      }
+    });
+  }
+
+  // Destroy previous cy
+  if (cy) cy.destroy();
+
+  // Init Cytoscape
+  cy = cytoscape({
+    container: document.getElementById('scaffold-network-full'),
+    elements: [...nodes, ...edges],
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'background-color': 'data(color)',
+          'width': 'data(size)',
+          'height': 'data(size)',
+          'label': 'data(label)',
+          'font-size': '8px',
+          'color': '#e5e7eb',
+          'text-wrap': 'wrap',
+          'text-max-width': '60px',
+          'text-outline-color': '#0f172a',
+          'text-outline-width': 1,
+          'overlay-opacity': 0
+        }
+      },
+      {
+        selector: 'node.hovered',
+        style: {
+          'border-width': 3,
+          'border-color': '#facc15',
+          'transition-property': 'border-width, border-color',
+          'transition-duration': '200ms'
+        }
+      },
+      {
+        selector: 'edge[type = "ligase"]',
+        style: {
+          'line-color': '#475569',
+          'width': 1,
+          'opacity': 0.35,
+          'curve-style': 'bezier'
+        }
+      },
+      {
+        selector: 'edge[type = "similarity"]',
+        style: {
+          'line-color': '#22c55e',
+          'width': 1,
+          'opacity': 0.5,
+          'curve-style': 'haystack'
+        }
+      }
+    ],
+    layout: {
+      name: 'cose',
+      animate: true,
+      idealEdgeLength: 120,
+      nodeRepulsion: 4500,
+      gravity: 1.0,
+      padding: 30
+    },
+    wheelSensitivity: 0.25
+  });
+
+  // Hover events (tooltip + pulse)
+  cy.on('mouseover', 'node', (evt) => {
+    const node = evt.target;
+    const data = node.data();
+    node.addClass('hovered');
+    showMolTooltip(data, evt.originalEvent, node);
+  });
+
+
+  cy.on('mouseout', 'node', (evt) => {
+    const node = evt.target;
+    node.removeClass('hovered');
+    hideMolTooltip();
+  });
+
+  // Click event -> modal
+  cy.on('tap', 'node', (evt) => {
+    const node = evt.target.data();
+    const ligaseStr = (node.ligases || []).join(', ');
+    showModal(
+      node.smiles, 
+      ligaseStr, 
+      'Scaffold Cluster', 
+      node.scaffoldID,        // 🟨 this is now a real route ID
+      node.recruiterCount,
+      node.id
+    );
+  });
+
+
+  // Update legend
+  updateLegend(filtered);
+}
+
+/* ==========================================================
+   Layout switching
+   ========================================================== */
+function runLayout(name) {
+  if (!cy) return;
+  let options = { name };
+
+  if (name === 'cose') {
+    options = {
+      name: 'cose',
+      animate: true,
+      idealEdgeLength: 120,
+      nodeRepulsion: 4500,
+      gravity: 1.0,
+      padding: 30
+    };
+  } else if (name === 'grid') {
+    options = {
+      name: 'grid',
+      fit: true,
+      padding: 30,
+      avoidOverlap: true
+    };
+  } else if (name === 'concentric') {
+    options = {
+      name: 'concentric',
+      fit: true,
+      padding: 30,
+      levelWidth: (nodes) => 1,
+      minNodeSpacing: 20
+    };
+  }
+
+  cy.layout(options).run();
+}
+
+/* ==========================================================
+   Legend rendering
+   ========================================================== */
+function updateLegend(filteredClusters) {
+  const legendDiv = document.getElementById('ligase-legend');
+  const totalSpan = document.getElementById('legend-total');
+  legendDiv.innerHTML = '';
+
+  const counts = {};
+  filteredClusters.forEach(c => {
+    (c.ligases || ['Others']).forEach(l => {
+      if (!activeLigases.has(l)) return;
+      counts[l] = (counts[l] || 0) + 1;
+    });
+  });
+
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const total = entries.reduce((acc, [, v]) => acc + v, 0);
+  totalSpan.textContent = total ? `${total} clusters shown` : 'No clusters';
+
+  entries.forEach(([ligase, count]) => {
+    const chip = document.createElement('div');
+    chip.className = 'flex items-center gap-1 text-[0.7rem] text-slate-200';
+    chip.innerHTML = `
+      <span class="inline-block w-2 h-2 rounded-full"
+            style="background-color:${ligaseColors[ligase] || ligaseColors.Others}"></span>
+      <span class="font-semibold">${ligase}</span>
+      <span class="text-slate-400">(${count})</span>
+    `;
+    legendDiv.appendChild(chip);
+  });
+}
+
+/* ==========================================================
+   Tooltip (SMILES + ligase colors)
+   ========================================================== */
+let tooltipDiv = null;
+
+function initTooltip() {
+  if (tooltipDiv) return;
+  tooltipDiv = document.createElement('div');
+  Object.assign(tooltipDiv.style, {
+    position: "fixed",
+    pointerEvents: "none",
+    background: "rgba(15,23,42,0.96)",
+    padding: "8px",
+    border: "1px solid rgba(148,163,184,0.5)",
+    borderRadius: "8px",
+    color: "white",
+    fontSize: "11px",
+    maxWidth: "260px",
+    zIndex: 9999,
+    display: "none",
+  });
+  tooltipDiv.id = "scaffold-tooltip";
+  document.body.appendChild(tooltipDiv);
+}
+
+async function showMolTooltip(nodeData, event, cyNode = null) {
+  initTooltip();
+
+  const node = cyNode;
+  if (!node) return;
+
+  // Convert node position to rendered (screen) coordinates
+  const pos = node.renderedPosition();
+  const containerRect = cy.container().getBoundingClientRect();
+
+  const screenX = containerRect.left + pos.x;
+  const screenY = containerRect.top + pos.y;
+
+  tooltipDiv.style.left = `${screenX - 50}px`;
+  tooltipDiv.style.top = `${screenY + 20}px`;
+  tooltipDiv.style.display = "block";
+
+  const ligases = nodeData.ligases || [];
+  const colorChips = ligases.map(l => {
+    const c = ligaseColors[l] || ligaseColors.Others;
+    return `<span style="display:inline-block;width:8px;height:8px;border-radius:9999px;background:${c};margin-right:3px;"></span>`;
+  }).join("");
+
+  tooltipDiv.innerHTML = `
+    <div class="mb-1 text-[0.7rem]">
+      <div class="font-semibold">${nodeData.label}</div>
+      <div class="text-slate-300 mt-0.5">
+        Ligases: ${ligases.join(', ') || 'Unknown'}
+      </div>
+      <div class="mt-1">${colorChips}</div>
+    </div>
+    <div id="tooltip-smiles-svg" class="bg-slate-900/80 rounded p-1 mb-1 text-center text-[0.65rem]">
+      Loading structure…
+    </div>
+    <div class="text-slate-400 text-[0.6rem] break-all">${nodeData.smiles || ''}</div>
+  `;
+
+  if (nodeData.smiles) {
+    try {
+      const res = await fetch(`/api/render-smiles/${encodeURIComponent(nodeData.smiles)}`);
+      const svg = await res.text();
+      const svgDiv = document.getElementById('tooltip-smiles-svg');
+      svgDiv.innerHTML = svg;
+    } catch (err) {
+      document.getElementById('tooltip-smiles-svg').textContent = 'Failed to render structure';
+    }
+  }
+
+
+  if (nodeData.smiles) {
+    try {
+      const res = await fetch(`/api/render-smiles/${encodeURIComponent(nodeData.smiles)}`);
+      const svg = await res.text();
+      const svgDiv = document.getElementById('tooltip-smiles-svg');
+      svgDiv.innerHTML = svg;
+    } catch (err) {
+      document.getElementById('tooltip-smiles-svg').textContent = 'Failed to render structure';
+    }
+  }
+}
+
+function hideMolTooltip() {
+  if (!tooltipDiv) return;
+  tooltipDiv.style.display = "none";
+}
+
+
+
+/* ==========================================================
+   Modal for detailed scaffold cluster
+   ========================================================== */
+let modalDiv = null;
+
+function initModal() {
+  if (modalDiv) return;
+  modalDiv = document.createElement("div");
+  modalDiv.className =
+    "fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-[10000]";
+  modalDiv.innerHTML = `
+    <div class="bg-slate-900 p-6 rounded-lg border border-slate-700 w-[460px] max-h-[80vh] overflow-y-auto relative">
+      <button id="modal-close" class="absolute top-3 right-3 text-white text-xl leading-none">
+        &times;
+      </button>
+      <div id="modal-content"></div>
+    </div>
+  `;
+  document.body.appendChild(modalDiv);
+
+  modalDiv.addEventListener("click", (e) => {
+    if (e.target === modalDiv) hideModal();
+  });
+  modalDiv.querySelector("#modal-close").addEventListener("click", hideModal);
+}
+
+async function showModal(smiles, ligaseStr, title, scaffoldLabel, recruiterCount, scaffoldHash) {
+  initModal();
+  modalDiv.classList.remove("hidden");
+
+  const content = modalDiv.querySelector("#modal-content");
+  content.innerHTML = `
+    <h2 class="text-xl font-bold text-white mb-1">${scaffoldLabel}</h2>
+    <p class="text-slate-300 mb-1 text-sm">
+      <span class="font-semibold">Ligases:</span> ${ligaseStr || 'Unknown'}
+    </p>
+    <p class="text-slate-400 mb-3 text-xs">
+      Recruiter count (cluster): <span class="text-amber-300 font-semibold">${recruiterCount ?? '—'}</span>
+    </p>
+
+    <div class="bg-slate-800 p-3 rounded mb-3" id="modal-svg">
+      Loading 2D structure…
+    </div>
+    <div class="flex gap-2 mb-3">
+
+    <!-- Scaffold Page -->
+    <a href="/scaffolds/${scaffoldLabel}"
+      target="_blank"
+      class="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded">
+      Open Scaffold Page →
+    </a>
+
+    
+
+  </div>
+
+
+    <div class="mb-3">
+      <p class="text-[0.7rem] text-slate-400 mb-1">Scaffold SMILES:</p>
+      <p class="text-[0.7rem] text-slate-200 break-all bg-slate-950/60 rounded px-2 py-1">
+        ${smiles || '—'}
+      </p>
+    </div>
+  `;
+
+  if (smiles) {
+    try {
+      const res = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`);
+      const svg = await res.text();
+      content.querySelector("#modal-svg").innerHTML = svg;
+    } catch (err) {
+      content.querySelector("#modal-svg").innerHTML =
+        "<span class='text-red-400 text-sm'>Failed to render structure</span>";
+    }
+  } else {
+    content.querySelector("#modal-svg").innerHTML =
+      "<span class='text-slate-400 text-sm'>No SMILES available for this cluster</span>";
+  }
+}
+
+function hideModal() {
+  if (modalDiv) {
+    modalDiv.classList.add("hidden");
+  }
+}
+
+// Global ON/OFF buttons
+document.getElementById("ligase-enable-all").addEventListener("click", () => {
+  activeLigases = new Set(Object.keys(ligaseColors));
+  renderLigaseToggles(Array.from(activeLigases));
+  updateGraph();
+});
+
+document.getElementById("ligase-disable-all").addEventListener("click", () => {
+  activeLigases = new Set(); // empty = everything off
+  renderLigaseToggles(Object.keys(ligaseColors));
+  updateGraph();
+});
+
+</script>
+{% endblock %}

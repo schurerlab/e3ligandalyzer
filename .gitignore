@@ -1,0 +1,48 @@
+# Large data and generated archives
+*.db
+*.sqlite
+*.sqlite3
+*.zip
+*.pse
+Ligase.db
+Ligase_Recruiter.db
+Ligase_Recruiter2.db
+Ligases/*.db
+Ligases/CSVcache/
+Ligases/*/PDB/
+Ligases/*/SDF/
+Ligases/*/SDF_4Download/
+logs/
+tmp_sessions/
+
+# Runtime logs and mutable app output
+*.log
+Ligases/visits.json
+Ligases/Ligases_Shipped_To_Builder.csv
+Ligases/converted-ligases-by-user.csv
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node/build artifacts
+node_modules/
+
+# System/editor artifacts
+.DS_Store
+._*
+
+# Huge local data files - never push
+Ligases/eliah.db
+Ligases/gene_expression_with_tissue.csv
+Ligases/*.db
+Ligases/**/*.db
+Ligases/*.sqlite
+Ligases/**/*.sqlite
+Ligases/*.sqlite3
+Ligases/**/*.sqlite3
+Ligases/gene_expression*.csv

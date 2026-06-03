@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="min-h-screen flex flex-col justify-center items-center text-center px-6 py-20">
+
+    <!-- Title -->
+    <h1 class="text-5xl font-bold text-amber-400 drop-shadow-lg mb-6">
+        410 — Structure Retired from Duty
+    </h1>
+
+    <div class="bg-slate-900/70 border border-slate-700 p-8 rounded-2xl max-w-2xl shadow-xl">
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+            Like all great proteins that completed their life's mission,  
+            <span class="text-amber-300 font-semibold">{{ recruiter_code }}</span>  
+            has officially been removed from active service.
+        </p>
+
+        <p class="text-gray-300 leading-relaxed mb-6">
+            Why? Well… one of the following scientifically-verified explanations is likely to blame:
+        </p>
+
+        <ul class="text-left text-gray-300 space-y-3 mb-8">
+            <li>🧹 <strong class="text-amber-300">The proteasome</strong> decided this protein didn’t belong in this dataset.</li>
+
+            <li>🔄 This ligand is <strong class="text-amber-300">already represented</strong> elsewhere —  
+                like antibodies, you must now go search for your true antigen soulmate.</li>
+
+            <li>🐶 My dog ate the homework.  
+                Data will return soon. Maybe. Probably. Hopefully.</li>
+        </ul>
+
+        <p class="text-gray-300 leading-relaxed mb-6">
+            But don’t leave empty-handed — check out a different random recruiter from the collection!
+        </p>
+
+        <!-- Random Link Generator -->
+        <a href="/ligand/{{ random_recruiter }}"
+           class="inline-block bg-amber-400 text-black font-semibold px-6 py-3 rounded-xl shadow-lg hover:bg-amber-300 transition-all">
+           🎲 Take Me to a Random Recruiter ({{ random_recruiter }})
+        </a>
+
+        <p class="text-gray-500 text-sm mt-6">
+            Need help? Reach out to support — we don’t bite:  
+            <a class="text-amber-300 underline" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>
+        </p>
+
+    </div>
+</div>
+
+{% endblock %}

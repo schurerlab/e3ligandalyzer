@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Missing Recruiter Data 🧪{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen text-center text-slate-200 bg-slate-950 px-6 py-20">
+
+  <!-- HEADER -->
+  <h1 class="text-5xl font-bold text-amber-400 mb-6 drop-shadow-lg">
+    Recruiter Data Not Found 🧬
+  </h1>
+
+  <p class="text-gray-300 mb-4 max-w-2xl leading-relaxed text-lg">
+    The recruiter  
+    <span class="text-amber-300 font-mono text-xl">{{ recruiter_code }}</span>  
+    is officially MIA from the dataset.
+  </p>
+
+  <p class="text-gray-400 mb-8 max-w-xl leading-relaxed">
+    This usually happens when:
+    <br><span class="text-amber-400 font-semibold">
+      SASA Summary, PDB File, Atom-Level Data, or SVG Visualization
+    </span>
+    has gone missing.
+  </p>
+
+
+  <!-- HUMOR SECTION -->
+  <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 max-w-xl mb-10 shadow-xl">
+    
+    <p class="text-sky-300 font-semibold mb-3">Possible Scientific Explanations:</p>
+
+    <ul class="text-left text-gray-300 space-y-3 text-sm">
+
+      <li>
+        🧹 The <span class="text-amber-300 font-semibold">proteasome</span> decided this recruiter 
+        was “non-essential” and recycled it.
+      </li>
+
+      <li>
+        🔍 This ligand is <span class="text-amber-300 font-semibold">represented elsewhere</span> —
+        please locate its antigen like a good antibody.
+      </li>
+
+      <li>
+        🐶 My dog ate the homework.  
+        <span class="text-amber-300 font-semibold">We’re working on getting the data back up.</span>
+      </li>
+
+      <li>
+        🚗 Miami Traffic: The PDB file left 30 minutes early and somehow 
+        <span class="text-rose-300 font-semibold">still isn't here yet</span>.
+      </li>
+
+      <li>
+        🧬 This recruiter may actually be a 
+        <span class="text-amber-300 font-semibold">peptide-like molecule or BRD</span> 
+        (biologically relevant drug).  
+        It slipped through the initial sweep but has now been flagged until our 
+        <span class="text-sky-300 font-semibold">peptide/BRD module</span> goes live.
+      </li>
+
+      <li>
+        🧪 This scaffold may have been paired with an 
+        <span class="text-amber-300 font-semibold">incorrect or duplicate recruiter code</span>.  
+        Let us know — we’ll unmix the data  
+        <span class="text-rose-300 font-semibold">faster than a PCR denaturation cycle</span>.
+      </li>
+
+    </ul>
+
+  </div>
+
+
+
+  <!-- MISSING DETAILS BOX -->
+  <div id="details"
+       class="bg-slate-800/70 border border-slate-700 rounded-lg px-5 py-3 mb-4 text-sm text-sky-300 font-mono shadow-md">
+    Missing Recruiter → {{ recruiter_code }}
+  </div>
+
+
+  <!-- REPORT BOX -->
+  <div class="bg-slate-900/60 border border-slate-800 rounded-lg px-5 py-4 mb-6 text-xs text-gray-300 max-w-xl break-words shadow-lg"
+       id="copyBox">
+    <p class="mb-2 text-amber-300 font-semibold">Missing Data Report:</p>
+    <pre id="reportText" class="whitespace-pre-wrap text-left"></pre>
+    <button id="copyButton"
+            class="mt-2 px-3 py-1 bg-amber-600 hover:bg-amber-500 rounded text-white text-xs transition-all">
+      📋 Copy Report
+    </button>
+  </div>
+
+
+   <!-- RANDOM RECRUITER BUTTON -->
+  <button id="randomBtn"
+          class="px-5 py-2 mb-8 bg-amber-600 hover:bg-amber-500 rounded-lg text-white shadow-md transition">
+    🎲 Show Me a Random Recruiter
+  </button>
+
+
+
+  <!-- CONTACT -->
+  <p class="text-gray-400 mb-6 max-w-xl">
+    If you believe this data should exist, please send the report to  
+    <a href="mailto:{{ SUPPORT_EMAIL }}" class="text-amber-400 underline">
+      {{ SUPPORT_EMAIL }}
+    </a>.  
+    We don’t bite — unlike some proteases.
+  </p>
+
+  <!-- HOME BUTTON -->
+  <a href="/" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded text-white shadow">
+    🏠 Return to Dashboard
+  </a>
+
+</div>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const recruiter = "{{ recruiter_code }}";
+  const timestamp = new Date().toLocaleString();
+
+  // Build error report text
+  const report = `🚨 Missing Recruiter Visualization Data
+Time: ${timestamp}
+Recruiter Code: ${recruiter}
+URL: ${window.location.href}
+
+Details:
+- SASA summary missing or unreadable
+- PDB file missing or unreadable
+- Atom-level SASA missing or unreadable
+- SVG generation failed
+
+User Agent: ${navigator.userAgent}`;
+
+  document.getElementById("reportText").textContent = report;
+
+  // Copy button
+  document.getElementById("copyButton").onclick = () => {
+    navigator.clipboard.writeText(report);
+    const btn = document.getElementById("copyButton");
+    btn.textContent = "✅ Copied!";
+    setTimeout(() => btn.textContent = "📋 Copy Report", 1500);
+  };
+
+  // ⭐ FIXED LUCKY BUTTON SYSTEM ⭐
+  const luckyBtn = document.querySelector("#randomBtn");
+
+  const blockedRecruiters = [
+    "L00755","L00753","L00759","L00757","L00756","L00754","L00570","L00187",
+    "L00571","L00381","L00574","L00297","L00298","L00294","L00295","L00302",
+    "L00299","L00301","L00300","L00305","L00303","L00308","L00462","L00793",
+    "L00013","L00663","L00664","L00665","L00666","L00213","L00007","L00256",
+    "L00192","L00086","L00048","L00218","L00024","L00436","L00216","L00040",
+    "L00718","L00017","L00676","L00677","L00727","L00025","L00697","L00009",
+    "L00210","L00400","L00332","L00333","L00208","L00054","L00257","L00552",
+    "L00737","L00738","L00695","L00248","L00338","L00480","L00498","L00499",
+    "L00328","L00250","L00505","L00321","L00506","L00507","L00508","L00285",
+    "L00203","L00343","L00514","L00474","L00487","L00808","L00524","L00417",
+    "L00320","L00423","L00309","L00341","L00233","L00037","L00237","L00211",
+    "L00350","L00628","L00629","L00630","L00609","L00610","L00612","L00696",
+    "L00108","L00096","L00119","L00431", "L00561"
+  ];
+
+  function getRandomRecruiter() {
+    while (true) {
+      const num = Math.floor(Math.random() * 600) + 1; // 1–600
+      const code = "L" + String(num).padStart(5, "0");
+      if (!blockedRecruiters.includes(code)) return code;
+    }
+  }
+
+  luckyBtn.addEventListener("click", () => {
+    luckyBtn.disabled = true;
+    luckyBtn.textContent = "🎲 Loading...";
+    const next = getRandomRecruiter();
+    window.location.href = `/ligand/${next}`;
+  });
+
+});
+</script>
+
+
+{% endblock %}
+

@@ -1,0 +1,3003 @@
+{% extends "base.html" %}
+{% block title %}E3 Ligase Overview{% endblock %}
+
+{% block content %}
+
+{% include "popup.html" %}
+
+
+
+<div class="px-10 py-8 text-slate-100 bg-slate-950 min-h-screen">
+  <h1 class="text-3xl font-bold mb-2 text-sky-300">E3 Ligase Overview</h1>
+  <p class="text-gray-400 mb-6">
+    Explore recruiter totals, class distributions, and scaffold diversity across ligases.
+    Click a ligase to open a structural viewer with all PDB complexes.
+  </p>
+
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- LEFT -->
+    <div class="bg-slate-900 rounded-lg p-6 shadow-lg">
+      <div class="flex justify-between items-center mb-2">
+        <h2 id="left-carousel-title" class="text-xl font-semibold text-sky-300">Total Recruiters per Ligase</h2>
+        <div class="space-x-2">
+          <button id="prevLeft" class="px-2 py-1 text-sm bg-slate-800 rounded hover:bg-slate-700">◀</button>
+          <button id="nextLeft" class="px-2 py-1 text-sm bg-slate-800 rounded hover:bg-slate-700">▶</button>
+        </div>
+      </div>
+      <div id="left-carousel" style="height:420px;"></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="bg-slate-900 rounded-lg p-6 shadow-lg relative">
+      <div class="flex justify-between items-center mb-2">
+        <h2 id="right-carousel-title" class="text-xl font-semibold text-sky-300">Unique Scaffolds per Ligase</h2>
+        <div class="space-x-2">
+          <button id="prevRight" class="px-2 py-1 text-sm bg-slate-800 rounded hover:bg-slate-700">◀</button>
+          <button id="nextRight" class="px-2 py-1 text-sm bg-slate-800 rounded hover:bg-slate-700">▶</button>
+        </div>
+      </div>
+      <div id="right-carousel" style="height:420px;"></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="bg-slate-900 rounded-lg p-6 shadow-lg mt-8">
+    <h2 class="text-xl font-semibold mb-3 text-sky-300">Ligase Statistics (aggregated per ligase)</h2>
+    <table id="ligaseTable" class="display w-full text-sm"></table>
+  </div>
+
+  <!-- STRUCTURE VIEWER -->
+  <div id="structureContainer" class="bg-slate-900 rounded-lg p-6 shadow-lg mt-8 hidden">
+    <div class="flex justify-between items-center mb-2">
+      <h2 id="viewerTitle" class="text-xl font-semibold text-sky-300">Structure Viewer</h2>
+      <div class="flex flex-wrap gap-2 mb-2">
+
+        <button id="toggleLigands" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs">Toggle Ligands</button>
+        <button id="toggleComplexes" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs">Toggle Proteins</button>
+        <button id="togglePocket" class="px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-xs">Show Pocket</button>
+        <button
+          id="toggleNearby"
+          class="px-2 py-1 rounded bg-amber-700 hover:bg-amber-600 text-xs hidden disabled:opacity-30 disabled:cursor-not-allowed">
+          Toggle Pocket Surface
+        </button>
+
+
+
+        <button id="toggleHBonds" class="px-2 py-1 rounded bg-indigo-700 hover:bg-indigo-600 text-xs" disabled>Toggle H-Bonds</button>
+        <button id="toggleVDW" class="px-2 py-1 rounded bg-yellow-700 hover:bg-yellow-600 text-xs" disabled>Toggle VDW Clashes</button>
+        <button id="toggleCovalent" class="px-2 py-1 rounded bg-orange-700 hover:bg-orange-600 text-xs" disabled>Toggle Covalent</button>
+        <div class="relative inline-block text-left">
+          <button id="resColorMenuBtn"
+                  class="ml-2 px-3 py-1 text-sm bg-amber-800/40 border border-amber-700 rounded-md text-amber-200 hover:bg-amber-700/60 transition">
+            ⚙ Residue Colors ▾
+          </button>
+
+          <div id="resColorMenu"
+              class="hidden absolute right-0 mt-1 w-48 origin-top-right rounded-md bg-slate-900 border border-slate-700 shadow-lg z-20">
+            <!-- ⚗️ STRUCTURE-BASED COLORING -->
+            <div class="py-1">
+              <div class="px-3 text-xs uppercase text-slate-500 mb-1">Structure-based</div>
+              <button data-mode="0" class="block w-full px-3 py-2 text-left text-white hover:bg-slate-800">
+                Electric White (Default)
+              </button>
+
+              <button data-mode="1" class="block w-full px-3 py-2 text-left text-green-400 hover:bg-slate-800">
+                Seafoam (Spectrum)
+              </button>
+              <button data-mode="2" class="block w-full px-3 py-2 text-left text-sky-400 hover:bg-slate-800">
+                Secondary Structure
+              </button>
+              <button data-mode="3" class="block w-full px-3 py-2 text-left text-violet-400 hover:bg-slate-800">
+                Residue Type (Hydrophobic / Acidic / Basic)
+              </button>
+            </div>
+
+            <!-- ⚡ ELECTRIC PALETTES -->
+            <div class="py-1">
+              <div class="px-3 text-xs uppercase text-slate-500 mb-1">Electric Palettes</div>
+              <button data-mode="4" class="block w-full px-3 py-2 text-left text-lime-400 hover:bg-slate-800">
+                Electric Green
+              </button>
+              <button data-mode="5" class="block w-full px-3 py-2 text-left text-cyan-400 hover:bg-slate-800">
+                Electric Blue
+              </button>
+              <button data-mode="6" class="block w-full px-3 py-2 text-left text-amber-400 hover:bg-slate-800">
+                Electric Yellow
+              </button>
+            </div>
+
+            <!-- 🎨 PROCRASTINATION PACK -->
+            <div class="py-1 border-t border-slate-800 mt-1">
+              <div class="px-3 text-xs uppercase text-slate-500 mb-1">Procrastination Pack</div>
+
+              <button data-mode="7" class="block w-full px-3 py-2 text-left text-cyan-400 hover:bg-slate-800">
+                Cyborg
+              </button>
+              <button data-mode="8" class="block w-full px-3 py-2 text-left text-fuchsia-400 hover:bg-slate-800">
+                Tron
+              </button>
+              <button data-mode="9" class="block w-full px-3 py-2 text-left text-amber-400 hover:bg-slate-800">
+                Futuro
+              </button>
+              <button data-mode="10" class="block w-full px-3 py-2 text-left text-emerald-400 hover:bg-slate-800">
+                Pasado
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+
+        
+
+        <div class="relative inline-block text-left">
+          <button id="ligandColorMenuBtn"
+                  class="ml-2 px-3 py-1 text-sm bg-pink-800/40 border border-pink-700 rounded-md text-pink-200 hover:bg-pink-700/60 transition">
+            ⚙ Ligand Colors ▾
+          </button>
+          <div id="ligandColorMenu"
+              class="hidden absolute right-0 mt-1 w-48 origin-top-right rounded-md bg-slate-900 border border-slate-700 shadow-lg z-20">
+            <button data-mode="4" class="block w-full px-3 py-2 text-left text-lime-400 hover:bg-slate-800">Electric Green</button>
+            <button data-mode="5" class="block w-full px-3 py-2 text-left text-cyan-400 hover:bg-slate-800">Electric Blue</button>
+            <button data-mode="6" class="block w-full px-3 py-2 text-left text-amber-400 hover:bg-slate-800">Electric Yellow</button>
+            <button data-mode="7" class="block w-full px-3 py-2 text-left text-gray-400 hover:bg-slate-800">Knight (Black)</button>
+            <button data-mode="8" class="block w-full px-3 py-2 text-left text-gray-200 hover:bg-slate-800">Light (White)</button>
+            <button data-mode="9" class="block w-full px-3 py-2 text-left text-red-400 hover:bg-slate-800">Fire (Red)</button>
+            <button data-mode="10" class="block w-full px-3 py-2 text-left text-sky-400 hover:bg-slate-800">Aqua (Cyan)</button>
+            <button data-mode="11" class="block w-full px-3 py-2 text-left text-pink-400 hover:bg-slate-800">Miami Mode</button>
+          </div>
+        </div>
+
+
+        <button id="toggleLabels" class="px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-xs" disabled>Toggle Labels</button>
+        <div class="relative inline-block text-left">
+          <button id="labelColorMenuBtn"
+                  class="ml-2 px-3 py-1 text-sm bg-emerald-800/40 border border-emerald-700 rounded-md text-emerald-200 opacity-30 pointer-events-none transition hidden">
+            ⚙ Label Colors ▾
+          </button>
+
+
+            <div id="labelColorMenu"
+              class="hidden absolute right-0 mt-1 w-56 origin-top-right rounded-md bg-slate-900 border border-slate-700 shadow-lg z-20">
+
+              <button data-mode="1"
+                class="block w-full px-3 py-2 text-left text-gray-200 hover:bg-slate-800">
+                ⚪ White (Default)
+              </button>
+
+              <button data-mode="2"
+                class="block w-full px-3 py-2 text-left text-sky-400 hover:bg-slate-800">
+                🔵 Charge-Based (Lys/Arg/His vs Asp/Glu)
+              </button>
+
+              <button data-mode="3"
+                class="block w-full px-3 py-2 text-left text-lime-400 hover:bg-slate-800">
+                🌈 All Residue-Types (Hydrophobic / Aromatic / Polar)
+              </button>
+
+              <button data-mode="4"
+                class="block w-full px-3 py-2 text-left text-amber-400 hover:bg-slate-800">
+                🧡 Aromatic Only
+              </button>
+
+              <button data-mode="5"
+                class="block w-full px-3 py-2 text-left text-cyan-400 hover:bg-slate-800">
+                💧 Polar Uncharged Only
+              </button>
+
+              <button data-mode="6"
+                class="block w-full px-3 py-2 text-left text-yellow-300 hover:bg-slate-800">
+                💛 Sulfur-Containing Only
+              </button>
+            </div>
+
+          </div>
+        
+
+
+        <button id="screenshotBtn" class="px-2 py-1 rounded bg-pink-700 hover:bg-pink-600 text-xs" disabled>📸 Screenshot</button>
+        <button id="closeViewer" class="px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-xs">✖ Close</button>
+      </div>
+    </div>
+
+    <p class="text-xs text-slate-400 mb-2">All structures are loaded sequentially. Use buttons to toggle ligands and proteins.</p>
+    
+  
+
+
+    <!-- SPINNER -->
+    <div id="viewerLoading" class="hidden absolute inset-0 flex items-center justify-center bg-slate-900/80 rounded-lg z-50">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-sky-400 border-opacity-70"></div>
+      <span class="ml-4 text-sky-300 font-semibold text-lg">Loading structures…</span>
+    </div>
+
+    <div id="viewer3d" style="height:520px;"></div>
+
+    <!-- MODEL PANEL -->
+    <div id="modelTogglePanel" class="hidden mt-4 bg-slate-800 rounded-lg p-3 text-xs text-slate-200 space-y-1">
+      <h3 class="font-semibold text-sky-300 mb-1">Loaded Models</h3>
+      <div id="modelList" 
+        class="grid grid-cols-4 gap-1 overflow-y-auto max-h-[300px] pr-2 
+                scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
+    <div class="absolute bottom-0 left-0 w-full h-6 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none"></div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<!-- LIBS -->
+<script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js?branch=develop"></script>
+<link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light-border.css" />
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/numeric/1.2.6/numeric.min.js"></script>
+
+<style>
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.8); }
+}
+.pulse-active {
+  animation: pulseGlow 1.2s infinite ease-in-out;
+}
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+</style>
+
+<style>
+
+@keyframes pulseElectric {
+  0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.7); }
+  50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+}
+
+.pulse-active {
+  animation: pulseElectric 1.2s infinite ease-in-out;
+}
+
+
+  /* Button transition feedback for model visibility */
+#modelList button {
+  transition: background-color 0.25s ease, color 0.25s ease, opacity 0.25s ease;
+}
+#modelList button.opacity-50 {
+  filter: brightness(80%);
+}
+
+
+  /* --- Model Toggle Panel Scrollbar Styling --- */
+#modelTogglePanel {
+  position: relative;
+  max-height: 340px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0f172a;
+}
+
+#modelTogglePanel::-webkit-scrollbar {
+  width: 6px;
+}
+
+#modelTogglePanel::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 6px;
+}
+
+#modelTogglePanel::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
+#modelTogglePanel::-webkit-scrollbar-track {
+  background-color: #0f172a;
+}
+
+.dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {color:#cbd5e1!important;}
+.dataTable tbody tr {background-color:#0f172a!important;color:#e2e8f0!important;}
+.dataTable tbody tr:hover {background-color:#1e293b!important;}
+.dataTable td,.dataTable th {border-color:#1e293b!important;}
+#structureContainer {position:relative;}
+#viewer3d {position:relative!important;width:100%;height:520px;border-radius:0.5rem;overflow:hidden;background:#0f172a;}
+
+#viewerLoading {
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto; /* allow interaction when visible */
+  z-index: 50;
+}
+
+#viewerLoading.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important; /* ✅ let viewer clicks pass through */
+  display: none !important;
+}
+
+
+
+/* 🧩 Fix unclickable toolbar buttons overlapping 3Dmol viewer */
+#structureContainer {
+  position: relative;
+  z-index: 1;
+}
+
+#viewer3d {
+  position: relative;
+  z-index: 0; /* ensures it's behind all buttons */
+  pointer-events: auto;
+}
+
+#structureContainer .flex button {
+  position: relative;
+  z-index: 5; /* ensures they are clickable over the viewer */
+  pointer-events: auto !important;
+}
+
+#viewerLoading {
+  z-index: 10; /* stays on top only when visible */
+}
+
+/* 🌙 Faded look for disabled toggle buttons */
+#structureContainer button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(40%);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* Brighten and re-enable when active */
+#structureContainer button:not(:disabled) {
+  opacity: 1;
+  filter: none;
+}
+
+
+#structureContainer button:disabled:hover {
+  background-color: inherit !important;
+  color: #94a3b8 !important;
+}
+
+
+#labelColorMenuBtn::after {
+  content: '';
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  margin-left: 0.4em;
+  border-radius: 50%;
+  background-color: var(--label-mode-color, #ffffff);
+}
+
+
+
+
+
+</style>
+
+<script>
+
+let viewer, models = [];
+let referenceCenter = null;
+let referenceRadius = 0;
+let surfaceVisible = false;
+// let opacity = 0.0; // default opacity for surfaces (30%)
+let surfaceIDs = [];
+let ligandsVisible = true, complexesVisible = true;
+let selectedLigases = new Set();
+let isolated = false;
+let currentLigase = null;
+let isLoadingLigase = false;
+let hbondShapes = [];
+let covalentShapes = [];
+let covalentVisible = false;
+let vdwShapes = [];
+let hbondVisible = false,
+    
+    chargeColored = false,
+    vdwVisible = false,
+    labelVisible = false;
+
+const standardResidues = new Set([
+  "ALA","ARG","ASN","ASP","CYS","GLN","GLU","GLY","HIS","ILE",
+  "LEU","LYS","MET","PHE","PRO","SER","THR","TRP","TYR","VAL","MSE"
+]);
+
+// Global shared state
+window.nearbyResidues = new Set();
+window.residueColorMode = "6";
+// ==================== INITIAL UI STATE (on load) ====================
+
+// hide label-related controls until a pocket is shown
+document.addEventListener("DOMContentLoaded", () => {
+  const labelBtn = document.getElementById("toggleLabels");
+  const labelMenuBtn = document.getElementById("labelColorMenuBtn");
+  const labelMenu = document.getElementById("labelColorMenu");
+
+  [labelBtn, labelMenuBtn, labelMenu].forEach(el => {
+    if (!el) return;
+    el.classList.add("hidden");
+    el.style.opacity = "0.0";
+    el.style.pointerEvents = "none";
+    el.style.visibility = "hidden";
+    el.style.display = "none";
+  });
+
+  console.log("🚀 Initial load → Label buttons hidden by default");
+});
+
+
+// =======================================================
+// 🎨 GLOBAL COLOR PALETTES — Shared by all functions
+// =======================================================
+window.colorFuncs = {
+  "0": atom => {
+    const map = { C:"#E6E8FF", N:"#B0D6FF", O:"#e84a4a", S:"#FFD700", P:"#F3E5AB", H:"#FFFFFF" };
+    return map[atom.elem] || "#E6E8FF";
+  },
+  "1": atom => {
+    const map = { C:"#41e1b4", N:"#4941e1", O:"#e84a4a", S:"#FFD700", P:"#FAEBD7", H:"#F5F5F5" };
+    return map[atom.elem] || "#FFFFFF";
+  },
+  "2": atom => atom.ss === "h" ? "#FFD700" : atom.ss === "s" ? "#8A2BE2" : "#00CED1",
+  "3": atom => {
+    const map = {
+      LYS:"#4169E1", ARG:"#4169E1", HIS:"#4169E1",
+      ASP:"#DC143C", GLU:"#DC143C",
+      VAL:"#32CD32", LEU:"#32CD32", ILE:"#32CD32",
+      PHE:"#32CD32", TRP:"#32CD32", MET:"#32CD32", ALA:"#32CD32",
+      ASN:"#BA55D3", GLN:"#BA55D3", SER:"#BA55D3",
+      THR:"#BA55D3", TYR:"#BA55D3", CYS:"#BA55D3"
+    };
+    return map[atom.resn] || "#FFFFFF";
+  },
+  "4": atom => ({ C:"#39FF14", N:"#00BFFF", O:"#FF007F", S:"#FFFF00" }[atom.elem] || "#CCCCCC"),
+  "5": atom => ({ C:"#00FFFF", N:"#1E90FF", O:"#FF00FF", S:"#FFD700" }[atom.elem] || "#CCCCCC"),
+  "6": atom => ({ C:"#FFFF33", N:"#4169E1", O:"#FF1493", S:"#FFD700" }[atom.elem] || "#CCCCCC"),
+
+  // ⚡ CYBORG – neon magenta & cold steel
+  "7": atom => ({ C:"#FF00C8", N:"#00E5FF", O:"#FF4A4A", S:"#F3FF00", P:"#FFAAFF", H:"#E0E0E0" }[atom.elem] || "#CCCCCC"),
+
+  // 🔷 TRON – cool blue grid aesthetic
+  "8": atom => ({ C:"#006eff", N:"#00E5FF", O:"#FF00AA", S:"#FFD700", P:"#80FFEA", H:"#B0F0FF" }[atom.elem] || "#CCCCCC"),
+
+  // 🪩 FUTURO – vaporwave chrome pastel
+  "9": atom => ({ C:"#cc788f", N:"#00E5FF", O:"#FF00AA", S:"#BDE0FE", P:"#A2D2FF", H:"#FFFFFF" }[atom.elem] || "#CCCCCC"),
+
+  // 🕰️ PASADO – muted retro vintage tones
+  "10": atom => ({ C:"#C4A484", N:"#7E6B8F", O:"#E07A5F", S:"#F2CC8F", P:"#81B29A", H:"#EDE0D4" }[atom.elem] || "#CCCCCC")
+};
+
+
+
+
+// ==================== HELPERS ====================
+function scrollToViewer() {
+  document.getElementById('structureContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function toggleLoading(show) {
+  const loader = document.getElementById('viewerLoading');
+  if (show) {
+    loader.classList.remove('hidden');
+    loader.style.opacity = '1';
+    loader.style.pointerEvents = 'auto';
+  } else {
+    loader.style.opacity = '0';
+    loader.style.pointerEvents = 'none';
+    setTimeout(() => loader.classList.add('hidden'), 200); // give fade-out time
+  }
+}
+function filterVariantFiles(files) {
+  const grouped = {};
+  for (const f of files) {
+    const base = f.replace(/_\d+\.pdb$/i, '.pdb');
+    if (!grouped[base]) grouped[base] = [];
+    grouped[base].push(f);
+  }
+  const finalList = [];
+  for (const base in grouped) {
+    const group = grouped[base];
+    const hasVariants = group.some(f => /_\d+\.pdb$/i.test(f));
+    if (hasVariants) group.forEach(f => { if (/_\d+\.pdb$/i.test(f)) finalList.push(f); });
+    else finalList.push(base);
+  }
+  return finalList;
+}
+
+
+// ==================== PROTEIN-ONLY CENTERING ====================
+// Centers and frames the view around the protein portion of the *first model only*.
+function centerOnProteinReference(viewer, models) {
+  if (!viewer || !models.length) return;
+
+  const refModel = models[0].model;
+  const proteinAtoms = refModel.selectedAtoms({ hetflag: false }); // only protein
+  if (!proteinAtoms.length) {
+    console.warn("⚠️ No protein atoms found for centering.");
+    return;
+  }
+
+  // Compute centroid of protein atoms
+  const n = proteinAtoms.length;
+  const cx = proteinAtoms.reduce((s,a)=>s+a.x,0)/n;
+  const cy = proteinAtoms.reduce((s,a)=>s+a.y,0)/n;
+  const cz = proteinAtoms.reduce((s,a)=>s+a.z,0)/n;
+  referenceCenter = { x: cx, y: cy, z: cz };
+
+  // Estimate reference radius (for zoom scaling)
+  const radius = Math.max(...proteinAtoms.map(a => {
+    const dx = a.x - cx, dy = a.y - cy, dz = a.z - cz;
+    return Math.sqrt(dx*dx + dy*dy + dz*dz);
+  }));
+  referenceRadius = radius;
+
+  // Apply camera transform
+  viewer.center({ hetflag: false });
+  viewer.zoomTo({ hetflag: false });
+  viewer.zoom(1.4);
+  viewer.render();
+
+  console.log(`🎯 Centered on protein centroid (${cx.toFixed(2)}, ${cy.toFixed(2)}, ${cz.toFixed(2)}) · r=${radius.toFixed(1)} Å`);
+}
+
+
+
+function fastFinalizeScene(viewer, models) {
+  if (!viewer || models.length === 0) return;
+
+  // prevent re-entry
+  if (isLoadingLigase) return;
+  isLoadingLigase = true;
+
+  const refModel = models[0].model;
+  const allAtoms = refModel.selectedAtoms({});
+  if (allAtoms.length === 0) {
+    isLoadingLigase = false;
+    return;
+  }
+
+  // Center and zoom
+  viewer.center({});
+  viewer.zoomTo({});
+  viewer.zoom(1.2);
+
+  // 🚀 Force a synchronous render before hover handlers are bound
+  requestAnimationFrame(() => {
+    try {
+      viewer.render();
+      console.log("🎨 Viewer render pass complete");
+    } catch (err) {
+      console.error("⚠️ Render failed:", err);
+    }
+
+    // ✅ Compute and store reference frame AFTER successful render
+    const allAtomsAll = [];
+    for (const m of models) allAtomsAll.push(...m.model.selectedAtoms({}));
+    const n = allAtomsAll.length;
+    const cx = allAtomsAll.reduce((s, a) => s + a.x, 0) / n;
+    const cy = allAtomsAll.reduce((s, a) => s + a.y, 0) / n;
+    const cz = allAtomsAll.reduce((s, a) => s + a.z, 0) / n;
+    referenceCenter = { x: cx, y: cy, z: cz };
+    referenceRadius = Math.max(...allAtomsAll.map(a => {
+      const dx = a.x - cx, dy = a.y - cy, dz = a.z - cz;
+      return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }));
+
+    console.log(`🧭 Reference frame set (${cx.toFixed(2)},${cy.toFixed(2)},${cz.toFixed(2)}) r=${referenceRadius.toFixed(1)}Å`);
+
+    // 🟢 Start continuous redraw loop (safety)
+    setTimeout(() => {
+      if (viewer && viewer.render) viewer.render();
+      isLoadingLigase = false;
+    }, 150);
+  });
+}
+
+
+// ======================================================
+// 🧩 GLOBAL INTERACTION RESET HELPERS
+// ======================================================
+
+function resetInteractionFlags() {
+  // --- Global visibility flags ---
+  window.hbondVisible = false;
+  window.vdwVisible = false;
+  window.covalentVisible = false;
+  window.pocketVisible = false;
+  window.labelVisible = false;
+
+  // --- Global shape arrays ---
+  window.hbondShapes = [];
+  window.vdwShapes = [];
+  window.covalentShapes = [];
+
+  // --- Ensure all buttons visually match "off" state ---
+  const btnMap = {
+    toggleHBonds: "Show H-Bonds",
+    toggleVDW: "Show VDW Clashes",
+    toggleCovalent: "Show Covalent Bonds",
+    togglePocket: "Show Pocket",
+    toggleLabels: "Show Labels"
+  };
+
+  Object.entries(btnMap).forEach(([id, txt]) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.classList.remove("bg-sky-700", "bg-yellow-800", "bg-indigo-800", "text-white");
+    btn.textContent = txt;
+  });
+}
+
+
+// ======================================================
+// 🧹 MASTER OVERLAY CLEANER — KILLS ALL RESIDUALS + RESETS FLAGS
+// ======================================================
+
+function removeInteractionOverlays() {
+  try {
+    console.log("♻️ removeInteractionOverlays(): full teardown start...");
+
+    // --- 1️⃣ Force-trigger active toggles (so internal cleanup runs normally) ---
+    const toggles = [
+      { id: "toggleHBonds", flag: "hbondVisible" },
+      { id: "toggleVDW", flag: "vdwVisible" },
+      { id: "toggleCovalent", flag: "covalentVisible" },
+      { id: "togglePocket", flag: "pocketVisible" },
+      { id: "toggleLabels", flag: "labelVisible" }
+    ];
+    toggles.forEach(({ id, flag }) => {
+      const btn = document.getElementById(id);
+      if (btn && window[flag] && btn.textContent.startsWith("Hide")) {
+        try {
+          console.log(`🧹 Triggering click for: ${id}`);
+          btn.click();
+        } catch (e) {
+          console.warn(`⚠️ click failed for ${id}`, e);
+        }
+      }
+    });
+
+    // --- 2️⃣ Hard-kill all leftover primitives and viewer caches ---
+    if (viewer) {
+      try {
+        // Remove all visible shapes, surfaces, and labels
+        viewer.removeAllShapes?.();
+        viewer.removeAllSurfaces?.();
+        viewer.removeAllLabels?.();
+
+        // Purge low-level cached shapes
+        const glviewer = viewer.glviewer || viewer;
+        if (glviewer && glviewer.shapes) glviewer.shapes.length = 0;
+
+        // Clear model-level shape + label caches
+        if (viewer.models) {
+          viewer.models.forEach(m => {
+            if (m.shapes) m.shapes.length = 0;
+            if (m.labels) m.labels.length = 0;
+          });
+        }
+
+        viewer.render();
+      } catch (err) {
+        console.warn("⚠️ deep viewer cleanup issue:", err);
+      }
+    }
+
+    // --- 3️⃣ Reset global state and nearby residue tracking ---
+    resetInteractionFlags();
+    window.nearbyResidues = new Set();
+
+    // --- 4️⃣ Hide dropdowns and color menus (keep label toggle visible) ---
+    [
+      "surfaceColorMenu"
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add("hidden");
+      el.style.opacity = "0.0";
+      el.style.pointerEvents = "none";
+      el.style.visibility = "hidden"; // ✅ hides visually but keeps layout stable
+    });
+
+    // 🎯 Handle label color gear separately — hide only the menu, not the gear btn
+    const labelMenuBtn = document.getElementById("labelColorMenuBtn");
+    const labelMenu = document.getElementById("labelColorMenu");
+
+    if (labelMenuBtn) {
+      labelMenuBtn.style.opacity = "0.4"; // fully invisible
+      labelMenuBtn.style.pointerEvents = "none";
+      labelMenuBtn.style.visibility = "hidden"; // ✅ not visible but doesn’t collapse
+    }
+
+    if (labelMenu) {
+      labelMenu.classList.add("hidden");
+      labelMenu.style.opacity = "0.4";
+      labelMenu.style.pointerEvents = "none";
+      labelMenu.style.visibility = "hidden"; // ✅ invisible but retains layout
+    }
+
+
+
+
+
+    // --- 5️⃣ Restore defaults for opacity and label sync ---
+    window.opacity = 0.3;
+    if (typeof syncLabelButton === "function") syncLabelButton();
+
+    console.log("✅ Overlays fully removed and states synced.");
+  } catch (e) {
+    console.error("🔥 removeInteractionOverlays() fatal:", e);
+  } finally {
+    viewer?.render?.();
+  }
+}
+
+
+
+// ==================== LOAD LIGASE STRUCTURES (Debug + Clarity) ====================
+async function loadLigaseStructures(ligase, focus = true) {
+  if (isLoadingLigase) {
+    console.warn(`⏳ Still loading ${currentLigase}, skipping new request for ${ligase}`);
+    return;
+  }
+  if (currentLigase === ligase) {
+    console.log(`🔁 Ligase ${ligase} already loaded — recentering instead`);
+    recenterOnLigaseContents();
+    return;
+  }
+
+  // 🧭 Reset reference frame on new ligase load
+  referenceCenter = null;
+  referenceRadius = 0;
+
+  console.groupCollapsed(`🧩 Loading Ligase: ${ligase}`);
+  console.log("🔄 Reset reference frame →", { referenceCenter, referenceRadius });
+
+  isLoadingLigase = true;
+  currentLigase = ligase;
+  const container = document.getElementById('structureContainer');
+  const title = document.getElementById('viewerTitle');
+  const vdiv = $('#viewer3d');
+  const panel = document.getElementById('modelTogglePanel');
+  const list = document.getElementById('modelList');
+
+  container.classList.remove('hidden');
+  scrollToViewer();
+
+  title.textContent = `Structure Viewer — ${ligase}`;
+  vdiv.empty(); models = [];
+  list.innerHTML = '';
+  panel.classList.add('hidden');
+  toggleLoading(true);
+
+  console.log("🧼 Cleared viewer container and toggle panel");
+
+  // 🚀 Create a new $3Dmol viewer
+  viewer = $3Dmol.createViewer(vdiv, {
+    backgroundColor: '#0f172a',
+    fog: false
+  });
+  console.log("✅ Created new $3Dmol viewer instance");
+
+  // ✅ Define custom colors for elements
+  $3Dmol.elementColors.hetAtomBlueCarbon = {
+    H: "#CCCCCC", C: "#147dfc", N: "#0070FF", O: "#FF4040", S: "#FFD700",
+    P: "#FFA500", F: "#00FF00", Cl: "#32CD32", Br: "#A52A2A", I: "#9400D3",
+    Fe: "#CD5C5C", Zn: "#9999FF", defaultColor: "#147dfc"
+  };
+  console.log("🎨 Registered custom color palette hetAtomBlueCarbon");
+
+  // Cleanup old handlers
+  if (typeof viewer.clearHandlers === "function") viewer.clearHandlers();
+  else { viewer._clickCallbacks = []; viewer._hoverCallbacks = []; }
+  console.log("🧹 Cleared previous click/hover handlers");
+
+  // 🔍 Fetch all variant PDBs
+  const files = filterVariantFiles(await fetch(`/api/ligase-pdbs/${encodeURIComponent(ligase)}`).then(r => r.json()));
+  console.log(`📁 Found ${files.length} structure files for ${ligase}:`, files);
+
+  if (!files.length) {
+    alert(`No PDBs found for ${ligase}`);
+    toggleLoading(false);
+    isLoadingLigase = false;
+    return;
+  }
+
+  // Load models sequentially
+  for (const file of files) {
+    const fetchPath = `/api/Ligases/${ligase}/PDB/${file}`;
+    console.log(`📡 Fetching ${fetchPath} ...`);
+    try {
+      const pdbtxt = await $.get(fetchPath);
+      const m = viewer.addModel(pdbtxt, 'pdb');
+
+      // 🧬 Representations
+      m.setStyle({}, { cartoon: { color: 'spectrum' } }); // protein backbone
+      m.setStyle({ hetflag: true }, { stick: { colorscheme: 'hetAtomBlueCarbon', radius: 0.25 } }); // ligand(s)
+
+      models.push({ model: m, name: file, visible: true });
+      console.log(`✅ Loaded model: ${file}`);
+    } catch (err) {
+      console.error(`❌ Failed to load model: ${fetchPath}`, err);
+    }
+  }
+
+  console.log(`🧩 Total models loaded: ${models.length}`);
+
+  // Give the browser a beat before alignment
+  await new Promise(r => setTimeout(r, 100));
+  alignAllModelsToFirst();
+  console.log("🎯 Alignment complete");
+
+  centerOnProteinReference(viewer, models);
+  console.log("📍 Centered on protein reference frame");
+
+  setTimeout(() => {
+    isLoadingLigase = false;
+    toggleLoading(false);
+  }, 50);
+
+  setTimeout(() => {
+    buildModelTogglePanel();
+    enableLigandHover();
+    enableLigandInfoHover();
+
+
+
+    console.log("📦 Model toggle panel + hover enabled");
+  }, 100);
+
+  setTimeout(() => {
+    if (viewer && viewer.render) viewer.render();
+    console.groupEnd();
+    console.log("🧩 Finished loading and rendering ligase structures");
+  }, 500);
+}
+
+
+
+
+// ==================== SMART RECENTER FUNCTION ====================
+// Used when user clicks a row in the table (no reload, just reframe)
+function recenterOnLigaseContents() {
+  if (!viewer || models.length === 0) return;
+
+  if (referenceCenter) {
+    // 🎯 Use stored global reference frame
+    viewer.zoomTo({});  // reset to full view first
+    viewer.translate(-referenceCenter.x, -referenceCenter.y, -referenceCenter.z);
+    viewer.zoom(referenceRadius ? (60 / referenceRadius) : 1.2);
+    viewer.render();
+
+    console.log(`🎯 Recentered using reference centroid (${referenceCenter.x.toFixed(2)}, ${referenceCenter.y.toFixed(2)}, ${referenceCenter.z.toFixed(2)})`);
+  } else {
+    // fallback: dynamic recenter
+    const allAtoms = [];
+    for (const m of models) allAtoms.push(...m.model.selectedAtoms({}));
+    viewer.zoomTo(allAtoms);
+    viewer.zoom(1.2);
+    viewer.render();
+  }
+}
+
+
+
+
+// ==================== MANUAL ALIGNMENT (fallback Kabsch) ====================
+function manualAlignModels(refModel, movModel, atomSel = ["CA","N","O","C"]) {
+  const refAtoms = refModel.selectedAtoms({atom: atomSel});
+  const movAtoms = movModel.selectedAtoms({atom: atomSel});
+
+  if (refAtoms.length === 0 || movAtoms.length === 0) return NaN;
+
+  // Match shortest set
+  const n = Math.min(refAtoms.length, movAtoms.length);
+  const ref = refAtoms.slice(0, n);
+  const mov = movAtoms.slice(0, n);
+
+  // Compute centroids
+  const refCentroid = {x:0,y:0,z:0}, movCentroid = {x:0,y:0,z:0};
+  for (let i=0;i<n;i++){
+    refCentroid.x += ref[i].x; refCentroid.y += ref[i].y; refCentroid.z += ref[i].z;
+    movCentroid.x += mov[i].x; movCentroid.y += mov[i].y; movCentroid.z += mov[i].z;
+  }
+  refCentroid.x/=n; refCentroid.y/=n; refCentroid.z/=n;
+  movCentroid.x/=n; movCentroid.y/=n; movCentroid.z/=n;
+
+  // Center coordinates
+  const A=[], B=[];
+  for (let i=0;i<n;i++){
+    A.push([ref[i].x-refCentroid.x, ref[i].y-refCentroid.y, ref[i].z-refCentroid.z]);
+    B.push([mov[i].x-movCentroid.x, mov[i].y-movCentroid.y, mov[i].z-movCentroid.z]);
+  }
+
+  // Compute covariance matrix
+  const C=[[0,0,0],[0,0,0],[0,0,0]];
+  for (let i=0;i<n;i++)
+    for (let j=0;j<3;j++)
+      for (let k=0;k<3;k++)
+        C[j][k]+=B[i][j]*A[i][k];
+
+  // SVD decomposition
+  const svd = numeric.svd(C);
+  let U = svd.U, V = svd.V;
+  let R = numeric.dot(V, numeric.transpose(U));
+
+  // Fix improper rotation
+  if (numeric.det(R)<0){
+    V[2] = V[2].map(v=>-v);
+    R = numeric.dot(V, numeric.transpose(U));
+  }
+
+  // Apply rotation + translation to *all* atoms in movModel
+  const allAtoms = movModel.selectedAtoms({});
+  for (let atom of allAtoms) {
+    const x = atom.x - movCentroid.x;
+    const y = atom.y - movCentroid.y;
+    const z = atom.z - movCentroid.z;
+    const nx = R[0][0]*x + R[0][1]*y + R[0][2]*z + refCentroid.x;
+    const ny = R[1][0]*x + R[1][1]*y + R[1][2]*z + refCentroid.y;
+    const nz = R[2][0]*x + R[2][1]*y + R[2][2]*z + refCentroid.z;
+    atom.x = nx; atom.y = ny; atom.z = nz;
+  }
+
+
+  // Compute RMSD
+  let rmsd=0;
+  for (let i=0;i<n;i++){
+    const dx = mov[i].x - ref[i].x;
+    const dy = mov[i].y - ref[i].y;
+    const dz = mov[i].z - ref[i].z;
+    rmsd += dx*dx+dy*dy+dz*dz;
+  }
+  rmsd = Math.sqrt(rmsd/n);
+  return rmsd;
+}
+
+
+// ==================== ALIGNMENT FUNCTION ====================
+function alignAllModelsToFirst() {
+  if (!viewer || models.length < 2) return;
+  const ref = models[0].model;
+
+  for (let i = 1; i < models.length; i++) {
+    const mov = models[i].model;
+    let rmsd;
+    if (typeof viewer.alignModels === "function") {
+      rmsd = viewer.alignModels(ref, mov, "CA");
+    } else {
+      rmsd = manualAlignModels(ref, mov, ["CA","N","O","C"]);
+    }
+    console.log(`✅ Aligned ${models[i].name} (RMSD: ${rmsd?.toFixed?.(3) || "—"} Å)`);
+  }
+
+  // ✅ commit transformations before any surface builds
+  viewer.requestRebuild?.();
+}
+
+
+function getCurrentModel() {
+  // ✅ Always prefer the explicitly active model
+  if (window.currentModel && window.currentModel.model)
+    return window.currentModel;
+
+  // fallback: if none marked, pick the single visible one
+  const visibleModels = models.filter(m => m.visible && m.model);
+  return visibleModels.length === 1 ? visibleModels[0] : null;
+}
+
+
+// ==================== 🔆 Highlight Active Model Button ====================
+function highlightModelButton(modelName, mode = "click") {
+  const list = document.getElementById('modelList');
+  if (!list) return;
+
+  const buttons = Array.from(list.querySelectorAll('button'));
+
+  buttons.forEach(btn => {
+    const isMatch = modelName && btn.textContent.includes(modelName.replace('.pdb', ''));
+
+    // 🟡 HOVER highlight: soft electric glow (temporary)
+    if (isMatch && mode === "hover") {
+      btn.style.backgroundColor = '#fde047';  // lighter yellow
+      btn.style.color = '#000';
+      btn.style.border = '2px solid #ef4444';
+      btn.style.boxShadow = '0 0 10px rgba(250, 204, 21, 0.5)';
+      btn.style.transition = 'all 0.2s ease';
+      btn.classList.add('pulse-active');
+
+    // 🔴 CLICK highlight: stronger yellow (persistent)
+    } else if (isMatch && mode === "click") {
+      btn.style.backgroundColor = '#facc15';  // solid electric yellow
+      btn.style.color = '#000';
+      btn.style.border = '2px solid #ef4444';
+      btn.style.boxShadow = '0 0 12px rgba(250, 204, 21, 0.8)';
+      btn.style.transition = 'all 0.3s ease';
+      btn.classList.add('pulse-active');
+
+    // 🔘 Reset all other buttons
+    } else {
+      btn.style.backgroundColor = '';
+      btn.style.color = '';
+      btn.style.border = '';
+      btn.style.boxShadow = '';
+      btn.classList.remove('pulse-active');
+    }
+  });
+}
+
+
+
+
+// ==================== SAFE OVERLAY CLEANUP ====================
+function clearViewerOverlays() {
+  try {
+    viewer.removeAllSurfaces?.();
+    viewer.removeAllLabels?.();
+  } catch (e) {
+    console.warn("⚠️ Partial overlay cleanup issue:", e);
+  }
+  window.surfaceIDs = [];
+  window.activeSurface = null;
+  window.labelVisible = false;
+}
+
+
+
+
+// ==================== HOVER + CLICK + READY ====================
+function enableLigandHover() {
+  // Safety: clear previous event bindings if supported
+  if (viewer && typeof viewer.clearHandlers === "function") viewer.clearHandlers();
+
+  // Hover tooltip
+  viewer.setHoverable({ hetflag: true }, true,
+    function(atom, viewer, event) {
+      if (atom && atom.resn) {
+        let tooltipDiv = document.getElementById('tooltipDiv');
+        if (!tooltipDiv) {
+          tooltipDiv = document.createElement('div');
+          tooltipDiv.id = 'tooltipDiv';
+          tooltipDiv.style.position = 'absolute';
+          tooltipDiv.style.padding = '4px 8px';
+          tooltipDiv.style.background = 'rgba(0,0,0,0.8)';
+          tooltipDiv.style.color = '#fff';
+          tooltipDiv.style.borderRadius = '4px';
+          tooltipDiv.style.fontSize = '11px';
+          tooltipDiv.style.pointerEvents = 'none';
+          tooltipDiv.style.zIndex = '1000';
+          tooltipDiv.style.display = 'none';
+          document.body.appendChild(tooltipDiv);
+        }
+        tooltipDiv.innerHTML = `<b>${atom.resn}</b> (${atom.atom})<br>
+          Chain ${atom.chain || '-'} · Residue ${atom.resi}<br>
+          <span style="color:#38bdf8;font-size:10px;">Click to open recruiter page</span>`;
+        tooltipDiv.style.left = (event.x + 12) + 'px';
+        tooltipDiv.style.top = (event.y + 12) + 'px';
+        tooltipDiv.style.display = 'block';
+      }
+    },
+    function() {
+      const tooltipDiv = document.getElementById('tooltipDiv');
+      if (tooltipDiv) tooltipDiv.style.display = 'none';
+    }
+  );
+
+  // Click logic (variant-aware)
+  viewer.setClickable({ hetflag: true }, true, async function(atom, viewer, event) {
+    if (!atom || !atom.resn) return;
+    const ligName = atom.resn.trim();
+
+    // Find model in *current* session
+    const modelIndex = models.findIndex(m => m.model.selectedAtoms({ resn: ligName }).length > 0);
+    if (modelIndex === -1) {
+      console.warn("Ligand not found in any model:", ligName);
+      return;
+    }
+
+    const fileName = models[modelIndex].name.replace('.pdb', '');
+    const parts = fileName.split('_');
+    const pdbId = parts[0];
+    const lig = parts[1];
+    const variant = parts[2] || '';
+
+    try {
+      const res = await fetch(`/api/recruiter-by-pdb?pdb_id=${pdbId}&ligand=${lig}&variant=${variant}`);
+      const data = await res.json();
+      if (data && data.RECRUITER_CODE) {
+        window.open(`/ligand/${encodeURIComponent(data.RECRUITER_CODE)}`, "_blank");
+      } else {
+        window.open(`/missing?pdb=${pdbId}&ligand=${lig}&variant=${variant}`, "_blank");
+      }
+    } catch (err) {
+      console.error("❌ Recruiter lookup failed:", err);
+      window.open(`/missing?pdb=${pdbId}&ligand=${lig}&variant=${variant}`, "_blank");
+    }
+
+    viewer.zoomTo({ hetflag: true, resn: ligName });
+    viewer.zoom(2.0);
+    viewer.render();
+  });
+}
+
+// ==================== HOVER TOOLTIP (2s delay + 0.5s grace exit + Download + Model Highlight + Multi-Model Safe) ====================
+let hoverTimer = null;
+let hideTimer = null;
+let activeTooltip = null;
+
+function enableLigandInfoHover() {
+  if (!viewer) return;
+  viewer.clearHandlers?.();
+
+  viewer.setHoverable({ hetflag: true }, true,
+    async (atom, viewer, event) => {
+      if (!atom?.resn) return;
+
+      clearTimeout(hoverTimer);
+      clearTimeout(hideTimer);
+      if (activeTooltip) {
+        activeTooltip.remove();
+        activeTooltip = null;
+      }
+
+      // Wait 2 seconds before showing tooltip
+      hoverTimer = setTimeout(async () => {
+        const ligName = atom.resn.trim();
+        const chain = atom.chain || "-";
+        const resi = atom.resi || "-";
+
+        // 🧩 Identify which model the hovered ligand belongs to (match by residue + chain)
+        let matchedModel = null;
+        for (const m of models) {
+          try {
+            const found = m.model.selectedAtoms({
+              resn: atom.resn,
+              resi: atom.resi,
+              chain: atom.chain
+            });
+            if (found.length > 0) {
+              matchedModel = m;
+              break;
+            }
+          } catch (err) {
+            console.warn("⚠️ Model scan error:", err);
+          }
+        }
+
+
+        // 🧬 Resolve file + ligase context
+        const pdbFile = (matchedModel?.name || window.currentModel?.name || "").replace(".pdb", "");
+        const [pdbId, ligand, variant] = pdbFile.split("_");
+        const ligase = currentLigase;
+
+        // ⚡ Highlight the corresponding model in sidebar
+        if (matchedModel) highlightModelButton(matchedModel.name, "hover");
+
+        // 🔍 Recruiter lookup (if possible)
+        let recruiterData = null;
+        if (pdbId) {
+          try {
+            const res = await fetch(`/api/recruiter-by-pdb?pdb_id=${pdbId}&ligand=${ligand || ligName}&variant=${variant || ""}`);
+            recruiterData = await res.json();
+          } catch (err) {
+            console.warn("⚠️ Tooltip fetch failed:", err);
+          }
+        }
+
+        // 🟡 Build tooltip
+        const tip = document.createElement("div");
+        Object.assign(tip.style, {
+          position: "fixed",
+          top: `${event.clientY + 16}px`,
+          left: `${event.clientX + 16}px`,
+          zIndex: "99999",
+          pointerEvents: "auto",
+          padding: "12px 16px",
+          borderRadius: "0.75rem",
+          border: "2px solid #ef4444", // red outline to match active glow
+          background: "rgba(250, 204, 21, 0.95)", // electric yellow
+          color: "#000",
+          fontFamily: "Inter, sans-serif",
+          boxShadow: "0 0 16px rgba(250, 204, 21, 0.6)",
+          minWidth: "220px",
+          maxWidth: "260px",
+          transition: "opacity 0.3s ease",
+          opacity: "0"
+        });
+
+        // 🧾 Determine download path
+        let pdbFileName = "";
+        if (matchedModel?.name) pdbFileName = matchedModel.name;
+        else if (window.currentModel?.name) pdbFileName = window.currentModel.name;
+        else if (pdbId && (ligand || ligName)) pdbFileName = `${pdbId}_${ligand || ligName}${variant ? "_" + variant : ""}.pdb`;
+        else pdbFileName = `${ligName}.pdb`;
+
+        const pdbDownloadURL = `/api/Ligases/${ligase}/PDB/${pdbFileName}`;
+
+        // 🧱 Tooltip inner HTML (with PROTAC Builder integration)
+        tip.innerHTML = `
+          <div class="font-semibold mb-1">${ligName}</div>
+          <div class="text-xs mb-3 text-gray-800">
+            Chain ${chain}, Residue ${resi}<br>
+            ${recruiterData?.NAME ? `<span class="text-red-600">${recruiterData.NAME}</span>` : ""}
+          </div>
+          <div class="flex flex-col gap-2">
+            <button class="open-btn px-3 py-1 bg-black/70 hover:bg-black/80 rounded text-xs text-yellow-300 transition">
+              🔗 Open Ligand Page
+            </button>
+            <button class="download-btn px-3 py-1 bg-black/70 hover:bg-black/80 rounded text-xs text-yellow-300 transition">
+              💾 Download Structure (.pdb)
+            </button>
+            <button class="sdf-btn px-3 py-1 bg-black/70 hover:bg-black/80 rounded text-xs text-yellow-300 transition">
+              💠 Generate SDF (.sdf)
+            </button>
+            <button class="builder-btn px-3 py-1 bg-sky-700 hover:bg-sky-800 rounded text-xs text-white transition font-medium shadow-md">
+              🧩 Use as Ligase Recruiter
+            </button>
+          </div>
+        `;
+
+
+        document.body.appendChild(tip);
+        activeTooltip = tip;
+        requestAnimationFrame(() => (tip.style.opacity = "1"));
+
+        // 🧲 Keep tooltip active while hovering
+        tip.addEventListener("mouseenter", () => clearTimeout(hideTimer));
+        tip.addEventListener("mouseleave", () => {
+          hideTimer = setTimeout(() => {
+            tip.remove();
+            activeTooltip = null;
+            highlightModelButton(null, "hover");
+          }, 300);
+        });
+
+        // 🔗 Open Ligand Page
+        tip.querySelector(".open-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (recruiterData?.RECRUITER_CODE)
+            window.open(`/ligand/${encodeURIComponent(recruiterData.RECRUITER_CODE)}`, "_blank");
+          else if (pdbId)
+            window.open(`/missing?pdb=${pdbId}&ligand=${ligand || ligName}&variant=${variant || ""}`, "_blank");
+        });
+
+        // 💾 Download Structure
+        tip.querySelector(".download-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          const a = document.createElement("a");
+          a.href = pdbDownloadURL;
+          a.download = pdbFileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        });
+
+        // 💠 Generate SDF
+        tip.querySelector(".sdf-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          let sdfURL = `/api/render-sdf/${ligase}/${pdbFileName}`;
+          if (!sdfURL.endsWith(".pdb")) sdfURL += ".pdb";
+          const a = document.createElement("a");
+          a.href = sdfURL;
+          a.download = pdbFileName.replace(".pdb", ".sdf");
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        });
+
+        // 🧩 “Use as Ligase Recruiter” → Open PROTAC Builder
+        tip.querySelector(".builder-btn").addEventListener("click", async (e) => {
+          e.stopPropagation();
+
+          const finalPdb = pdbFileName;   // safely resolved earlier
+
+          // Open full PROTAC popup from tooltip
+          await useLigaseRecruiterFromTooltip(finalPdb, ligase);
+
+          // Close tooltip
+          if (activeTooltip) {
+              activeTooltip.remove();
+              activeTooltip = null;
+          }
+      });
+
+
+
+
+
+
+      }, 500); // ⏱️ Tooltip delay
+    },
+
+    // 🧹 Hover leave cleanup
+    () => {
+      clearTimeout(hoverTimer);
+      hideTimer = setTimeout(() => {
+        if (activeTooltip) {
+          activeTooltip.remove();
+          activeTooltip = null;
+        }
+        highlightModelButton(null, "hover");
+      }, 2000);
+    }
+  );
+}
+
+
+
+
+
+
+// =============================================
+// GLOBAL STATE
+// =============================================
+let originalSDF = null;
+let popupViewer = null;
+let popupModel = null;
+
+
+// =============================================
+// OPEN POPUP + LOAD 3DMOL VIEWER
+// =============================================
+async function openProtacPopup(sdfText) {
+  originalSDF = sdfText;
+  window.currentSDFtext = sdfText;   // <-- CRITICAL: backend needs this!
+
+  const popup = document.getElementById("protac-popup");
+  popup.classList.remove("hidden");
+
+  const atomInput = document.getElementById("atom-index-input");
+  const atomDropdown = document.getElementById("atom-index-dropdown");
+
+  atomInput.value = "";
+  atomDropdown.innerHTML = "";
+  atomDropdown.classList.add("hidden");
+
+  // Init viewer
+  const container = document.getElementById("protac-viewer");
+  container.innerHTML = "";
+
+  popupViewer = new $3Dmol.GLViewer(container, {
+    backgroundColor: "#0f172a"
+  });
+
+  popupModel = popupViewer.addModel(sdfText, "sdf");
+  popupViewer.setStyle({}, { stick: { radius: 0.25 }, sphere: { scale: 0.3 } });
+  popupViewer.zoomTo();
+
+  // Label all atoms
+  const atoms = popupModel.selectedAtoms({});
+  atoms.forEach(a => {
+    popupViewer.addLabel(String(a.index), {
+      position: a,
+      backgroundColor: "black",
+      backgroundOpacity: 0.6,
+      fontColor: "yellow",
+      fontSize: 12,
+      alignment: "center",
+      inFront: true
+    });
+
+    let opt = document.createElement("option");
+    opt.value = a.index;
+    opt.textContent = `Atom ${a.index} (${a.elem})`;
+    atomDropdown.appendChild(opt);
+  });
+
+  atomDropdown.classList.remove("hidden");
+  popupViewer.render();
+}
+
+
+// =============================================
+// SERVER-SIDE CONVERSION (Python)
+// =============================================
+async function convertAtomToV_backend(atomIndex, skipModify = false) {
+  const res = await fetch(`/api/convert_atom_to_v`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sdf: window.currentSDFtext,     // <-- REQUIRED
+      atom_index: atomIndex,
+      recruiter: window.currentRecruiter,
+      skip_modify: skipModify         // <-- NEW FLAG
+    })
+  });
+
+  if (!res.ok) {
+    console.error("convert_atom_to_v failed:", res.status);
+    return null;
+  }
+
+  const data = await res.json();
+  return data.session_id;
+}
+
+
+// =============================================
+// CONFIRM BUTTON HANDLER
+// =============================================
+async function handleProtacConfirm() {
+
+  const skipModify =
+      document.getElementById("skip-modify-checkbox")?.checked || false;
+
+  const inputVal =
+    document.getElementById("atom-index-input").value.trim() ||
+    document.getElementById("atom-index-dropdown").value;
+
+  if (!inputVal) {
+    alert("Please enter or select an atom index.");
+    return;
+  }
+
+  const atomIndex = parseInt(inputVal);
+
+  const sessionId = await convertAtomToV_backend(atomIndex, skipModify);
+  if (!sessionId) return;
+
+  window.open(`${window.PROTACSUITE}/build?session=${sessionId}`, "_blank");
+
+  document.getElementById("protac-popup").classList.add("hidden");
+}
+
+
+async function openProtacPopupFromPage() {
+  const sdfURL = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
+  const res = await fetch(sdfURL);
+
+  if (!res.ok) return alert("Error loading SDF.");
+
+  const sdfText = await res.text();
+  openProtacPopup(sdfText);
+}
+
+
+function downloadPDB() {
+  const a = document.createElement("a");
+  a.href = `/Ligases/${window.currentLigase}/PDB/${window.currentPDB}`;
+  a.download = window.currentPDB;
+  a.click();
+}
+
+
+function downloadSDF() {
+  const a = document.createElement("a");
+  a.href = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
+  a.download = window.currentPDB.replace(".pdb", ".sdf");
+  a.click();
+}
+
+
+
+// =============================================
+// SEND RESULT TO PROTAC BUILDER
+// =============================================
+async function sendToProtacBuilder(modifiedSDF) {
+  const uploadResponse = await fetch(`${window.PROTACSUITE_API}/api/upload-ligand`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sdf: modifiedSDF,
+      recruiter: window.currentLigandCode
+    })
+  });
+
+  const { sessionId } = await uploadResponse.json();
+  window.open(`${window.PROTACSUITE}/build?session=${sessionId}`, "_blank");
+}
+
+
+// =============================================
+// DIRECT CALL FROM TOOLTIP → OPEN POPUP
+// =============================================
+async function useLigaseRecruiterFromTooltip(pdbFileName, ligase) {
+
+    // 🔥 FIX — set globals for download buttons
+    window.currentLigase = ligase;
+    window.currentPDB = pdbFileName;
+
+    const sdfURL = `/api/render-sdf/${ligase}/${pdbFileName}`;
+    const res = await fetch(sdfURL);
+
+    if (!res.ok) {
+        return alert("Error loading SDF.");
+    }
+
+    const sdfText = await res.text();
+    openProtacPopup(sdfText);
+}
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    const cancelBtn = document.getElementById("protac-cancel");
+    const confirmBtn = document.getElementById("protac-confirm");
+    const pdbBtn = document.getElementById("download-pdb-btn");
+    const sdfBtn = document.getElementById("download-sdf-btn");
+    const protacBtn = document.getElementById("use-as-protac-btn");
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+            document.getElementById("protac-popup").classList.add("hidden");
+        });
+    }
+
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", handleProtacConfirm);
+
+    }
+
+    if (pdbBtn) {
+        pdbBtn.addEventListener("click", downloadPDB);
+    }
+
+    if (sdfBtn) {
+        sdfBtn.addEventListener("click", downloadSDF);
+    }
+
+    if (protacBtn) {
+        protacBtn.addEventListener("click", openProtacPopupFromPage);
+    }
+});
+
+
+
+
+
+
+// ==================== MODEL TOGGLE PANEL ====================
+function buildModelTogglePanel() {
+  const panel = document.getElementById('modelTogglePanel');
+  const list = document.getElementById('modelList');
+
+  console.log("🧱 Building toggle panel with", models.length, "models");
+  list.innerHTML = '';
+  panel.classList.remove('hidden');
+
+  // ==================== GLOBAL HIDE / SHOW BUTTONS ====================
+  if (!panel.dataset.initialized) {
+    const globalBar = document.createElement('div');
+    globalBar.className = 'flex gap-2 mb-2';
+
+    const hideAllBtn = document.createElement('button');
+    hideAllBtn.textContent = 'Hide All';
+    hideAllBtn.className = 'px-2 py-1 rounded bg-rose-700 hover:bg-rose-600 text-xs';
+    hideAllBtn.onclick = () => {
+      models.forEach(m => {
+        m.visible = false;
+        m.model.setStyle({}, {});
+      });
+      viewer.render();
+      clearViewerOverlays(); // ✅ safe cleanup, no model loss
+      refreshList();
+      hideAllBtn.classList.add('bg-rose-800');
+      showAllBtn.classList.remove('bg-emerald-800');
+      resetPocketState();
+      window.currentModel = null;
+    };
+
+
+    const showAllBtn = document.createElement('button');
+    showAllBtn.textContent = 'Show All';
+    showAllBtn.className = 'px-2 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-xs';
+    showAllBtn.onclick = () => {
+      models.forEach(m => {
+        m.visible = true;
+        m.model.setStyle({}, { cartoon: { color: 'spectrum' } });
+        if (ligandsVisible)
+          m.model.setStyle({ hetflag: true }, { stick: { colorscheme: 'hetAtomBlueCarbon' } });
+      });
+      viewer.render();
+      
+      refreshList();
+      showAllBtn.classList.add('bg-emerald-800');
+      hideAllBtn.classList.remove('bg-rose-800');
+      resetPocketState();
+      window.currentModel = null; // 🧩 unset if multiple shown
+    };
+
+    globalBar.append(hideAllBtn, showAllBtn);
+    list.parentNode.insertBefore(globalBar, list);
+    panel.dataset.initialized = "true";
+  }
+
+  // ==================== REFRESH LIST ====================
+  function refreshList() {
+    const modelButtons = list.querySelectorAll('button');
+    modelButtons.forEach((btn, i) => {
+      const modelObj = models[i];
+      if (!modelObj) return;
+      btn.classList.toggle('opacity-50', !modelObj.visible);
+      btn.classList.toggle('bg-sky-700', modelObj.visible);
+      btn.classList.toggle('bg-slate-700', !modelObj.visible);
+      btn.classList.toggle('text-white', modelObj.visible);
+      btn.classList.toggle('text-slate-400', !modelObj.visible);
+    });
+
+    const pocketBtn = document.getElementById("togglePocket");
+    if (pocketBtn) {
+      const visibleCount = models.filter(m => m.visible).length;
+      pocketBtn.disabled = visibleCount !== 1;
+      if (visibleCount !== 1 && pocketVisible) resetPocketState();
+    }
+  }
+
+  // ==================== BUILD MODEL BUTTONS ====================
+  models.forEach((m, idx) => {
+    const item = document.createElement('button');
+    item.textContent = m.name;
+    item.className = 'truncate px-2 py-1 rounded bg-slate-700 hover:bg-sky-700 text-left transition-opacity';
+
+    const infoIcon = document.createElement('span');
+    infoIcon.innerHTML = 'ℹ️';
+    infoIcon.className = 'cursor-pointer ml-2 text-sky-400 hover:text-sky-200 float-right';
+    if (typeof tippy === 'function')
+      tippy(infoIcon, { content: 'Open in Ligand Explorer?', theme: 'light-border' });
+
+    infoIcon.onclick = async (e) => {
+      e.stopPropagation();
+      const [pdbId, lig, variant] = m.name.replace('.pdb', '').split('_');
+      try {
+        const res = await fetch(`/api/recruiter-by-pdb?pdb_id=${pdbId}&ligand=${lig}&variant=${variant || ''}`);
+        const data = await res.json();
+        if (data && data.RECRUITER_CODE)
+          window.open(`/ligand/${encodeURIComponent(data.RECRUITER_CODE)}`, "_blank");
+        else
+          window.open('/missing', "_blank");
+      } catch (err) {
+        console.error("❌ Recruiter lookup failed:", err);
+        window.open('/missing', "_blank");
+      }
+    };
+    item.appendChild(infoIcon);
+
+    // 🎯 Click to toggle visibility and focus
+    item.onclick = () => {
+    removeInteractionOverlays();
+
+    const modelObj = models[idx];
+    const fileBase = modelObj.name.replace('.pdb', '');
+    const parts = fileBase.split('_');
+    const ligName = parts[1]?.trim();
+
+    console.groupCollapsed(`🧩 Model Clicked: ${modelObj.name}`);
+    console.log("📦 Index:", idx);
+    console.log("🧬 Ligase:", currentLigase);
+    console.log("🔹 Ligand name parsed from file:", ligName || "(none)");
+    
+
+    // Inspect ligand atoms
+    try {
+      const ligAtoms = modelObj.model.selectedAtoms({ hetflag: true });
+      console.log(`🧪 Total heteroatoms: ${ligAtoms.length}`);
+      if (ligAtoms.length > 0) {
+        const resSet = new Set(ligAtoms.map(a => a.resn));
+        console.log("🔍 Detected ligand residue codes:", Array.from(resSet));
+        const atomPreview = ligAtoms.slice(0, 5).map(a =>
+          `${a.resn}-${a.atom}-${a.serial}(${a.elem})`
+        );
+        console.log("🧫 Example atoms:", atomPreview);
+      }
+    } catch (err) {
+      console.warn("⚠️ Could not inspect ligand atoms:", err);
+    }
+
+    resetPocketState();
+
+
+      resetPocketState();
+
+      if (modelObj.visible) {
+        modelObj.visible = false;
+        modelObj.model.setStyle({}, {});
+        viewer.render();
+        clearViewerOverlays()
+        refreshList();
+        console.log(`🚫 Hidden model ${modelObj.name}`);
+        window.currentModel = null; // 🧩 clear when hiding
+        return;
+      }
+
+      // hide others
+      models.forEach((m2, j) => {
+        if (j !== idx) {
+          m2.visible = false;
+          m2.model.setStyle({}, {});
+          m2.active = false;
+        }
+      });
+
+      // show this one
+      modelObj.visible = true;
+      modelObj.model.setStyle({}, { cartoon: { color: 'spectrum' } });
+      if (ligandsVisible)
+        modelObj.model.setStyle({ hetflag: true }, { stick: { colorscheme: 'hetAtomBlueCarbon' } });
+
+      viewer.render();
+
+      // ✅ mark this as active & global
+      models.forEach(x => x.active = false);
+      modelObj.active = true;
+      window.currentModel = modelObj; // ✅ set the global “current model”
+
+      // 🧭 zoom and highlight
+      const ligandAtoms = ligName
+        ? modelObj.model.selectedAtoms({ hetflag: true, resn: ligName })
+        : [];
+      if (ligandAtoms.length > 0) {
+        viewer.zoomTo({ hetflag: true, resn: ligName }, 800);
+        viewer.zoom(1.7);
+        viewer.render();
+
+        modelObj.model.setStyle({ hetflag: true, resn: ligName }, {
+          stick: { colorscheme: 'hetAtomBlueCarbon' },
+          sphere: { radius: 1.2, color: 'yellow' }
+        });
+        viewer.render();
+        setTimeout(() => {
+          modelObj.model.setStyle({ hetflag: true, resn: ligName },
+            { stick: { colorscheme: 'hetAtomBlueCarbon' } });
+          viewer.render();
+        }, 900);
+      } else {
+        viewer.zoomTo({ hetflag: false }, 500);
+        viewer.zoom(1.3);
+        viewer.render();
+      }
+
+      refreshList();
+    };
+
+    list.appendChild(item);
+  });
+
+  refreshList();
+}
+
+
+// ==================== TOGGLE BUTTONS ====================
+document.getElementById("toggleLigands").onclick = () => {
+  ligandsVisible = !ligandsVisible;
+  const activeModels = models.filter(m => m.visible);
+  activeModels.forEach(m => {
+    if (!ligandsVisible)
+      m.model.setStyle({ hetflag: true }, {});
+    else
+      m.model.setStyle({ hetflag: true }, { stick: { colorscheme: 'hetAtomBlueCarbon' } });
+  });
+  viewer.render();
+};
+
+document.getElementById("toggleComplexes").onclick = () => {
+  complexesVisible = !complexesVisible;
+  const activeModels = models.filter(m => m.visible);
+  activeModels.forEach(m => {
+    if (!complexesVisible)
+      m.model.setStyle({ hetflag: false }, {});
+    else
+      m.model.setStyle({ hetflag: false }, { cartoon: { color: 'spectrum' } });
+  });
+  viewer.render();
+};
+
+
+
+// ==================== PLOTS + TABLE ====================
+Promise.all([
+  fetch('/api/ligase-summary').then(r=>r.json())
+]).then(([ligaseSummary])=>{
+  const ligases=ligaseSummary.map(d=>d.Ligase);
+
+  Plotly.newPlot('left-carousel',[{x:ligases,y:ligaseSummary.map(d=>d.Total_Recruiters),type:'bar',marker:{color:'#38bdf8'}}],
+    {template:'plotly_dark',title:'Total Recruiters per Ligase',margin:{t:50,l:50,r:10,b:80},xaxis:{title:'Ligase'}});
+
+  Plotly.newPlot('right-carousel',[{x:ligases,y:ligaseSummary.map(d=>d.Unique_Scaffolds),type:'bar',marker:{color:'#22d3ee'}}],
+    {template:'plotly_dark',title:'Unique Scaffolds per Ligase',margin:{t:50,l:50,r:10,b:80},xaxis:{title:'Ligase'}});
+
+  const table = $('#ligaseTable').DataTable({
+    data: ligaseSummary,
+    columns: [
+      {title: '', data: null, render: (d) => `<input type="checkbox" class="ligase-check" data-name="${d.Ligase}">`, orderable: false},
+      {title:'Ligase',data:'Ligase'},
+      {title:'Unique Scaffolds',data:'Unique_Scaffolds'},
+      {title:'Total Recruiters',data:'Total_Recruiters'},
+      {title:'Avg Density',data:'Avg_Density',render:d=>(+d).toFixed(3)},
+      {title:'Avg Shannon',data:'Avg_Shannon',render:d=>(+d).toFixed(3)},
+      {title:'Avg Norm. Diversity',data:'Avg_Normalized',render:d=>(+d).toFixed(3)}
+    ],
+    order:[[3,'desc']],pageLength:10
+  });
+
+  // Checkbox handler
+  $('#ligaseTable tbody').on('change','.ligase-check',function(e){
+    if (!e.originalEvent) return; // ← ignore programmatic or initialization events
+    const ligase = $(this).data('name');
+    if (this.checked) {
+      selectedLigases.add(ligase);
+      loadLigaseStructures(ligase);
+    } else {
+      selectedLigases.delete(ligase);
+      viewer.removeAllModels();
+      models = [];
+      viewer.render();
+    }
+  });
+
+
+  // Double-click → open ligand page
+  $('#ligaseTable tbody').on('dblclick', 'tr', function () {
+    const rowData = table.row(this).data();
+    if (!rowData || !rowData.Ligase) return;
+    fetch(`/api/featured-recruiters?ligase=${encodeURIComponent(rowData.Ligase)}&limit=1`)
+      .then(r => r.json())
+      .then(list => {
+        if (list.length > 0)
+          window.open(`/ligand/${encodeURIComponent(list[0].RECRUITER_CODE)}`, "_blank");
+        else
+          alert(`No recruiter found for ${rowData.Ligase}`);
+      });
+  });
+
+  // Highlight row + click to select only (no auto-zoom)
+  let clickTimeout;
+  $('#ligaseTable tbody').on('click', 'tr', async function (e) {
+    if (isLoadingLigase) return; // ignore clicks during loading
+
+    clearTimeout(clickTimeout);
+    clickTimeout = setTimeout(async () => {
+      $('#ligaseTable tbody tr').removeClass('selected-row');
+      $(this).addClass('selected-row');
+
+      const lig = table.row(this).data()?.Ligase;         
+      if (!lig) return;
+
+      if (currentLigase !== lig) {
+        await loadLigaseStructures(lig);
+      } else {
+        console.log(`ℹ️ ${lig} already active — no recenter triggered.`);
+      }
+    }, 150);
+  });
+
+
+
+  $('<style>')
+    .prop('type','text/css')
+    .html('.selected-row { background-color: #334155 !important; }')
+    .appendTo('head');
+}); // <-- closes the Promise.all(...).then(...)
+
+
+document.getElementById("closeViewer").onclick = () => {
+  document.getElementById("structureContainer").classList.add("hidden");
+  viewer.removeAllModels();
+  models = [];
+  currentLigase = null;
+  console.log("🧹 Viewer closed.");
+};
+
+
+
+// ==================== TOGGLE POCKET (NO ZOOM) ====================
+let pocketVisible = false;
+window.nearbyResidues = new Set();
+
+document.getElementById("togglePocket").onclick = () => {
+  const pocketBtn = document.getElementById("togglePocket");
+  const activeModels = models.filter(m => m.visible);
+
+  // Require exactly one visible model
+  if (activeModels.length !== 1) {
+    alert("Please show only one structure to view its binding pocket.");
+    return;
+  }
+
+  const modelObj = activeModels[0];
+  const ligAtoms = modelObj.model.selectedAtoms({ hetflag: true });
+  if (ligAtoms.length === 0) {
+    alert("No ligand atoms found in this model.");
+    return;
+  }
+
+  // ✅ flip both local + global
+  pocketVisible = !pocketVisible;
+  window.pocketVisible = pocketVisible;   // <—— this is the key addition
+
+  // ✅ sync label button state instantly
+  syncLabelButton?.();
+
+  if (pocketVisible) {
+    // 💙 Active (Hide Pocket)
+    pocketBtn.classList.add("bg-sky-700", "text-white");
+    pocketBtn.classList.remove("bg-slate-700", "hover:bg-slate-600");
+    pocketBtn.textContent = "Hide Pocket";
+  } else {
+    // 🩶 Inactive (Show Pocket)
+    pocketBtn.classList.remove("bg-sky-700", "text-white");
+    pocketBtn.classList.add("bg-sky-700", "hover:bg-slate-600");
+    pocketBtn.textContent = "Show Pocket";
+  }
+
+  // 🎯 Hide or show label-related UI when pocket is toggled
+  const labelBtn = document.getElementById("toggleLabels");
+  const labelMenuBtn = document.getElementById("labelColorMenuBtn");
+  const labelMenu = document.getElementById("labelColorMenu");
+
+  if (!pocketVisible) {
+    // 🧹 Pocket hidden → remove labels & hide UI
+    if (viewer && window.labelVisible) {
+      viewer.removeAllLabels();
+      window.labelVisible = false;
+    }
+
+    if (labelBtn) {
+      labelBtn.classList.add("hidden");
+      labelBtn.style.opacity = "0.0";
+      labelBtn.style.pointerEvents = "none";
+      labelBtn.style.visibility = "hidden";
+      labelBtn.style.display = "none";
+    }
+
+    if (labelMenuBtn) {
+      labelMenuBtn.classList.add("hidden");
+      labelMenuBtn.style.opacity = "0.0";
+      labelMenuBtn.style.pointerEvents = "none";
+      labelMenuBtn.style.visibility = "hidden";
+      labelMenuBtn.style.display = "none";
+    }
+
+    if (labelMenu) {
+      labelMenu.classList.add("hidden");
+      labelMenu.style.opacity = "0.0";
+      labelMenu.style.pointerEvents = "none";
+      labelMenu.style.visibility = "hidden";
+      labelMenu.style.display = "none";
+    }
+
+    console.log("🧩 Pocket hidden → Labels and Label Menu fully removed");
+  } else {
+    // 💡 Pocket visible → restore buttons (but not auto-show labels)
+    if (labelBtn) {
+      labelBtn.classList.remove("hidden");
+      labelBtn.style.display = "inline-block";
+      labelBtn.style.opacity = "1.0";
+      labelBtn.style.pointerEvents = "auto";
+      labelBtn.style.visibility = "visible";
+    }
+
+    if (labelMenuBtn) {
+      labelMenuBtn.classList.remove("hidden");
+      labelMenuBtn.style.display = "inline-block";
+      labelMenuBtn.style.opacity = "1.0";
+      labelMenuBtn.style.pointerEvents = "auto";
+      labelMenuBtn.style.visibility = "visible";
+    }
+
+    console.log("🎯 Pocket shown → Labels and Label Menu restored");
+  }
+
+
+  if (pocketVisible) {
+    // collect nearby residues within 5 Å
+    const protAtoms = modelObj.model.selectedAtoms({ hetflag: false });
+    window.nearbyResidues = new Set();
+
+    for (const p of protAtoms) {
+      for (const l of ligAtoms) {
+        const dx = p.x - l.x, dy = p.y - l.y, dz = p.z - l.z;
+        if (Math.sqrt(dx*dx + dy*dy + dz*dz) <= 5.0) {
+          nearbyResidues.add(p.resi);
+          break;
+        }
+      }
+    }
+
+    const pocketSel = { hetflag: false, resi: Array.from(nearbyResidues) };
+    const colorfunc = window.colorFuncs?.[window.residueColorMode] || window.colorFuncs?.["0"];
+
+    modelObj.model.setStyle(pocketSel, {
+      cartoon: { colorfunc, opacity: 0.35 },
+      stick: { radius: 0.3, colorfunc }
+    });
+
+    // ✅ mark atoms in pocket
+    const pocketAtoms = modelObj.model.selectedAtoms(pocketSel);
+    pocketAtoms.forEach(a => a.inPocket = true);
+    console.log(`✅ Pocket styled using residue color mode ${window.residueColorMode}`);
+
+  } else {
+    // remove pocket styling, revert to default
+    modelObj.model.setStyle({}, { cartoon: { color: 'spectrum' } });
+    if (ligandsVisible)
+      modelObj.model.setStyle({ hetflag: true }, { stick: { colorscheme: 'hetAtomBlueCarbon' } });
+  }
+
+  viewer.render();
+};
+
+
+
+// 🧹 Utility to reset pocket state externally
+function resetPocketState() {
+  const pocketBtn = document.getElementById("togglePocket");
+  if (pocketVisible) {
+    pocketVisible = false;
+    pocketBtn.textContent = "Show Pocket";
+    pocketBtn.classList.remove("bg-sky-700", "text-white");
+  }
+}
+
+// ============================
+// 🧠 Auto-hide Pocket if Active
+// ============================
+function autoHidePocketIfActive() {
+  const pocketBtn = document.getElementById("togglePocket");
+  // only trigger if pocket is visible (button says "Hide Pocket")
+  if (pocketVisible && pocketBtn.textContent.includes("Hide")) {
+    console.log("🔁 Auto-hiding pocket before recolor");
+    pocketBtn.click(); // simulate actual toggle behavior
+  }
+}
+
+// ✅ Attach to residue color dropdown
+document.querySelectorAll("#resColorMenu button[data-mode]").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    const mode = e.target.getAttribute("data-mode");
+    window.residueColorMode = mode;
+    console.log(`🎨 Residue color mode changed → ${mode}`);
+
+    // Remember whether pocket was visible before hiding
+    const wasPocketVisible = pocketVisible;
+
+    // 🧩 If pocket currently visible, hide it first
+    autoHidePocketIfActive();
+
+    // Close dropdown and apply recolor
+    document.getElementById("resColorMenu").classList.add("hidden");
+    applyResidueColorScheme();
+
+    // ✅ If it was visible before, automatically re-show it
+    if (wasPocketVisible) {
+      const pocketBtn = document.getElementById("togglePocket");
+      if (pocketBtn) {
+        console.log("🔁 Auto-restoring pocket after recolor...");
+        setTimeout(() => pocketBtn.click(), 200); // small delay for smoother update
+      }
+    }
+  });
+});
+
+
+
+
+// ==================== ADVANCED TOGGLES ====================
+
+
+
+// Utility: disable all when >1 visible (still used as base logic)
+function refreshToggleLocks() {
+  const singleVisible = models.filter(m => m.visible).length === 1;
+  ["toggleHBonds", "toggleChargeColors", "toggleVDW", "toggleLabels", "screenshotBtn"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !singleVisible;
+  });
+}
+
+
+// 🧭 Auto-enable all advanced toggles once the Show Pocket button becomes active
+document.addEventListener("DOMContentLoaded", () => {
+  const pocketBtn = document.getElementById("togglePocket");
+  if (!pocketBtn) return;
+
+  const advancedIDs = [
+    "toggleHBonds",
+    
+    "toggleChargeColors",
+    "toggleVDW",
+    "toggleLabels",
+    "screenshotBtn",
+    "toggleCovalent", 
+    "surfaceColorMenuBtn",
+
+  ];
+
+  const updateAdvancedToggleState = () => {
+    const pocketEnabled = !pocketBtn.disabled;
+    const singleVisible = models.filter(m => m.visible).length === 1;
+
+    advancedIDs.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = !(pocketEnabled && singleVisible);
+    });
+  };
+
+  // Run once on page load
+  updateAdvancedToggleState();
+
+  // Listen for state changes on Show Pocket
+  const observer = new MutationObserver(updateAdvancedToggleState);
+  observer.observe(pocketBtn, { attributes: true, attributeFilter: ["disabled"] });
+
+  // Also listen when visible models change (re-run the check)
+  const originalRefresh = refreshToggleLocks;
+  refreshToggleLocks = function() {
+    originalRefresh();
+    updateAdvancedToggleState();
+  };
+});
+
+
+function updateNearbyButtonState() {
+  const pocketActive = window.pocketVisible;
+  const singleVisible = models.filter(m => m.visible).length === 1;
+
+  if (pocketActive && singleVisible) {
+    nearbyBtn.classList.remove("hidden");
+    nearbyBtn.disabled = false;
+  } else {
+    nearbyBtn.classList.add("hidden");
+    nearbyBtn.disabled = true;
+    nearbyVisible = false;
+    window.nearbyResidues.clear();
+  }
+}
+
+// Call whenever pocket toggled or model visibility changes
+document.getElementById("togglePocket")?.addEventListener("click", updateNearbyButtonState);
+
+
+
+
+// Call this whenever visibility changes (resets all active visuals)
+function resetExtraToggles() {
+  hbondVisible = surfaceVisible = chargeColored = vdwVisible = labelVisible = false;
+  viewer.removeAllShapes();
+  viewer.removeAllSurfaces();
+  viewer.removeAllLabels();
+  viewer.render();
+
+  ["toggleHBonds", "toggleChargeColors", "toggleVDW", "toggleLabels"].forEach(id => {
+    document.getElementById(id)?.classList.remove(
+      "bg-indigo-800", "bg-purple-800", "bg-amber-800",
+      "bg-yellow-800", "bg-emerald-800", "text-white"
+    );
+  });
+
+  refreshToggleLocks();
+}
+
+
+// =======================================================
+// 🎨 Apply Residue Coloring + Sync Pocket Visualization
+// =======================================================
+function applyResidueColorScheme() {
+  console.log("🎨 applyResidueColorScheme() triggered...");
+  const modelObj = models.find(m => m.visible);
+  if (!modelObj || !viewer || !modelObj.model) {
+    console.warn("⚠️ applyResidueColorScheme(): Viewer/model not ready");
+    return;
+  }
+
+  // Save the pocket residues BEFORE we recolor (so we can rebuild)
+  const existingPocket = Array.from(window.nearbyResidues || []);
+  const colorfunc = window.colorFuncs?.[window.residueColorMode] || window.colorFuncs?.["0"];
+
+  console.log(`🧬 Applying residue color mode: ${window.residueColorMode}`);
+
+  // 1️⃣ Reset full protein coloring (cartoon only)
+  modelObj.model.setStyle({ hetflag: false }, { cartoon: { colorfunc } });
+
+  // 2️⃣ If we had a visible pocket, restore it using saved residues
+  if (window.pocketVisible && existingPocket.length) {
+    console.log("🧩 Pocket visible — restoring overlay after recolor...");
+    rebuildPocketVisualization(existingPocket);
+  }
+
+  viewer.render();
+  console.log("✅ Protein recolored, ligand preserved, pocket rebuilt");
+}
+
+
+// =========================
+// 🎛️ Residue Color Menu Logic
+// =========================
+
+// Toggle menu visibility when ⚙ button is clicked
+document.getElementById("resColorMenuBtn")?.addEventListener("click", () => {
+  const menu = document.getElementById("resColorMenu");
+  if (menu) menu.classList.toggle("hidden");
+});
+
+// Listen for color mode clicks inside the dropdown
+document.querySelectorAll("#resColorMenu button[data-mode]").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    const mode = e.target.getAttribute("data-mode");
+    window.residueColorMode = mode;
+    console.log(`🎨 Residue color mode changed → ${mode}`);
+
+    // Close the dropdown
+    document.getElementById("resColorMenu").classList.add("hidden");
+
+    // Apply the new coloring + rebuild pocket if visible
+    applyResidueColorScheme();
+  });
+});
+
+// Optional: hide the menu if clicked outside
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("resColorMenu");
+  const btn = document.getElementById("resColorMenuBtn");
+  if (menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.add("hidden");
+  }
+});
+
+
+
+
+
+// ==================== LABEL TOGGLE (pocket-aware & auto-clearing) ====================
+
+// Always declare color mode globally
+let labelColorMode = "1"; // default white
+
+// --- attach click handler ---
+document.getElementById("toggleLabels").onclick = () => {
+  const btn = document.getElementById("toggleLabels");
+  const labelMenuBtn = document.getElementById("labelColorMenuBtn");
+  const labelMenu = document.getElementById("labelColorMenu");
+  const modelObj = models.find(m => m.active);
+  if (!modelObj || !viewer) return;
+
+  // 🧭 Ensure consistency after reset or overlay removal
+  if (!viewer.labels || viewer.labels.length === 0) labelVisible = false;
+
+  // Require pocket visibility
+  if (!window.pocketVisible) {
+    alert("Labels are only available when the binding pocket is shown.");
+    return;
+  }
+
+  // --- HIDE LABELS ---
+  if (labelVisible) {
+    viewer.removeAllLabels();
+    labelVisible = false;
+    btn.textContent = "Show Labels";
+    btn.classList.remove("bg-sky-700", "text-white");
+
+    // 🟢 Hide both the label color gear and its dropdown
+    labelMenuBtn.classList.add("hidden");
+    labelMenu.classList.add("hidden");
+
+    labelMenuBtn.style.opacity = "0.0";
+    labelMenuBtn.style.pointerEvents = "none";
+    labelMenuBtn.style.visibility = "hidden";
+    labelMenuBtn.style.display = "none"; // ✅ fully removes it visually
+
+    viewer.render();
+    return;
+  }
+
+  // --- SHOW LABELS ---
+  updatePocketLabels();
+  labelVisible = true;
+  btn.textContent = "Hide Labels";
+  btn.classList.add("bg-sky-700", "text-white");
+
+  // 🌈 Show both gear and dropdown toggle visibility
+  labelMenuBtn.classList.remove("hidden");
+  labelMenuBtn.style.opacity = "1.0";
+  labelMenuBtn.style.pointerEvents = "auto";
+  labelMenuBtn.style.visibility = "visible";
+  labelMenuBtn.style.display = "inline-block"; // ✅ ensures it appears again
+  labelMenuBtn.style.zIndex = "9999";
+
+  viewer.render();
+
+};
+
+
+
+
+// --- pocket aware update ---
+function updatePocketLabels() {
+  viewer.removeAllLabels();
+  const modelObj = models.find(m => m.visible);
+  if (!modelObj) return;
+
+  const residues = modelObj.model.selectedAtoms({ hetflag: false });
+  const atomsToLabel = residues.filter(a => a.inPocket);
+  const unique = {};
+  atomsToLabel.forEach(a => { unique[`${a.chain}:${a.resi}`] = a; });
+
+  // color maps (your existing ones)
+  const chargeColors = {
+    LYS:"#4DA6FF", ARG:"#1E90FF", HIS:"#6A5ACD",
+    ASP:"#FF4C4C", GLU:"#FF6347"
+  };
+  const residueTypeColors = {
+    // 🟩 Hydrophobic (nonpolar aliphatic)
+    ALA: "#7FFF00",  // bright green
+    VAL: "#32CD32",
+    LEU: "#2E8B57",
+    ILE: "#00FF7F",
+    PRO: "#66CDAA",
+    GLY: "#9ACD32",
+
+    // 🟠 Aromatic
+    PHE: "#FFD700",
+    TYR: "#FFA500",
+    TRP: "#FFB347",
+    HIS: "#9370DB",  // violet — aromatic & partially polar
+
+    // 🔵 Polar uncharged
+    SER: "#87CEFA",
+    THR: "#00BFFF",
+    ASN: "#ADD8E6",
+    GLN: "#5F9EA0",
+
+    // 💛 Sulfur-containing
+    MET: "#ADFF2F",
+    CYS: "#E6E600",
+
+    // 🔴 Negatively charged (acidic)
+    ASP: "#FF4C4C",
+    GLU: "#FF6347",
+
+    // 🔷 Positively charged (basic)
+    LYS: "#4DA6FF",
+    ARG: "#1E90FF",
+
+    // 🩶 Special
+    SEC: "#CCCCCC"   // selenocysteine (rare but nice to include)
+  };
+
+  const aromaticOnly = { PHE:"#FFD700", TYR:"#FFA500", TRW:"#FFB347" };
+  const polarOnly = { SER:"#87CEFA", THR:"#00BFFF", ASN:"#ADD8E6", GLN:"#5F9EA0" };
+  const sulfurOnly = { MET:"#ADFF2F", CYS:"#E6E600" };
+
+  Object.values(unique).forEach(a => {
+    let color = "#FFFFFF";
+
+    if (labelColorMode === "2") color = chargeColors[a.resn] || "#FFFFFF";
+    else if (labelColorMode === "3") color = residueTypeColors[a.resn] || "#FFFFFF";
+    else if (labelColorMode === "4") color = aromaticOnly[a.resn] || "rgba(255,255,255,0.15)";
+    else if (labelColorMode === "5") color = polarOnly[a.resn] || "rgba(255,255,255,0.15)";
+    else if (labelColorMode === "6") color = sulfurOnly[a.resn] || "rgba(255,255,255,0.15)";
+
+    // Skip unlabeled residues if filtering by type
+    if (color.startsWith("rgba")) return;
+
+    viewer.addLabel(`${a.resn}${a.resi}`, {
+      position: a,
+      fontColor: color,
+      backgroundColor: "rgba(0,0,0,0.65)",
+      fontSize: 14,
+      fontFamily: "Arial, sans-serif",
+      borderThickness: 1.0,
+      borderColor: "rgba(255,255,255,0.35)",
+      alignment: "center",
+      inFront: true,
+      zOffset: 0.8
+    });
+  });
+
+  viewer.render();
+}
+
+
+
+// --- auto-enable/disable label button with pocket ---
+function syncLabelButton() {
+  const lblBtn = document.getElementById("toggleLabels");
+
+  // disable or enable based on pocketVisible
+  lblBtn.disabled = !pocketVisible;
+  lblBtn.style.opacity = pocketVisible ? "1" : "0.0";
+
+  // 🧹 automatically remove labels if pocket turned off
+  if (!pocketVisible && labelVisible) {
+    viewer.removeAllLabels();
+    labelVisible = false;
+    lblBtn.textContent = "Show Labels";
+    lblBtn.classList.remove("bg-sky-700", "text-white");
+    viewer.render();
+  }
+}
+
+// ==================== LABEL COLOR MENU (robust + reactive) ====================
+document.addEventListener("DOMContentLoaded", () => {
+  const labelMenuBtn = document.getElementById("labelColorMenuBtn");
+  const labelMenu = document.getElementById("labelColorMenu");
+
+  if (!labelMenuBtn || !labelMenu) return;
+
+  // --- Improved dropdown toggle with style reset ---
+  labelMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // prevent global click from closing immediately
+
+    const isHidden = labelMenu.classList.contains("hidden");
+
+    if (isHidden) {
+      // ✅ SHOW dropdown
+      labelMenu.classList.remove("hidden");
+      labelMenu.style.opacity = "1.0";
+      labelMenu.style.pointerEvents = "auto";
+      labelMenu.style.visibility = "visible";
+      labelMenu.style.display = "block";
+      labelMenu.style.zIndex = "9999"; // ensure it's above other buttons
+
+      // also ensure gear button itself is restored if previously faded
+      labelMenuBtn.style.opacity = "1.0";
+      labelMenuBtn.style.pointerEvents = "auto";
+      labelMenuBtn.style.visibility = "visible";
+    } else {
+      // 🔒 HIDE dropdown
+      labelMenu.classList.add("hidden");
+      labelMenu.style.opacity = "0.0";
+      labelMenu.style.pointerEvents = "none";
+      labelMenu.style.visibility = "hidden";
+      labelMenu.style.display = "none";
+    }
+  });
+
+  // --- Close dropdown when clicking outside ---
+  window.addEventListener("click", (e) => {
+    if (!labelMenu.contains(e.target) && e.target !== labelMenuBtn) {
+      labelMenu.classList.add("hidden");
+      labelMenu.style.opacity = "0.0";
+      labelMenu.style.pointerEvents = "none";
+      labelMenu.style.visibility = "hidden";
+      labelMenu.style.display = "none";
+    }
+  });
+
+  // --- Handle color selection from dropdown ---
+  labelMenu.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      labelColorMode = e.target.dataset.mode;
+      labelMenu.classList.add("hidden");
+      labelMenu.style.opacity = "0.0";
+      labelMenu.style.pointerEvents = "none";
+      labelMenu.style.visibility = "hidden";
+      labelMenu.style.display = "none";
+
+      // 🧩 shorten the text to first word only (split before("(") or by spaces)
+      const shortLabel = e.target.textContent.split(/[ (]/)[0];
+      labelMenuBtn.textContent = `⚙ Label Colors (${shortLabel}) ▾`;
+
+
+      // 🔄 Refresh labels immediately if visible
+      if (labelVisible) updatePocketLabels();
+    });
+  });
+});
+
+
+
+
+
+// ==================== LIGAND COLOR MENU ====================
+document.addEventListener("DOMContentLoaded", () => {
+  const ligandColorBtn = document.getElementById("ligandColorMenuBtn");
+  const ligandColorMenu = document.getElementById("ligandColorMenu");
+  if (!ligandColorBtn || !ligandColorMenu) return;
+
+  ligandColorBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    ligandColorMenu.classList.toggle("hidden");
+  });
+  window.addEventListener("click", (e) => {
+    if (!ligandColorMenu.contains(e.target) && e.target !== ligandColorBtn)
+      ligandColorMenu.classList.add("hidden");
+  });
+
+  window.ligandPalettes = {
+    "4": {1:"#CCCCCC",6:"#39FF14",7:"#00BFFF",8:"#FF007F",9:"#00FFFF",15:"#FFAA00",16:"#FFFF00",17:"#32CD32",35:"#FF4500",53:"#9400D3"},
+    "5": {1:"#CCCCCC",6:"#00FFFF",7:"#1E90FF",8:"#FF00FF",9:"#00FF80",15:"#FFD700",16:"#40E0D0",17:"#4682B4",35:"#008B8B",53:"#9370DB"},
+    "6": {1:"#CCCCCC",6:"#FFFF33",7:"#4169E1",8:"#FF1493",9:"#7FFF00",15:"#FFA500",16:"#FFD700",17:"#F0E68C",35:"#FF8C00",53:"#DAA520"},
+    "7": {1:"#CCCCCC",6:"#000000",7:"#4444FF",8:"#FF2222",9:"#00FFFF",15:"#FFD700",16:"#AAAA00",17:"#00FF00",35:"#FF8C00",53:"#9370DB"},
+    "8": {1:"#CCCCCC",6:"#FFFFFF",7:"#AADDFF",8:"#FFBBBB",9:"#DDFFDD",15:"#FFFFCC",16:"#FFFF99",17:"#CCFFCC",35:"#DDDDDD",53:"#EEEEEE"},
+    "9": {1:"#CCCCCC",6:"#FF0000",7:"#0000FF",8:"#FFA500",9:"#FFFF00",15:"#FF69B4",16:"#FFD700",17:"#00FF00",35:"#FF4500",53:"#8A2BE2"},
+    "10":{1:"#CCCCCC",6:"#00FFFF",7:"#0077FF",8:"#FF99FF",9:"#00FF80",15:"#FFD700",16:"#40E0D0",17:"#4682B4",35:"#20B2AA",53:"#9370DB"},
+    "11":{1:"#CCCCCC",6:"#FFB6C1",7:"#B0E0E6",8:"#FF1493",9:"#AEEEEE",15:"#FFDAB9",16:"#FAFAD2",17:"#E6E6FA",35:"#F4A460",53:"#D8BFD8"}
+  };
+  const elemMap = {H:1,C:6,N:7,O:8,F:9,P:15,S:16,Cl:17,Br:35,I:53};
+
+  window.applyLigandColorScheme = function(mode) {
+    const modelObj = models.find(m => m.visible);
+    if (!modelObj || !viewer) return;
+
+    const palette = window.ligandPalettes[mode];
+    if (!palette) return;
+
+    const colorfunc = atom => {
+      const eNum = elemMap[atom.elem] || 0;
+      return palette[eNum] || "#CCCCCC";
+    };
+
+    // 🔧 Re-apply style so viewer refreshes ligand colors
+    modelObj.model.setStyle({ hetflag: true }, { stick: { radius: 0.3, colorfunc } });
+    viewer.render();
+  };
+
+  ligandColorMenu.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const mode = e.target.getAttribute("data-mode");
+      window.applyLigandColorScheme(mode);
+      ligandColorMenu.classList.add("hidden");
+      ligandColorBtn.textContent = `⚙ Ligand Colors (${e.target.textContent}) ▾`;
+    });
+  });
+});
+
+
+
+
+
+// ==================== INDIVIDUAL TOGGLES ====================
+
+
+// ==================== TOGGLE NEARBY RESIDUES (Halo Surface Edition — Double Pocket Reset) ====================
+let nearbyVisible = false;
+window.nearbyResidues = new Set();
+
+const nearbyBtn = document.getElementById("toggleNearby");
+
+if (nearbyBtn) {
+  nearbyBtn.onclick = async () => {
+    const activeModels = models.filter(m => m.visible);
+    if (activeModels.length !== 1) {
+      alert("Please show only one structure to view nearby residues.");
+      return;
+    }
+
+    const modelObj = activeModels[0];
+    const ligandAtoms = modelObj.model.selectedAtoms({ hetflag: true });
+    if (ligandAtoms.length === 0) {
+      alert("No ligand atoms found in this model.");
+      return;
+    }
+
+    nearbyVisible = !nearbyVisible;
+
+    if (nearbyVisible) {
+      // 🔍 collect residues within 5 Å of ligand atoms
+      window.nearbyResidues.clear();
+      const protAtoms = modelObj.model.selectedAtoms({ hetflag: false });
+
+      for (const p of protAtoms) {
+        for (const l of ligandAtoms) {
+          const dx = p.x - l.x, dy = p.y - l.y, dz = p.z - l.z;
+          if (Math.sqrt(dx * dx + dy * dy + dz * dz) <= 5.0) {
+            window.nearbyResidues.add(p.resi);
+            break;
+          }
+        }
+      }
+
+      const nearbySel = { hetflag: false, resi: Array.from(window.nearbyResidues) };
+
+      // 🌟 Inner bright gold core
+      modelObj.model.setStyle(nearbySel, {
+        sphere: { color: "gold", opacity: 0.85, radius: 1.8 }
+      });
+
+      // 🌟 Outer halo layer
+      modelObj.model.setStyle(nearbySel, {
+        sphere: { color: "yellow", opacity: 0.45, radius: 2.6 }
+      }, true);
+
+      viewer.render();
+      console.log(`🌟 Highlighted ${window.nearbyResidues.size} nearby residues (halo surface)`);
+      nearbyBtn.classList.add("bg-amber-800");
+
+    } else {
+      // 🧹 OFF → simulate full pocket hide/show to restore sticks correctly
+      console.log("🧽 Nearby surface off — triggering double pocket reset for full restoration.");
+
+      const pocketBtn = document.getElementById("togglePocket");
+      if (pocketBtn && typeof pocketBtn.onclick === "function") {
+        // 🌀 simulate two sequential clicks with a small delay between
+        pocketBtn.onclick(); // first click hides
+        setTimeout(() => {
+          pocketBtn.onclick(); // second click shows again (restores sticks + styles)
+          console.log("✅ Double pocket reset completed.");
+        }, 200);
+      } else {
+        console.warn("⚠️ togglePocket handler not found — using manual restore fallback.");
+        modelObj.model.setStyle({}, { cartoon: { color: "spectrum" } });
+        modelObj.model.setStyle({ hetflag: true }, { stick: { colorscheme: "hetAtomBlueCarbon" } });
+        viewer.render();
+      }
+
+      window.nearbyResidues.clear();
+      nearbyBtn.classList.remove("bg-amber-800");
+    }
+  };
+}
+
+
+
+
+
+
+// 🔹 Simplified H-Bonds (distance-only, for PDBs without hydrogens)
+document.getElementById("toggleHBonds").onclick = () => {
+  const btn = document.getElementById("toggleHBonds");
+  const modelObj = models.find(m => m.active);
+  if (!modelObj || !viewer) return;
+
+  // 🧭 realign flag if shapes were cleared elsewhere
+  if (!hbondShapes || hbondShapes.length === 0) hbondVisible = false;
+
+  // --- TURN OFF ---
+  if (hbondVisible) {
+    hbondShapes.forEach(s => { try { viewer.removeShape(s); } catch (err) {} });
+    hbondShapes = [];
+    hbondVisible = false;
+    btn.textContent = "Show H-Bonds";
+    btn.classList.remove("bg-sky-700", "text-white");
+    viewer.render();
+    return;
+  }
+
+  // --- TURN ON ---
+  const lig = modelObj.model.selectedAtoms({ hetflag: true }).filter(a => a.elem !== "H");
+  const prot = modelObj.model.selectedAtoms({ hetflag: false }).filter(a => a.elem !== "H");
+  hbondShapes = [];
+
+  const hbondElems = ["N", "O", "S"];
+  const maxDist = 3.5;
+
+  lig.forEach(l => {
+    if (!hbondElems.includes(l.elem)) return;
+    prot.forEach(p => {
+      if (!hbondElems.includes(p.elem)) return;
+
+      const dx = l.x - p.x, dy = l.y - p.y, dz = l.z - p.z;
+      const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      if (dist > maxDist) return;
+
+      const cyl = viewer.addCylinder({
+        start: l, end: p,
+        radius: 0.18,
+        fromCap: 1, toCap: 1,
+        color: "#00FF00",
+        opacity: 0.85,
+        dashed: true,
+        dashLength: 0.3
+      });
+      hbondShapes.push(cyl);
+    });
+  });
+
+  hbondVisible = hbondShapes.length > 0; // ✅ ensure consistency
+  btn.textContent = hbondVisible ? "Hide H-Bonds" : "Show H-Bonds";
+  if (hbondVisible) btn.classList.add("bg-sky-700", "text-white");
+  else btn.classList.remove("bg-sky-700", "text-white");
+  viewer.render();
+};
+
+
+
+
+
+// 🔹 Van der Waals Clashes (excludes true H-bonds)
+// 🔹 Van der Waals Clashes (excludes true H-bonds)
+document.getElementById("toggleVDW").onclick = () => {
+  const btn = document.getElementById("toggleVDW");
+  const modelObj = models.find(m => m.visible);
+  if (!modelObj || !viewer) return;
+
+  // 🧭 realign flag if shapes were cleared elsewhere
+  if (!vdwShapes || vdwShapes.length === 0) vdwVisible = false;
+
+  // --- TURN OFF ---
+  if (vdwVisible) {
+    vdwShapes.forEach(s => { try { viewer.removeShape(s); } catch (err) {} });
+    vdwShapes = [];
+    vdwVisible = false;
+    btn.classList.remove("bg-sky-700", "text-white");
+    btn.textContent = "Show VDW Clashes";
+    viewer.render();
+    return;
+  }
+
+  // --- TURN ON ---
+  const vdwR = { H:1.2, C:1.7, N:1.55, O:1.52, F:1.47, P:1.8, S:1.8, Cl:1.75, Br:1.85, I:1.98 };
+  const getR = a => vdwR[a.elem] || 1.7;
+
+  const lig = modelObj.model.selectedAtoms({ hetflag: true }).filter(a => a.elem !== "H");
+  const prot = modelObj.model.selectedAtoms({ hetflag: false }).filter(a => a.elem !== "H");
+  const hbondElems = ["N", "O", "S"];
+  const hbondCutoff = 3.5;
+  const seen = new Set();
+  vdwShapes = [];
+
+  lig.forEach(l => {
+    let best = null, bestD = 9e9;
+    for (const p of prot) {
+      const dx = l.x - p.x, dy = l.y - p.y, dz = l.z - p.z;
+      const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      if (d < bestD) { bestD = d; best = p; }
+    }
+    if (!best) return;
+
+    const bothHbondAtoms = hbondElems.includes(l.elem) && hbondElems.includes(best.elem);
+    if (bothHbondAtoms && bestD <= hbondCutoff && bestD >= 2.3) return;
+
+    const sumR = getR(l) + getR(best);
+    const overlap = sumR - bestD;
+    if (overlap <= 0) return;
+
+    const key = `${l.serial}-${best.chain}:${best.resi}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    let col = "#ffd54a", radius = 0.18, opacity = 0.70;
+    if (overlap > 0.20) { col = "#ff9800"; radius = 0.22; opacity = 0.85; }
+    if (overlap > 0.50) { col = "#ff1744"; radius = 0.28; opacity = 0.95; }
+
+    const inset = Math.max(0.1, Math.min(0.35, overlap * 0.4));
+    const ux = (best.x - l.x) / bestD, uy = (best.y - l.y) / bestD, uz = (best.z - l.z) / bestD;
+    const start = { x: l.x + ux*inset, y: l.y + uy*inset, z: l.z + uz*inset };
+    const end   = { x: best.x - ux*inset, y: best.y - uy*inset, z: best.z - uz*inset };
+
+    vdwShapes.push(viewer.addCylinder({
+      start, end, radius, color: col, opacity,
+      fromCap: 1, toCap: 1, dashed: true, dashLength: 0.35
+    }));
+
+    const mid = { x:(start.x+end.x)/2, y:(start.y+end.y)/2, z:(start.z+end.z)/2 };
+    vdwShapes.push(viewer.addSphere({
+      center: mid, radius: radius * 0.8,
+      color: col, opacity: Math.min(1, opacity + 0.1)
+    }));
+  });
+
+  vdwVisible = vdwShapes.length > 0; // ✅ ensure consistency
+  btn.textContent = vdwVisible ? "Hide VDW Clashes" : "Show VDW Clashes";
+  if (vdwVisible) btn.classList.add("bg-sky-700", "text-white");
+  else btn.classList.remove("bg-sky-700", "text-white");
+  viewer.render();
+};
+
+
+
+// 🔹 Covalent Interactions (explicit + distance-based fallback)
+document.getElementById("toggleCovalent").onclick = () => {
+  const btn = document.getElementById("toggleCovalent");
+  const modelObj = models.find(m => m.visible);
+  if (!modelObj) return;
+
+  // Remove existing shapes if already visible 
+  if (covalentVisible) {
+    covalentShapes.forEach(s => viewer.removeShape(s));
+    covalentShapes = [];
+    covalentVisible = false;
+    viewer.render();
+    return;
+  }
+
+  const lig = modelObj.model.selectedAtoms({ hetflag: true });
+  const prot = modelObj.model.selectedAtoms({ hetflag: false });
+  covalentShapes = [];
+
+  const pairs = [
+    ["C", "S", 1.9], // cysteine-type
+    ["C", "N", 1.7], // imine-type
+    ["C", "O", 1.6]  // serine-type
+  ];
+
+  lig.forEach(l => {
+    prot.forEach(p => {
+      pairs.forEach(([a, b, cut]) => {
+        if ((l.elem === a && p.elem === b) || (l.elem === b && p.elem === a)) {
+          const dx = l.x - p.x, dy = l.y - p.y, dz = l.z - p.z;
+          const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          if (dist <= cut) {
+            const cyl = viewer.addCylinder({
+              start: l, end: p, radius: 0.25,
+              color: "#FFA500", opacity: 1.0,
+              fromCap: 1, toCap: 1
+            });
+            const mid = { x:(l.x+p.x)/2, y:(l.y+p.y)/2, z:(l.z+p.z)/2 };
+            covalentShapes.push(cyl);
+            covalentShapes.push(viewer.addSphere({
+              center: mid, radius: 0.2, color: "#FFB347", opacity: 1
+            }));
+          }
+        }
+      });
+    });
+  });
+
+  if (covalentShapes.length === 0) {
+    alert("No covalent interactions detected.");
+    viewer.render();
+    return;
+  }
+
+  covalentVisible = true;
+  viewer.render();
+};
+
+
+// 🔹 Screenshot
+document.getElementById("screenshotBtn").onclick = () => {
+  const img = viewer.pngURI();
+  const a = document.createElement("a");
+  a.href = img;
+  a.download = `LigandPOSE_${Date.now()}.png`;
+  a.click();
+};
+
+
+
+// ==================== FULL RESET ON MODEL LOAD ====================
+async function fullResetViewerState() {
+  console.log("♻️ Full viewer state reset...");
+
+  try {
+    // 💥 Clean shapes, surfaces, labels safely
+    if (window.hbondShapes?.length) {
+      for (const s of window.hbondShapes) try { viewer.removeShape(s); } catch (e) {}
+      window.hbondShapes = [];
+    }
+    if (window.vdwShapes?.length) {
+      for (const s of window.vdwShapes) try { viewer.removeShape(s); } catch (e) {}
+      window.vdwShapes = [];
+    }
+    if (window.covalentShapes?.length) {
+      for (const s of window.covalentShapes) try { viewer.removeShape(s); } catch (e) {}
+      window.covalentShapes = [];
+    }
+
+    if (nearbyBtn) {
+      nearbyBtn.classList.add("hidden");
+      nearbyBtn.disabled = true;
+      nearbyVisible = false;
+      window.nearbyResidues.clear();
+    }
+
+
+    viewer.removeAllShapes?.();
+    viewer.removeAllSurfaces?.();
+    viewer.removeAllLabels?.();
+    viewer.clear?.(); // full model cache clear
+  } catch (e) {
+    console.warn("⚠️ Partial cleanup issue:", e);
+  }
+
+  // ==========================================
+  // 🧩 RESET GLOBAL VIEWER STATE VARIABLES
+  // ==========================================
+  window.surfaceVisible = false;
+  window.hbondVisible = false;
+  window.vdwVisible = false;
+  window.labelVisible = false;
+  window.chargeColored = false;
+  window.covalentVisible = false;
+  window.pocketVisible = false;
+  window.ligandsVisible = true;
+  window.complexesVisible = true;
+  window.opacity = 0.3;
+  window.surfaceColorMode = "1";
+  window.labelColorMode = "1";
+  window.residueColorMode = "1";
+  window.nearbyResidues = new Set();
+
+  window.hbondShapes = [];
+  window.vdwShapes = [];
+  window.covalentShapes = [];
+  window.surfaceIDs = [];
+  window.activeSurface = null;
+  window.surfaceLock = false;
+
+  window.currentModel = null;
+  window.currentLigase = null;
+
+  // ==========================================
+  // 🧭 RESET UI BUTTON STATES
+  // ==========================================
+  const toggleButtons = [
+    "toggleHBonds","toggleChargeColors","toggleVDW","toggleLabels",
+    "toggleCovalent","screenshotBtn","ligandColorMenuBtn",
+    "labelColorMenuBtn","surfaceColorMenuBtn",
+    "toggleLigands","toggleComplexes"
+  ];
+
+  toggleButtons.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = false;
+    el.classList.remove("bg-sky-700","bg-yellow-800","bg-indigo-800","text-white");
+    el.textContent = el.textContent.replace(/^Hide/,"Show");
+  });
+
+  // Reset Pocket Button
+  const pocketBtn = document.getElementById("togglePocket");
+  if (pocketBtn) {
+    pocketBtn.disabled = models.filter(m => m.visible).length !== 1;
+    pocketBtn.textContent = "Show Pocket";
+    pocketBtn.classList.remove("bg-sky-700","text-white");
+  }
+
+  // Reset Opacity Slider
+  const slider = document.getElementById("surfaceOpacitySlider");
+  const sliderVal = document.getElementById("surfaceOpacityValue");
+  if (slider && sliderVal) {
+    slider.value = 0.3;
+    sliderVal.textContent = "30%";
+  }
+
+  // ==========================================
+  // 🧹 HIDE DROPDOWNS / SUBMENUS
+  // ==========================================
+  [
+    "surfaceColorMenu","ligandColorMenu","labelColorMenu",
+    "resColorMenu","surfaceColorMenuBtn","surfaceOpacityContainer"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  });
+
+  // Hide ⚙ Label Colors gear until labels are active again
+  const labelMenuBtn = document.getElementById("labelColorMenuBtn");
+  if (labelMenuBtn) labelMenuBtn.classList.add("hidden");
+
+  // ==========================================
+  // 🔄 REBUILD INTERNAL STATE LOCKS
+  // ==========================================
+  resetPocketState?.();
+  refreshToggleLocks?.();
+  updateAdvancedToggleState?.();
+
+  viewer.render();
+  console.log("✅ Viewer state fully reset to baseline.");
+}
+
+
+// Add tooltips to explain Shannon Index, Average Density, and Normalized Diversity
+const tooltips = {
+  "Avg Shannon": "Shannon Diversity Index measures the diversity of recruiters for a ligase. Higher values indicate greater diversity. Calculated as -Σ(pᵢ * log(pᵢ)), where pᵢ is the proportion of recruiters in each scaffold.",
+  "Avg Density": "Recruiter Density Score represents the proportion of recruiters associated with a specific scaffold relative to the total recruiters for a ligase. Higher values indicate higher scaffold utilization.",
+  "Avg Norm. Diversity": "Normalized Diversity is the Shannon Index normalized by its maximum possible value (H/Hmax). It ranges from 0 to 1, where 1 indicates maximum diversity."
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Apply tooltips to table headers
+  const tableHeaders = document.querySelectorAll("#ligaseTable th");
+  tableHeaders.forEach(header => {
+    const text = header.textContent.trim();
+    if (tooltips[text]) {
+      header.setAttribute("title", tooltips[text]);
+      header.classList.add("cursor-help");
+    }
+  });
+});
+
+
+
+</script>
+
+{% endblock %}

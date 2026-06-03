@@ -1,0 +1,9 @@
+Flask
+gunicorn
+pandas
+numpy
+requests
+biopython
+matplotlib
+SQLAlchemy
+rdkit-pypi

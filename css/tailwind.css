@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    .text-silver-300 {
+        color: #C0C0C0;
+    }
+    .text-sky-blue-400 {
+        color: #87CEEB;
+    }
+    .border-silver-200 {
+        border-color: rgba(192, 192, 192, 0.2);
+    }
+}

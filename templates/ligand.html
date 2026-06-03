@@ -1,0 +1,2508 @@
+{% extends 'base.html' %}
+{% block title %}Ligand Information | E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 md:px-12 py-10 bg-slate-950/50 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-800">
+
+
+  <p class="text-gray-400 mb-4">
+    Detailed view of recruiter compound properties and SASA exposure.
+  </p>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
+    <!-- Left / Main -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="ligand-code" class="text-xl font-semibold text-white">Loading…</h2>
+          <div class="flex gap-2 text-xs">
+            <span id="ligase-badge" class="px-2 py-1 rounded-full bg-slate-700 text-gray-200">—</span>
+            <span id="ligand-badge" class="px-2 py-1 rounded-full bg-sky-700 text-gray-100">—</span>
+            <span class="px-2 py-1 rounded-full bg-green-700 text-gray-100">Drug-like Recruiter</span>
+          </div>
+        </div>
+
+        <!-- 2D + 3D PANELS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- 2D STRUCTURE -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-gray-300">2D Structure</h3>
+              <div class="flex gap-2 text-xs">
+                <button id="btn-2d-normal" class="px-2 py-0.5 rounded bg-sky-700 text-white">Normal</button>
+                <button id="btn-2d-sasa" class="px-2 py-0.5 rounded bg-slate-700 text-gray-200 hover:bg-slate-600">SASA Map</button>
+
+              </div>
+
+            </div>
+
+            <!-- Molecule Container -->
+            <div id="svg2d-wrap" class="relative bg-slate-800 rounded-lg p-3">
+              <div id="svg2d" class="w-full h-[340px] flex items-center justify-center">
+                <span class="text-gray-500 text-sm">Rendering…</span>
+              </div>
+
+              <!-- Legend BELOW molecule -->
+              <div id="legend-2d" class="hidden mt-4 bg-slate-900/80 border border-slate-700 rounded px-3 py-2 text-[11px] text-gray-200 shadow-lg backdrop-blur">
+                <div class="text-xs text-gray-300 mb-1 font-semibold tracking-wide text-center">
+                  SASA Exposure (Å²)
+                </div>
+
+                <div class="flex justify-center gap-6 flex-wrap">
+                  <div class="flex items-center gap-2">
+                    <span class="sasa-chip sasa-green"></span>
+                    GREEN (15–24 Å²)
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <span class="sasa-chip sasa-yellow"></span>
+                    YELLOW (24–34 Å²)
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <span class="sasa-chip sasa-red"></span>
+                    RED (≥34 Å²)
+                  </div>
+                </div>
+
+                <div class="text-center text-[10px] text-gray-400 mt-2">
+                  Atoms below 15 Å² or without SASA are shown normally.
+                </div>
+              </div>
+
+              <!-- SCAFFOLD LINKAGE -->
+              
+              <!-- scaffold-only section -->
+              <div id="scaffold-meta" class="hidden">
+                <div>
+                  Scaffold ID: <span id="scaffold-id" class="text-gray-200">—</span>
+                </div>
+
+                <a id="scaffold-link-url" href="#" class="text-sky-400 hover:text-sky-300 ml-1 block mt-1">
+                  View Scaffold
+                </a>
+              </div>
+
+              <!-- ligand smiles always stays -->
+              <div id="ligand-smiles-box"
+                  class="mt-3 text-xs text-gray-400 text-center bg-slate-900/60 
+                          border border-slate-700 rounded-lg py-2 px-3 break-all">
+
+                <span class="text-gray-400">Ligand SMILES:</span>
+                <span id="ligand-smiles" class="text-gray-300 break-all">—</span>
+              </div>
+            </div>
+
+
+
+          </div> <!-- ✅ closes 2D structure column -->
+          
+
+          <!-- 3D STRUCTURE WITH SASA -->
+          <div class="flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-gray-300">3D Structure with SASA</h3>
+              <div class="flex gap-2 text-xs">
+                <button id="btn-3d-normal" class="px-2 py-0.5 rounded bg-sky-700 text-white">Normal</button>
+                <button id="btn-3d-sasa" class="px-2 py-0.5 rounded bg-slate-700 text-gray-200 hover:bg-slate-600">SASA Map</button>
+              </div>
+            </div>
+
+            <!-- NGL Viewer -->
+            <div id="ngl" class="h-[340px] bg-slate-800 rounded-lg shadow-lg border border-slate-700"></div>
+
+            <!-- ⭐ FINAL ACTION BAR -->
+            <div id="final-action-bar" class="flex flex-row gap-4 mt-4">
+
+              <button id="download-pdb-btn"
+                class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg shadow-lg border border-slate-600 transition">
+                💾 Download PDB Structure
+              </button>
+
+              <button id="download-sdf-btn"
+                class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg shadow-lg border border-slate-600 transition">
+                💠 Download SDF File
+              </button>
+
+              <button id="use-as-protac-btn"
+                class="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white font-semibold rounded-lg shadow-lg border border-slate-600 transition">
+                🧩 Use as PROTAC Ligand
+              </button>
+            </div>
+          </div>
+
+
+          
+
+
+        </div>
+
+
+      <!-- EXTERNAL LINKS -->
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+        <h3 class="text-white mb-2">External Links</h3>
+        <div class="flex flex-wrap gap-3">
+          <a id="pubchem-link" target="_blank" class="bg-slate-800 hover:bg-sky-600 hover:text-white text-gray-300 px-3 py-1 rounded flex items-center gap-2">
+            <i data-feather="external-link"></i> PubChem
+          </a>
+          <a id="rcsb-link" target="_blank" class="bg-slate-800 hover:bg-sky-600 hover:text-white text-gray-300 px-3 py-1 rounded flex items-center gap-2">
+            <i data-feather="external-link"></i> RCSB PDB
+          </a>
+          <a id="chembl-link" target="_blank" class="bg-slate-800 hover:bg-sky-600 hover:text-white text-gray-300 px-3 py-1 rounded flex items-center gap-2">
+            <i data-feather="external-link"></i> ChEMBL
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="space-y-4">
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+        <h3 class="text-white mb-2">Chemical Properties</h3>
+        <ul id="chem-props" class="text-sm text-gray-300 space-y-1"></ul>
+      </div>
+
+      <!-- STRUCTURAL METRICS -->
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+        <h3 class="text-white mb-2">Structural Metrics</h3>
+        <ul id="struct-metrics" class="text-sm text-gray-300 space-y-1">
+          <li><span class="text-gray-400" hidden >Formula:</span> <span id="metric-formula" class="text-gray-200" hidden>—</span></li>
+          <li><span class="text-gray-400">Formal Charge:</span> <span id="metric-charge" class="text-gray-200">—</span></li>
+          <li><span class="text-gray-400">Atoms / Bonds / Rings:</span> 
+            <span id="metric-counts" class="text-gray-200">—</span>
+          </li>
+          <li><span class="text-gray-400">Fraction C<sub>sp³</sub>:</span> 
+            <span id="metric-fsp3" class="text-gray-200">—</span>
+          </li>
+        </ul>
+      </div>
+
+
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+        <h3 class="text-white mb-2">Drug-like Rules</h3>
+        <div id="drug-rules" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+        <h3 class="text-white mb-2">Quality Metrics</h3>
+        <div id="quality" class="text-sm text-gray-300 space-y-2"></div>
+      </div>
+
+      <!-- MOLECULAR TOPOLOGY (ADVANCED) -->
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-white">Molecular Topology (Advanced)</h3>
+          <p class="text-gray-400 text-xs mb-2">
+            Topological descriptors summarize how a molecule’s atoms and bonds are connected — indicators of size, shape, branching, and electronic polarizability used in QSAR and drug-likeness modeling.
+          </p>
+          
+          <i data-feather="chevron-down" id="topology-icon" class="text-gray-400"></i>
+        </div>
+
+        <!-- show panel by default (removed 'hidden') -->
+        <div id="topology-panel" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+
+  <!-- BertzCT -->
+  <div class="topo-card">
+    <div class="topo-header">
+      <span>BertzCT</span>
+      <span class="cursor-help" title="Bertz Complexity Index — estimates molecular complexity from atom and bond diversity. Higher = more complex molecule.">
+        <i data-feather="info" class="topo-info"></i>
+      </span>
+    </div>
+    <div id="topo-bertz" class="topo-value">—</div>
+  </div>
+
+  <!-- Hall–Kier Alpha -->
+  <div class="topo-card">
+    <div class="topo-header">
+      <span>Hall–Kier α</span>
+      <span class="cursor-help" title="Hall–Kier Alpha — measures molecular branching. Negative values indicate compact, cyclic structures.">
+        <i data-feather="info" class="topo-info"></i>
+      </span>
+    </div>
+    <div id="topo-hallkier" class="topo-value">—</div>
+  </div>
+
+  <!-- Kappa 1 -->
+  <div class="topo-card">
+    <div class="topo-header">
+      <span>Kappa₁</span>
+      <span class="cursor-help" title="Kappa 1 — shape index related to molecular linearity. Higher = longer, less branched.">
+        <i data-feather="info" class="topo-info"></i>
+      </span>
+    </div>
+    <div id="topo-k1" class="topo-value">—</div>
+  </div>
+
+  <!-- Kappa 2 -->
+  <div class="topo-card">
+    <div class="topo-header">
+      <span>Kappa₂</span>
+      <span class="cursor-help" title="Kappa 2 — reflects cyclicity and balanced branching.">
+        <i data-feather="info" class="topo-info"></i>
+      </span>
+    </div>
+    <div id="topo-k2" class="topo-value">—</div>
+  </div>
+
+  <!-- Kappa 3 -->
+  <div class="topo-card">
+    <div class="topo-header">
+      <span>Kappa₃</span>
+      <span class="cursor-help" title="Kappa 3 — sensitive to ring count and 3D shape diversity.">
+        <i data-feather="info" class="topo-info"></i>
+      </span>
+    </div>
+    <div id="topo-k3" class="topo-value">—</div>
+  </div>
+
+  <!-- MolMR -->
+  <div class="topo-card">
+    <div class="topo-header">
+      <span>MolMR</span>
+      <span class="cursor-help" title="Molar Refractivity — approximates molecular volume and polarizability.">
+        <i data-feather="info" class="topo-info"></i>
+      </span>
+    </div>
+    <div id="topo-molmr" class="topo-value">—</div>
+  </div>
+
+</div>
+
+
+      <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mt-6">
+
+        <h2 class="text-xl font-semibold text-amber-300 mb-4">
+          SASA Summary
+        </h2>
+
+        <div id="sasa-summary" class="space-y-2 text-sm text-gray-300 leading-relaxed">
+          <!-- JS will inject rows here -->
+        </div>
+
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================
+     PROTAC ATTACHMENT POPUP
+=================================== -->
+<div id="protac-popup"
+     class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+
+  <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-[650px] shadow-2xl relative">
+
+    <h2 class="text-xl font-semibold text-amber-300 mb-4">
+      Select Attachment Site for PROTAC
+    </h2>
+
+    <!-- 3D Viewer -->
+    <div id="protac-viewer"
+         class="rounded-lg border border-slate-700 relative"
+         style="width:100%; height:380px;"></div>
+
+    <!-- Atom Index Input -->
+    <div class="mt-4">
+      <label class="block text-gray-300 font-medium mb-1">
+        Enter Atom Index for Attachment Site:
+      </label>
+
+      <input id="atom-index-input"
+             type="number"
+             min="0"
+             class="w-full bg-slate-800 border border-slate-600 text-gray-200 p-2 rounded mb-2 hidden"
+             placeholder="e.g. 12">
+
+      <select id="atom-index-dropdown"
+              class="w-full bg-slate-800 border border-slate-600 text-gray-200 p-2 rounded hidden">
+      </select>
+
+      <p id="atom-index-hint"
+         class="text-sm text-gray-400 mt-1">
+        Atom numbers are displayed as labels in the 3D viewer.
+      </p>
+      <label class="flex items-center gap-2 mt-3">
+        <input type="checkbox" id="skip-modify-checkbox">
+        <span class="text-gray-300">Do NOT modify ligand (send unmodified)</span>
+      </label>
+
+
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex justify-between mt-6">
+      <div class="flex gap-2">
+        <!-- download buttons restored -->
+        <button id="popup-download-pdb-btn"
+                class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded">
+          Download PDB
+        </button>
+
+        <button id="popup-download-sdf-btn"
+                class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded">
+          Download SDF
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <button id="protac-cancel"
+                class="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded">
+          Cancel
+        </button>
+
+        <button id="protac-confirm"
+                class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-black rounded">
+          Send to PROTAC Builder
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+{% endblock %}
+
+{% block page_scripts %}
+<script src="https://3Dmol.org/build/3Dmol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  console.log("3Dmol loaded?", typeof window.$3Dmol, window.$3Dmol);
+  </script>
+<script>
+
+Chart.register(
+  Chart.ArcElement,
+  Chart.LineElement,
+  Chart.BarElement,
+  Chart.PointElement,
+  Chart.RadarController,
+  Chart.BarController,
+  Chart.LineController,
+  Chart.BubbleController,
+  Chart.DoughnutController,
+  Chart.PieController,
+  Chart.RadarController,
+  Chart.CategoryScale,
+  Chart.LinearScale,
+  Chart.RadialLinearScale,
+  Chart.Legend,
+  Chart.Tooltip
+);
+
+// Initialize feather icons + copy titles into our CSS tooltip system
+function initFeatherTooltips() {
+  try {
+    document.querySelectorAll('svg[data-feather]').forEach(svg => {
+      const childTitle = svg.querySelector && svg.querySelector('title');
+      const tip = svg.getAttribute('title') || (childTitle ? (childTitle.textContent || '').trim() : '') || '';
+      if (!tip) return;
+      svg.setAttribute('data-tip', tip);
+      svg.classList.add('tooltip');
+      svg.setAttribute('aria-label', tip);
+      svg.setAttribute('role', 'img');
+      svg.removeAttribute('title');
+      if (childTitle && childTitle.parentNode) childTitle.parentNode.removeChild(childTitle);
+    });
+  } catch (e) {
+    console.warn('initFeatherTooltips failed', e);
+  }
+}
+
+function replaceFeather() {
+  if (window.feather && typeof feather.replace === 'function') {
+    feather.replace();
+    initFeatherTooltips();
+  }
+}
+
+replaceFeather();
+
+let stage3D = null;
+let current3D = { atoms: [], mode: "sasa", pdbUrl: null };
+let current2D = { svgRaw: "", mode: "normal", exposure: new Map() };
+
+// 🔑 Extract recruiter code from URL (e.g. L00470)
+const RECRUITER = window.location.pathname.split("/").pop().toUpperCase();
+console.log("🔑 Recruiter =", RECRUITER);
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+  // =====================================================
+  // 🔥 EARLY SAFETY CHECK – REDIRECT IF RECRUITER IS MISSING
+  // =====================================================
+
+  const recruiterCode = decodeURIComponent(RECRUITER);
+
+  try {
+      const early = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
+
+      if (early.status === 411) {
+          console.warn("🔻 Missing recruiter detected:", recruiterCode);
+          window.location.href = `/missing-recruiter?code=${recruiterCode}`;
+          return;
+      }
+  } catch (err) {
+      console.error("🚨 Early check request failed:", err);
+      window.location.href = `/missing-recruiter?code=${recruiterCode}`;
+      return;
+  }
+
+  // =====================================================
+  // 🔥 MAIN FETCH
+  // =====================================================
+
+  const res = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
+  const data = await res.json();
+  const descriptor = data.descriptor || {};
+  const metadata   = data.metadata   || {};
+
+  // ------------------------------------------
+  // 🔥 FETCH FIXED / AUTHORITATIVE SMILES
+  // ------------------------------------------
+  let fixedSmiles = "";
+  try {
+      const sres = await fetch(`/api/fixed-2d-smiles/${recruiterCode}`);
+      if (sres.ok) {
+          const sdata = await sres.json();
+          fixedSmiles = sdata.SMILES || "";
+          console.log("🧪 FIXED SMILES FOUND =", fixedSmiles);
+      } else {
+          console.warn("⚠️ No fixed SMILES found, falling back.");
+          fixedSmiles = data.descriptor?.SMILES ||
+                        data.metadata?.SMILES ||
+                        data.smiles ||
+                        "";
+      }
+  } catch (err) {
+      console.error("❌ fixed-smiles fetch error:", err);
+      fixedSmiles = data.descriptor?.SMILES ||
+                    data.metadata?.SMILES ||
+                    data.smiles ||
+                    "";
+  }
+
+  // This SMILES is now the ONLY SMILES used for:
+  //   - 2D rendering
+  //   - SASA overlay
+  //   - Mapping
+  //   - External links
+  //   - Properties panel
+  renderLigandSMILES(fixedSmiles);
+
+
+
+
+
+  if (!res.ok || data.error) {
+    document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
+    document.getElementById("ngl").innerHTML = '';
+    return;
+  }
+
+  // =====================================================
+  // 🔥 NORMALIZE BACKEND DATA
+  // =====================================================
+
+  const sasaSum    = data.sasa_summary || {};
+  const atoms      = Array.isArray(data.sasa_atoms) ? data.sasa_atoms : [];
+
+  const ligase = sasaSum.Ligase || atoms[0]?.Ligase || "—";
+  const ligand = metadata.Ligand || sasaSum.Ligand || "—";
+  const pdbId  = sasaSum.pdb_id  || atoms[0]?.pdb_id || "";
+
+  // =====================================================
+  // 🔥 ALWAYS USE THE TRUE LIGAND SMILES ONLY
+  // =====================================================
+  const ligandSmiles =
+    descriptor.SMILES ||
+    metadata.SMILES ||
+    data.smiles ||
+    "";
+
+  console.log("🧪 FINAL LIGAND SMILES =", ligandSmiles);
+
+  // Show SMILES in UI
+  renderLigandSMILES(fixedSmiles);
+
+  // =====================================================
+  // 🔥 SET BADGES / LABELS
+  // =====================================================
+  document.getElementById("ligand-code").textContent = recruiterCode;
+  document.getElementById("ligase-badge").textContent = ligase.toUpperCase();
+  document.getElementById("ligand-badge").textContent = ligand;
+
+  // =====================================================
+  // 🔥 DOWNLOAD GLOBALS (AFTER ligase/pdbId/ligand resolved)
+  // =====================================================
+  window.currentLigase = ligase;
+  window.currentPDB = data.pdb_file || `${pdbId}_${ligand}.pdb`;
+  window.currentModel = { name: window.currentPDB };
+  window.models = [ window.currentModel ];
+
+  console.log("🧬 DOWNLOAD METADATA SET:", window.currentLigase, window.currentPDB);
+
+  // =====================================================
+  // 🔥 RENDER 2D + 3D + METADATA
+  // =====================================================
+  await render2D(ligandSmiles, atoms, data.sasa_svg);
+
+  await loadSASASummary(recruiterCode);
+
+  current3D.atoms = atoms;
+  toggle3DButton("sasa");
+  render3D("sasa");
+
+  // SMILES is correct and only ligandSmiles is used for visualization
+  setExternalLinks(ligandSmiles, pdbId);
+  renderProperties(descriptor, fixedSmiles, recruiterCode);
+  renderRules(descriptor);
+  renderQuality(descriptor);
+  renderStructuralMetrics(metadata, descriptor);
+  renderTopologyMetrics(descriptor);
+  toggleScaffoldUI(false);
+
+  if (data.scaffold && data.scaffold.Scaffold_ID) {
+      renderScaffoldLink(data.scaffold);
+  }
+
+  loadScaffoldInfo(recruiterCode);
+
+}); // END DOMContentLoaded
+
+
+  
+
+
+
+
+  // --- Button toggles ---
+  document.getElementById("btn-2d-normal").addEventListener("click", () => {
+    toggle2DButton("normal");
+    document.getElementById("svg2d").innerHTML = current2D.svgRaw;
+    document.getElementById("legend-2d").classList.add("hidden");
+});
+
+  
+  document.getElementById("btn-2d-sasa").addEventListener("click", async () => {
+    toggle2DButton("sasa");
+
+    const code = document.getElementById("ligand-code").textContent.trim();
+    console.log("2D SASA button clicked — requesting:", `/api/render-2d-sasa/${code}`);
+
+
+    console.log("🟦 Fetching 2D SASA SVG for:", code);
+
+    const svg = await fetch(`/api/render-2d-sasa/${encodeURIComponent(code)}`)
+                        .then(r => r.text())
+                        .catch(err => {
+                            console.error("❌ Error fetching 2D SASA:", err);
+                            return "<svg><!-- error --></svg>";
+                        });
+
+    document.getElementById("svg2d").innerHTML = svg;
+    document.getElementById("legend-2d").classList.remove("hidden");
+});
+
+
+
+  document.getElementById("btn-3d-normal").addEventListener("click", () => {
+    toggle3DButton("normal");
+    render3D("normal");
+  });
+
+  document.getElementById("btn-3d-sasa").addEventListener("click", () => {
+    toggle3DButton("sasa");
+    render3D("sasa");
+  });
+
+
+function toggle2DButton(mode) {
+  current2D.mode = mode;
+  const n = document.getElementById("btn-2d-normal");
+  const s = document.getElementById("btn-2d-sasa");
+  if (mode === "sasa") {
+    s.className = "px-2 py-0.5 rounded bg-sky-700 text-white";
+    n.className = "px-2 py-0.5 rounded bg-slate-700 text-gray-200 hover:bg-slate-600";
+  } else {
+    n.className = "px-2 py-0.5 rounded bg-sky-700 text-white";
+    s.className = "px-2 py-0.5 rounded bg-slate-700 text-gray-200 hover:bg-slate-600";
+  }
+}
+
+function toggle3DButton(mode) {
+  const n = document.getElementById("btn-3d-normal");
+  const s = document.getElementById("btn-3d-sasa");
+  if (mode === "sasa") {
+    s.className = "px-2 py-0.5 rounded bg-sky-700 text-white";
+    n.className = "px-2 py-0.5 rounded bg-slate-700 text-gray-200 hover:bg-slate-600";
+  } else {
+    n.className = "px-2 py-0.5 rounded bg-sky-700 text-white";
+    s.className = "px-2 py-0.5 rounded bg-slate-700 text-gray-200 hover:bg-slate-600";
+  }
+}
+
+
+
+function build2DAtomCoordinateMap(svgEl) {
+    const coords = new Map();
+
+    svgEl.querySelectorAll("line").forEach(line => {
+        const x1 = parseFloat(line.getAttribute("x1"));
+        const y1 = parseFloat(line.getAttribute("y1"));
+        const x2 = parseFloat(line.getAttribute("x2"));
+        const y2 = parseFloat(line.getAttribute("y2"));
+
+        // Extract atom indices from RDKit bond class (bond-2 between atom 2 and 3)
+        const classes = line.getAttribute("class") || "";
+        const match = classes.match(/atom-(\d+)/g);
+        if (match) {
+            const ids = match.map(m => Number(m.replace("atom-", "")));
+            if (ids.length === 2) {
+                const [a1, a2] = ids;
+
+                if (!coords.has(a1)) coords.set(a1, { x: x1, y: y1 });
+                if (!coords.has(a2)) coords.set(a2, { x: x2, y: y2 });
+            }
+        }
+    });
+
+    console.log("🧭 Built 2D atom coordinate map:", coords.size);
+    return coords;
+}
+
+
+
+
+function build2DAtomMapping(svgEl) {
+    const mapping = new Map();
+
+    svgEl.querySelectorAll("[class*='atom-']").forEach(node => {
+        const classes = node.getAttribute("class").split(" ");
+        for (const c of classes) {
+            if (c.startsWith("atom-")) {
+                const id = Number(c.replace("atom-", ""));
+                if (!isNaN(id)) mapping.set(id, node);
+            }
+        }
+    });
+
+    console.log("🔗 Mapped SVG atoms:", mapping.size);
+    return mapping;
+}
+
+// =====================================================
+//  2D RENDERER (loads SVG, cleans, recolors, maps atoms)
+// =====================================================
+async function render2D(smiles, atoms, backendSvg = null) {
+
+    const svgBox = document.getElementById("svg2d");
+
+    if (!smiles) {
+        svgBox.innerHTML = '<span class="text-gray-400">No SMILES found</span>';
+        return;
+    }
+
+    // 1) Fetch RDKit SVG
+    let svg = await fetch(`/api/render-smiles/${encodeURIComponent(smiles)}`).then(r => r.text());
+
+    // 2) Sanitize RDKit output
+    svg = sanitizeSvg(svg);
+
+    // 3) Insert sanitized SVG
+    svgBox.innerHTML = svg;
+
+    const svgEl = svgBox.querySelector("svg");
+    if (!svgEl) {
+        console.error("❌ No SVG found in RDKit output");
+        return;
+    }
+
+    // 4) Recolor carbons/hydrogens
+    forceWhiteCarbons(svgEl);
+
+    // 5) Save base SVG for toggling
+    current2D.svgRaw = svgBox.innerHTML;
+
+    // 6) Build RDKit atom index → SVG node mapping
+    current2D.atomCoords = build2DAtomCoordinateMap(svgEl);
+
+
+    // 7) Build SASA exposure map (as provided by backend)
+    current2D.exposure = new Map();
+    atoms.forEach(a => {
+        if (a.smiles_atom_index != null && a.Exposure_A2 != null)
+            current2D.exposure.set(Number(a.smiles_atom_index), Number(a.Exposure_A2));
+    });
+
+    // 8) Store backend SASA SVG (might be null)
+    current2D.backendSasaSvg = backendSvg;
+
+
+    // 9) Default to SASA mode
+    // toggle2DButton("sasa");
+    apply2DColoring();
+}
+
+
+// ---------- SVG cleanup helpers ----------
+function sanitizeSvg(svg) {
+  return svg
+    .replace(/xmlns:xlink="[^"]*"/, "")
+    .replace(/width="[^"]+"/, "")
+    .replace(/height="[^"]+"/, "")
+    .replace(/viewBox="[^"]+"/, 'viewBox="0 0 300 300"')
+    .replace(/<svg/, '<svg preserveAspectRatio="xMidYMid meet" class="w-full h-full"')
+    // --- 🔥 nukes every background rect variant RDKit emits ---
+    .replace(
+      /<rect[^>]*(fill|style)=["'][^"']*(white|#fff|#ffffff)[^"']*["'][^>]*>\s*<\/rect>/gi,
+      ""
+    )
+    .replace(
+      /<rect[^>]*(fill-rule:evenodd;)?[^>]*(fill:#FFFFFF|fill:white)[^>]*>\s*<\/rect>/gi,
+      ""
+    )
+    // Also remove any leftover white fills on the <svg> tag itself
+    .replace(/fill="#FFFFFF"/gi, "")
+    .replace(/fill:white/gi, "");
+}
+
+
+// ---------- recolor all carbons + H bonds to white ----------
+function forceWhiteCarbons(svgEl) {
+  // --- 1️⃣ Bonds: black → white ---
+  svgEl.querySelectorAll('*[stroke]').forEach(el => {
+    const stroke = el.getAttribute('stroke') || '';
+    if (/^#?000000$/i.test(stroke) || /black/i.test(stroke)) {
+      el.setAttribute('stroke', '#ffffff');
+    }
+  });
+  svgEl.querySelectorAll('*[style]').forEach(el => {
+    const st = el.getAttribute('style') || '';
+    if (st.match(/stroke:\s*(#000000|black)/i)) {
+      el.setAttribute('style', st.replace(/stroke:\s*(#000000|black)/gi, 'stroke:#ffffff'));
+    }
+  });
+
+  // --- 2️⃣ Hydrogens (H text) → white ---
+  svgEl.querySelectorAll('text').forEach(t => {
+    const txt = (t.textContent || '').trim();
+    if (txt === 'H') {
+      t.setAttribute('fill', '#ffffff');
+      t.setAttribute('stroke', '#ffffff');
+    }
+  });
+
+  // --- 3️⃣ Oxygen and Nitrogen coloring (catch both text + paths) ---
+  svgEl.querySelectorAll('*').forEach(el => {
+    const st = el.getAttribute('style') || '';
+    const fill = el.getAttribute('fill') || '';
+    const stroke = el.getAttribute('stroke') || '';
+    const txt = (el.textContent || '').trim();
+
+    // Oxygen (red → coral)
+    if (
+      txt === 'O' ||
+      /#FF0000|#ff0000|rgb\(255,0,0\)|red/i.test(st + fill + stroke)
+    ) {
+      el.setAttribute('fill', '#F87171');
+      el.setAttribute('stroke', '#F87171');
+      el.setAttribute(
+        'style',
+        st
+          .replace(/#FF0000|#ff0000|rgb\(255,0,0\)|red/gi, '#F87171')
+          .replace(/stroke:\s*(#FF0000|red)/gi, 'stroke:#F87171')
+      );
+    }
+
+    // Nitrogen (blue → cyan)
+    if (
+      txt === 'N' ||
+      /#0000FF|#0000ff|rgb\(0,0,255\)|blue/i.test(st + fill + stroke)
+    ) {
+      el.setAttribute('fill', '#22D3EE');
+      el.setAttribute('stroke', '#22D3EE');
+      el.setAttribute(
+        'style',
+        st
+          .replace(/#0000FF|#0000ff|rgb\(0,0,255\)|blue/gi, '#22D3EE')
+          .replace(/stroke:\s*(#0000FF|blue)/gi, 'stroke:#22D3EE')
+      );
+    }
+
+    // Carbons rendered as paths (black strokes) → white
+    if (
+      /#000000|rgb\(0,0,0\)|black/i.test(st + fill + stroke) &&
+      !/url|gradient/i.test(st)
+    ) {
+      el.setAttribute('stroke', '#ffffff');
+      if (fill !== 'none') el.setAttribute('fill', '#ffffff');
+    }
+  });
+}
+
+
+// ======================================================================
+//  2D SASA HALO RENDERING USING CORRECTED ATOM MAPPING
+// ======================================================================
+function apply2DColoring() {
+    const wrap = document.getElementById("svg2d");
+
+    // For "normal" mode → restore raw RDKit SVG
+    if (current2D.mode === "normal") {
+        wrap.innerHTML = current2D.svgRaw;
+        document.getElementById("legend-2d").classList.add("hidden");
+        return;
+    }
+
+    // Otherwise: use RDKit SVG + draw halos manually
+    wrap.innerHTML = current2D.svgRaw;  // <-- removed stray 'd' here
+    const svgEl = wrap.querySelector("svg");
+    if (!svgEl) return;
+
+    document.getElementById("legend-2d").classList.remove("hidden");
+
+    
+}
+
+
+
+
+async function loadSASASummary(code) {
+    // const res = await fetch(`/api/sasa-summary/${code}`);
+    // const data = await res.json();
+    const res = await fetch(`/api/ligand-visual/${code}`);
+
+    if (res.status === 404) {
+        window.location.href = `/missing-recruiter?code=${code}`;
+        return;
+    }
+
+    const data = await res.json();
+
+
+    if (data.error) {
+        console.error("SASA load failed:", data);
+        return;
+    }
+
+    console.log("🧬 SASA summary:", data);
+
+    renderSASASummary(data.sasa_summary);
+
+}
+
+
+// =========================================================
+// 🧪 Correct HEAD-check helper — takes only ONE argument
+// =========================================================
+async function fileExists(url) {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+
+
+function splitLigandAndVariant(fullLig) {
+  // Matches <LIGAND>_<VARIANT>
+  const m = fullLig.match(/^(.*)_(\d+)$/);
+
+  if (m) {
+    return {
+      ligand: m[1],          // e.g. "VUF"
+      variant: parseInt(m[2]) // e.g. 1
+    };
+  }
+
+  // No variant → default = 1
+  return { ligand: fullLig, variant: 1 };
+}
+
+
+async function getProteinPdbPath(atomRecord, variantOverride = null) {
+
+  const ligase  = (atomRecord.Ligase || "TRIM21").trim();
+  const rawPdb  = (atomRecord.pdb_id || "").trim().toUpperCase();
+  const rawLig  = (atomRecord.Ligand || "").trim().toUpperCase();
+
+  const baseDir = `/Ligases/${ligase}/PDB/`;
+
+  // Extract ligand + variant from ligand field
+  const parsed = splitLigandAndVariant(rawLig);
+
+  const ligand  = parsed.ligand;
+  const variant = variantOverride ? variantOverride : parsed.variant;
+
+  // PDB is never variant‐encoded
+  const pdbId = rawPdb.replace(/_\d+$/, "");
+
+  const withVariant = `${pdbId}_${ligand}_${variant}.pdb`;
+  const noVariant   = `${pdbId}_${ligand}.pdb`;
+
+  const candidates = [];
+
+  // Try explicit variant first
+  if (variant !== 1) {
+    candidates.push(withVariant);
+  }
+
+  // Variant 1 → candidate is noVariant
+  candidates.push(noVariant);
+
+  // Variant 1 → also try explicit "_1"
+  if (variant === 1) {
+    candidates.push(`${pdbId}_${ligand}_1.pdb`);
+  }
+
+  // Try variants 2–9
+  for (let n = 2; n <= 9; n++) {
+    if (n !== variant) {
+      candidates.push(`${pdbId}_${ligand}_${n}.pdb`);
+    }
+  }
+
+  // Stop at first that exists
+  for (const fname of candidates) {
+    const url = `${baseDir}${fname}`;
+    if (await fileExists(url)) return url;
+  }
+
+  return `${baseDir}${noVariant}`;
+}
+
+
+
+
+
+
+
+
+
+
+
+async function computeSASAFromStructure(comp) {
+  const structure = comp.structure;
+  if (!structure) return [];
+
+  const surf = new NGL.Surface(structure, { probeRadius: 1.4, scaleFactor: 1 });
+  const atomProxy = structure.getAtomProxy();
+
+  const perAtomSASA = new Map();
+  for (let i = 0; i < structure.atomCount; i++) {
+    atomProxy.index = i;
+    const serial = atomProxy.serial;  // same as PDB atom_id
+    const area = surf.getAtomArea(i);
+    perAtomSASA.set(serial, area);
+  }
+
+  return perAtomSASA;
+}
+
+
+// =========================================================
+// 3D SASA HELPERS
+// =========================================================
+
+function getSasaBucket(expRaw) {
+  const exp = parseFloat(expRaw);
+
+  // Warhead-consistent rule:
+  // <15 Å² = ignore / normal
+  if (!Number.isFinite(exp) || exp < 15) {
+    return null;
+  }
+
+  if (exp >= 34) {
+    return {
+      bucket: "High exposure",
+      range: "≥34 Å²",
+      colorName: "RED",
+      color: [0.93, 0.27, 0.23],
+      hex: "#ef4444"
+    };
+  }
+
+  if (exp >= 24) {
+    return {
+      bucket: "Moderate exposure",
+      range: "24–34 Å²",
+      colorName: "YELLOW",
+      color: [0.98, 0.83, 0.08],
+      hex: "#facc15"
+    };
+  }
+
+  return {
+    bucket: "Accessible exposure",
+    range: "15–24 Å²",
+    colorName: "GREEN",
+    color: [0.13, 0.77, 0.37],
+    hex: "#22c55e"
+  };
+}
+
+
+function ensureSasa3DTooltip() {
+  const nglBox = document.getElementById("ngl");
+  if (!nglBox) return null;
+
+  nglBox.style.position = "relative";
+
+  let tooltip = document.getElementById("sasa-3d-tooltip");
+
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "sasa-3d-tooltip";
+    tooltip.className = "hidden";
+    nglBox.appendChild(tooltip);
+  }
+
+  return tooltip;
+}
+
+
+function initSasa3DHover(stage) {
+  if (!stage || stage._sasaHoverInitialized) return;
+
+  stage._sasaHoverInitialized = true;
+
+  const nglBox = document.getElementById("ngl");
+  const tooltip = ensureSasa3DTooltip();
+
+  if (!nglBox || !tooltip) return;
+
+  window.sasa3DLastMouse = { x: 20, y: 20 };
+
+  nglBox.addEventListener("mousemove", event => {
+    const rect = nglBox.getBoundingClientRect();
+
+    window.sasa3DLastMouse = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  });
+
+  nglBox.addEventListener("mouseleave", () => {
+    tooltip.classList.add("hidden");
+  });
+
+  stage.signals.hovered.add(function (pickingProxy) {
+    if (!pickingProxy) {
+      tooltip.classList.add("hidden");
+      return;
+    }
+
+    const label =
+      pickingProxy.name ||
+      pickingProxy.object?.name ||
+      pickingProxy.shape?.name ||
+      (
+        typeof pickingProxy.getLabel === "function"
+          ? pickingProxy.getLabel()
+          : ""
+      );
+
+    const data = window.sasa3DHoverData?.get(label);
+
+    if (!data) {
+      tooltip.classList.add("hidden");
+      return;
+    }
+
+    tooltip.innerHTML = `
+      <div class="sasa-tooltip-title">
+        <span>Atom ${data.atom_id ?? "—"}</span>
+        <span class="sasa-tooltip-chip" style="background:${data.hex};">
+          ${data.colorName}
+        </span>
+      </div>
+
+      <div class="sasa-tooltip-row">
+        <span>Exposure:</span>
+        <strong>${data.exp.toFixed(2)} Å²</strong>
+      </div>
+
+      <div class="sasa-tooltip-row">
+        <span>Class:</span>
+        <strong>${data.bucket}</strong>
+      </div>
+
+      <div class="sasa-tooltip-row">
+        <span>Range:</span>
+        <strong>${data.range}</strong>
+      </div>
+
+      <div class="sasa-tooltip-small">
+        Atom type: ${data.atom_type || data.exact_atom || "unknown"}
+      </div>
+    `;
+
+    const mouse = window.sasa3DLastMouse || { x: 20, y: 20 };
+
+    tooltip.style.left = `${mouse.x + 14}px`;
+    tooltip.style.top = `${mouse.y + 14}px`;
+    tooltip.classList.remove("hidden");
+  });
+}
+
+
+// ---------- 3D Renderer (Protein surface + colored ligand + SASA glow) ----------
+async function render3D(mode = "sasa") {
+  current3D.mode = mode;
+
+  if (!stage3D) {
+    stage3D = new NGL.Stage("ngl", { backgroundColor: "#000" });
+    initSasa3DHover(stage3D);
+  }
+
+  stage3D.removeAllComponents();
+
+  // Reset hover data each render
+  window.sasa3DHoverData = new Map();
+
+  const tooltip = ensureSasa3DTooltip();
+  if (tooltip) tooltip.classList.add("hidden");
+
+  // --- Extract data
+  const atoms = current3D.atoms || [];
+  const summary = current3D.summary || current3D.sasa_summary || {};
+
+  // --- Fallback guard
+  if (!atoms.length && !summary) {
+    console.warn("[3D] No atomic data found, skipping render.");
+    return;
+  }
+
+  // --- Identify ligase, pdb, ligand, variant
+  const ligase  = (summary.Ligase || atoms[0]?.Ligase || "UNKNOWN").trim();
+  const pdbId   = (summary.pdb_id  || atoms[0]?.pdb_id || "").trim().toUpperCase();
+  const ligand  = (summary.Ligand  || atoms[0]?.Ligand || "LIG").trim().toUpperCase();
+  const variant = atoms[0]?.Variant || 1;
+
+  // --- File path: use helper to pick correct variant
+  const pdbPath = await getProteinPdbPath({
+    Ligase: ligase,
+    pdb_id: pdbId,
+    Ligand: ligand,
+    Variant: variant
+  });
+
+  console.log(`[3D] Loading complex: ${pdbPath}`);
+
+  try {
+    const comp = await stage3D.loadFile(pdbPath, { ext: "pdb" });
+
+    window.currentLigase = ligase;
+    window.currentPDB = pdbPath.split("/").pop();
+
+    // ===========================================================
+    // Capture actual loaded filename from NGL
+    // ===========================================================
+    const loadedName = comp.name || comp.parameters?.name;
+
+    if (loadedName) {
+      console.log("🔄 NGL LOADED MODEL =", loadedName);
+
+      window.currentPDB = loadedName;
+      window.currentModel = { name: loadedName };
+      window.models = [window.currentModel];
+    }
+
+    // --- Protein surface
+    comp.addRepresentation("surface", {
+      sele: "protein and not hetero and not water",
+      color: 0xffffff,
+      opacity: 0.88,
+      smooth: 2,
+      probeRadius: 0.8,
+      side: "front",
+      useWorker: true,
+      surfaceType: "SES"
+    });
+
+    // --- Ligand ball+stick
+    comp.addRepresentation("ball+stick", {
+      sele: "hetero and not water",
+      colorScheme: "element",
+      multipleBond: true,
+      radiusScale: 1.3,
+      scale: 1.2
+    });
+
+    // =====================================================================
+    // SASA GLOW — WARHEAD-CONSISTENT + HOVERABLE
+    // =====================================================================
+    if (mode === "sasa" && atoms.length) {
+      const glowShape = new NGL.Shape("sasaGlow");
+
+      let highlightedCount = 0;
+      let ignoredCount = 0;
+
+      for (const a of atoms) {
+        if (
+          a.Exposure_A2 == null ||
+          isNaN(a.x) ||
+          isNaN(a.y) ||
+          isNaN(a.z)
+        ) {
+          ignoredCount++;
+          continue;
+        }
+
+        const exp = parseFloat(a.Exposure_A2);
+        const x = parseFloat(a.x);
+        const y = parseFloat(a.y);
+        const z = parseFloat(a.z);
+
+        const sasaInfo = getSasaBucket(exp);
+
+        // <15 Å² atoms stay normal and are not colored
+        if (!sasaInfo) {
+          ignoredCount++;
+          continue;
+        }
+
+        const atomLabel = `sasa_atom_${a.atom_id ?? "unknown"}_${highlightedCount}`;
+
+        window.sasa3DHoverData.set(atomLabel, {
+          atom_id: a.atom_id,
+          atom_index: a.atom_index,
+          exact_atom: a.exact_atom,
+          atom_type: a.atom_type,
+          exp,
+          bucket: sasaInfo.bucket,
+          range: sasaInfo.range,
+          colorName: sasaInfo.colorName,
+          hex: sasaInfo.hex,
+          x,
+          y,
+          z
+        });
+
+        glowShape.addSphere(
+          [x, y, z],
+          sasaInfo.color,
+          1.1,
+          atomLabel
+        );
+
+        highlightedCount++;
+      }
+
+      if (highlightedCount > 0) {
+        const glowComp = stage3D.addComponentFromObject(glowShape);
+
+        glowComp.addRepresentation("buffer", {
+          opacity: 0.35,
+          disablePicking: false
+        });
+
+        glowComp.name = "sasaGlow";
+      }
+
+      console.log(`[3D] SASA hoverable glow applied to ${highlightedCount} atoms.`);
+      console.log(`[3D] SASA atoms ignored / normal: ${ignoredCount}`);
+      console.log("[3D] GREEN  = 15–24 Å²");
+      console.log("[3D] YELLOW = 24–34 Å²");
+      console.log("[3D] RED    = ≥34 Å²");
+      console.log("[3D] <15 Å² = ignored / normal");
+    }
+
+    // --- Center and focus smoothly on ligand
+    comp.autoView("hetero and not water");
+
+    // --- Safe refresh for modern NGL
+    if (stage3D.viewer?.requestRender) {
+      stage3D.viewer.requestRender();
+    } else if (stage3D.requestRender) {
+      stage3D.requestRender();
+    }
+
+    current3D.ready = true;
+    document.dispatchEvent(new Event("current3D-ready"));
+
+    window._last3DStructure = { comp, mode, pdbPath };
+
+    console.log(`[✅] Protein (${ligase}) + ligand (${ligand}) rendered successfully.`);
+
+  } catch (err) {
+    console.error("[❌] 3D render failed:", err);
+  }
+}
+
+
+// ---------- SASA Toggle Controls ----------
+function toggleSasaHalos(show = true) {
+  if (!stage3D) return;
+
+  const halos = stage3D.getComponentsByName("sasaGlow");
+
+  halos.list.forEach(comp => {
+    comp.setVisibility(show);
+  });
+
+  const tooltip = document.getElementById("sasa-3d-tooltip");
+  if (tooltip && !show) tooltip.classList.add("hidden");
+
+  if (stage3D.viewer?.requestRender) {
+    stage3D.viewer.requestRender();
+  } else if (stage3D.requestRender) {
+    stage3D.requestRender();
+  }
+}
+
+
+
+
+
+
+
+// ---------- Panels ----------
+function setExternalLinks(fixedSmiles, pdbId) {
+  const pubchem = document.getElementById("pubchem-link");
+  const chembl  = document.getElementById("chembl-link");
+  const rcsb    = document.getElementById("rcsb-link");
+  const q = encodeURIComponent(fixedSmiles || "");
+  pubchem.href = q ? `https://pubchem.ncbi.nlm.nih.gov/#query=${q}` : "https://pubchem.ncbi.nlm.nih.gov/";
+  chembl.href  = q ? `https://www.ebi.ac.uk/chembl/search_results/${q}` : "https://www.ebi.ac.uk/chembl/";
+  rcsb.href    = pdbId ? `https://www.rcsb.org/structure/${pdbId}` : "https://www.rcsb.org/";
+}
+
+function renderProperties(d = {}, smiles, code) {
+  const ul = document.getElementById("chem-props");
+  const rows = [
+    ["Recruiter Code", code],
+    ["SMILES", smiles || "—"],
+    ["MW", fmt(d.MW, v => `${Number(v).toFixed(1)} g/mol`)],
+    ["LogP", fmt(d.LogP, v => Number(v).toFixed(2))],
+    ["TPSA", fmt(d.TPSA, v => `${Number(v).toFixed(1)} Å²`)],
+    ["HBA / HBD", (d.HBA != null && d.HBD != null) ? `${d.HBA}/${d.HBD}` : "—"],
+    ["Rotatable Bonds", d.Rotatable_Bonds],
+    ["Aromatic Rings", d.Aromatic_Rings],
+  ];
+  ul.innerHTML = rows.map(([k,v]) => `<li><span class="text-gray-400">${k}:</span> <span class="text-gray-200">${v ?? "—"}</span></li>`).join("");
+}
+
+function renderRules(d = {}) {
+  const node = document.getElementById("drug-rules");
+  const rules = [
+    ["Lipinski", d.Lipinski_Pass, "Lipinski’s Rule of Five: MW ≤ 500 Da, LogP ≤ 5, H-bond donors ≤ 5, acceptors ≤ 10"],
+    ["Veber", d.Veber_Pass, "Veber rule: ≤ 10 rotatable bonds and TPSA ≤ 140 Å² for good oral bioavailability"],
+    ["Ghose", d.Ghose_Pass, "Ghose filter: MW 160–480, LogP –0.4 to 5.6, molar refractivity 40–130, atom count 20–70"],
+    ["Muegge", d.Muegge_Pass, "Muegge filter: drug-like range combining MW 200–600, LogP ≤ 5, rings 3–7, H-bond donors ≤ 5, acceptors ≤ 10"]
+  ];
+
+  node.innerHTML = rules.map(([name, pass, tip]) => `
+    <span class="px-2 py-0.5 rounded-full text-xs ${pass ? "bg-green-600" : "bg-red-600"} text-white cursor-help"
+          title="${tip}">
+      ${name}
+    </span>
+  `).join(" ");
+}
+
+
+function renderQuality(d = {}) {
+  const node = document.getElementById("quality");
+  const qed = d.QED ?? null;
+
+  // --- QED COLOR LOGIC ---
+  function qedColor(q) {
+    if (q == null) return "bg-slate-700";     // fallback
+    if (q < 0.30) return "bg-red-500";        // 🔴 Very poor
+    if (q < 0.40) return "bg-orange-500";     // 🟠 Poor
+    if (q < 0.60) return "bg-yellow-400";     // 🟡 Moderate
+    return "bg-green-500";                    // 🟢 Good
+  }
+
+  const colorClass = qedColor(qed);
+  const pct = Math.min(100, Math.max(0, (qed ?? 0) * 100));
+
+  node.innerHTML = `
+    <div class="flex justify-between text-gray-300 text-xs mb-1">
+      <span>
+        QED 
+        <span class="ml-1 text-sky-400 cursor-help" title="Quantitative Estimate of Drug-likeness: combines MW, LogP, PSA, H-bond counts, and rotatable bonds into a 0–1 score (higher = more drug-like)">
+          <i data-feather="info"></i>
+        </span>
+      </span>
+      <span>${qed != null ? qed.toFixed(2) : "—"}</span>
+    </div>
+
+    <div class="w-full bg-slate-800 rounded-full h-2.5">
+      <div class="${colorClass} h-2.5 rounded-full" style="width:${pct}%"></div>
+    </div>
+  `;
+  replaceFeather();
+}
+
+
+
+function renderSASASummary(summary) {
+  const box = document.getElementById("sasa-summary");
+
+  if (!summary || Object.keys(summary).length === 0) {
+    box.innerHTML = "<span class='text-gray-400'>No SASA data available</span>";
+    return;
+  }
+
+  // 1) Pull raw values (normalize backend variations)
+  let buriedRaw  = summary.Percent_Buried  ?? summary["%Buried"];
+  let exposedRaw = summary.Percent_Exposed ?? summary["%Exposed"];
+  let totalAtoms = summary.Total_atoms     ?? summary.Total_Atoms;
+  let exposedAtoms = summary.Exposed_atoms ?? summary.Exposed_Atoms;
+
+  // 2) Format percentages nicely (convert decimals → x.xx%)
+  const fmtPct = v =>
+    (v == null || isNaN(v)) ? "—" : `${(parseFloat(v) * 100).toFixed(1)}%`;
+
+  const buried  = fmtPct(buriedRaw);
+  const exposed = fmtPct(exposedRaw);
+
+  // 3) Render HTML
+  box.innerHTML = `
+    <div class="flex justify-between">
+      <span>Buried:</span> 
+      <span class='text-amber-300 font-semibold'>${buried}</span>
+    </div>
+
+    <div class="flex justify-between">
+      <span>Exposed:</span> 
+      <span class='text-amber-300 font-semibold'>${exposed}</span>
+    </div>
+
+    <div class="flex justify-between">
+      <span>Total Atoms:</span> 
+      <span class='text-gray-200'>${totalAtoms ?? "—"}</span>
+    </div>
+
+    <div class="flex justify-between">
+      <span>Exposed Atoms:</span> 
+      <span class='text-gray-200'>${exposedAtoms ?? "—"}</span>
+    </div>
+  `;
+}
+
+
+
+function fmt(v, f) { 
+  return (v == null) ? "—" : (f ? f(v) : v); 
+}
+
+
+
+
+function toggleTopologyPanel() {
+  const panel = document.getElementById("topology-panel");
+  const icon = document.getElementById("topology-icon");
+  const open = !panel.classList.contains("hidden");
+  panel.classList.toggle("hidden");
+  icon.setAttribute("data-feather", open ? "chevron-down" : "chevron-up");
+  replaceFeather(); // refresh info icons as well
+}
+
+
+function renderStructuralMetrics(meta = {}, desc = {}) {
+  document.getElementById("metric-formula").textContent = meta.Formula || "—";
+  document.getElementById("metric-charge").textContent = 
+    desc.Formal_Charge ?? meta.Formal_Charge ?? "—";
+  document.getElementById("metric-counts").textContent = 
+    [meta.Atom_Count, meta.Bond_Count, meta.Ring_Count || desc.Ring_Count]
+      .filter(v => v != null)
+      .join(" / ") || "—";
+  document.getElementById("metric-fsp3").textContent = 
+    desc.Fraction_CSP3 != null ? desc.Fraction_CSP3.toFixed(2) : "—";
+}
+
+function renderTopologyMetrics(desc = {}) {
+  const set = (id, v) => document.getElementById(id).textContent = (v != null ? Number(v).toFixed(2) : "—");
+  set("topo-bertz", desc.BertzCT);
+  set("topo-hallkier", desc.HallKierAlpha);
+  set("topo-k1", desc.Kappa1);
+  set("topo-k2", desc.Kappa2);
+  set("topo-k3", desc.Kappa3);
+  set("topo-molmr", desc.MolMR);
+}
+
+
+function toggleScaffoldUI(show, scaffoldId = "") {
+  const scaffoldMeta = document.getElementById("scaffold-meta");
+  const scaffoldIdEl = document.getElementById("scaffold-id");
+  const scaffoldLink = document.getElementById("scaffold-link-url");
+
+  if (!scaffoldMeta) return;
+
+  if (show && scaffoldId && scaffoldId.trim() !== "") {
+    scaffoldMeta.classList.remove("hidden");
+    if (scaffoldIdEl) scaffoldIdEl.textContent = scaffoldId;
+  } else {
+    scaffoldMeta.classList.add("hidden");
+    if (scaffoldIdEl) scaffoldIdEl.textContent = "—";
+    if (scaffoldLink) scaffoldLink.removeAttribute("href");
+  }
+}
+
+
+function renderScaffoldLink(scaffold = {}) {
+  const scaffoldId = scaffold?.Scaffold_ID?.trim?.() || "";
+
+  if (!scaffoldId) {
+    toggleScaffoldUI(false);
+    return;
+  }
+
+  toggleScaffoldUI(true, scaffoldId);
+
+  const link = document.getElementById("scaffold-link-url");
+  if (link) {
+    link.href = `/scaffolds/${encodeURIComponent(scaffoldId)}`;
+
+    if (scaffold.Scaffold_SMILES && scaffold.Scaffold_SMILES.trim() !== "") {
+      link.setAttribute("data-scaffold-smiles", scaffold.Scaffold_SMILES);
+      link.title = "Click to view scaffold";
+    } else {
+      link.removeAttribute("data-scaffold-smiles");
+      link.title = "Click to view scaffold";
+    }
+  }
+}
+
+async function loadScaffoldInfo(recruiterCode) {
+  try {
+    const res = await fetch(`/api/scaffold/${recruiterCode}`);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: "Not found" }));
+
+      if (data.error === "NO_MASTER") {
+        console.warn(`⚠️ Scaffold master missing for ${recruiterCode}`);
+      }
+
+      toggleScaffoldUI(false);
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!data || data.error || !data.Scaffold_ID || !data.Scaffold_ID.trim()) {
+      toggleScaffoldUI(false);
+      return;
+    }
+
+    renderScaffoldLink(data);
+
+  } catch (err) {
+    console.error("Scaffold load error:", err);
+    toggleScaffoldUI(false);
+  }
+}
+
+
+
+function renderLigandSMILES(smiles) {
+  const el = document.getElementById("ligand-smiles");
+
+  if (!el) return console.warn("⚠️ ligand-smiles element not found");
+
+  if (!smiles || smiles.trim() === "") {
+    el.textContent = "—";
+  } else {
+    el.textContent = smiles;
+  }
+}
+
+
+
+
+
+
+// =============================================
+// GLOBAL STATE
+// =============================================
+let originalSDF = null;
+let popupViewer = null;
+let popupModel = null;
+
+
+// =============================================
+// OPEN POPUP + LOAD 3DMOL VIEWER
+// =============================================
+
+// =============================================
+// SERVER-SIDE CONVERSION (Python RDKit)
+// =============================================
+async function convertAtomToV_backend(atomIndex, skipModify = false) {
+  const res = await fetch(`/api/convert_atom_to_v`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sdf: window.currentSDFtext,
+      atom_index: atomIndex,
+      RECRUITER: window.currentRecruiter,
+      skip_modify: skipModify
+    })
+  });
+
+  if (!res.ok) {
+    console.error("convert_atom_to_v failed:", res.status);
+    return null;
+  }
+
+  const data = await res.json();
+  return data.session_id;
+}
+
+
+
+
+// =============================================
+// CONFIRM BUTTON HANDLER
+// =============================================
+async function handleProtacConfirm() {
+  const skipModify =
+    document.getElementById("skip-modify-checkbox")?.checked || false;
+
+  const inputVal =
+    document.getElementById("atom-index-input")?.value.trim() ||
+    document.getElementById("atom-index-dropdown")?.value;
+
+  if (!inputVal) {
+    alert("Please enter or select an atom index.");
+    return;
+  }
+
+  const atomIndex = parseInt(inputVal, 10);
+
+  if (!Number.isFinite(atomIndex)) {
+    alert("Invalid atom index.");
+    return;
+  }
+
+  const sessionId = await convertAtomToV_backend(atomIndex, skipModify);
+  if (!sessionId) return;
+
+  await saveActiveProtacBuilderSession(sessionId);
+
+  openProtacBuilderSession(sessionId);
+
+  document.getElementById("protac-popup")?.classList.add("hidden");
+}
+
+
+// =============================================
+// ACTIVE PROTAC BUILDER SESSION HELPERS
+// =============================================
+async function saveActiveProtacBuilderSession(sessionId) {
+  const cleanSession = String(sessionId || "").trim();
+
+  if (!cleanSession) {
+    console.warn("⚠️ No sessionId to save.");
+    return false;
+  }
+
+  const payload = {
+    session_id: cleanSession,
+    job_id: window.PROTACABLE_CONFIG?.job_id || window.JOB_ID || "global",
+    source: "e3_recruiter"
+  };
+
+  console.log("📤 Saving active Builder session to backend:", payload);
+
+  try {
+    const res = await fetch("/api/protac-builder/active-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+
+    let data = {};
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
+    }
+
+    if (!res.ok || !data.ok) {
+      console.warn("⚠️ Failed to save active Builder session:", {
+        status: res.status,
+        data
+      });
+
+      // Still save locally as fallback.
+      localStorage.setItem("protacBuilder.activeSession", cleanSession);
+      localStorage.setItem(
+        "protacBuilder.activeHref",
+        `${window.PROTACSUITE}/build?session=${encodeURIComponent(cleanSession)}`
+      );
+
+      return false;
+    }
+
+    localStorage.setItem("protacBuilder.activeSession", cleanSession);
+    localStorage.setItem(
+      "protacBuilder.activeHref",
+      `${window.PROTACSUITE}/build?session=${encodeURIComponent(cleanSession)}`
+    );
+
+    console.log("✅ Active Builder session saved to backend:", data);
+    return true;
+
+  } catch (err) {
+    console.warn("⚠️ Error saving active Builder session:", err);
+
+    // Local fallback.
+    localStorage.setItem("protacBuilder.activeSession", cleanSession);
+    localStorage.setItem(
+      "protacBuilder.activeHref",
+      `${window.PROTACSUITE}/build?session=${encodeURIComponent(cleanSession)}`
+    );
+
+    return false;
+  }
+}
+
+
+function openProtacBuilderSession(sessionId) {
+  const cleanSession = String(sessionId || "").trim();
+
+  if (!cleanSession) {
+    alert("No PROTAC Builder session found.");
+    return;
+  }
+
+  const base =
+    String(window.PROTACSUITE || "").replace(/\/+$/, "") ||
+    "https://kyle.rove-vernier.ts.net/copy/COPYindex";
+
+  const url = `${base}/build?session=${encodeURIComponent(cleanSession)}`;
+
+  console.log("🧬 Opening/reusing PROTAC Builder session:", url);
+
+  const w = window.open(url, "PROTAC_BUILDER_LIVE");
+
+  if (!w) {
+    alert("Popup blocked. Please allow popups for this site.");
+    return;
+  }
+
+  w.focus();
+}
+
+
+
+// =============================================
+// OPEN POPUP FROM PAGE
+// =============================================
+async function openProtacPopupFromPage() {
+  const sdfURL = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
+  const res = await fetch(sdfURL);
+
+  if (!res.ok) return alert("Error loading SDF.");
+
+  const sdfText = await res.text();
+
+  openProtacPopup(sdfText, window.currentLigase, window.currentPDB);  // <--- ADD
+}
+
+
+// =============================================
+// DOWNLOAD BUTTONS (variant-aware)
+// =============================================
+function downloadPDB() {
+  const a = document.createElement("a");
+  a.href = window.currentPDBurl ?? `/Ligases/${window.currentLigase}/PDB/${window.currentPDB}`;
+  a.download = window.currentPDB;
+  a.click();
+}
+
+function downloadSDF() {
+  const a = document.createElement("a");
+  a.href = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
+  a.download = window.currentPDB.replace(".pdb", ".sdf");
+  a.click();
+}
+
+
+// =============================================
+// DIRECT TOOLTIP → OPEN POPUP
+// =============================================
+async function useLigaseRecruiterFromTooltip(pdbFileName, ligase) {
+  window.currentLigase = ligase;
+  window.currentPDB = pdbFileName;
+
+  const sdfURL = `/api/render-sdf/${ligase}/${pdbFileName}`;
+  const res = await fetch(sdfURL);
+
+  if (!res.ok) return alert("Error loading SDF.");
+
+  const sdfText = await res.text();
+
+  openProtacPopup(sdfText, ligase, pdbFileName);  // <--- ADD
+}
+
+
+// =============================================
+// INIT BUTTON LISTENERS
+// =============================================
+document.addEventListener("DOMContentLoaded", () => {
+
+  // --- Popup buttons ---
+  const cancelBtn  = document.getElementById("protac-cancel");
+  const confirmBtn = document.getElementById("protac-confirm");
+
+  // --- Main page buttons ---
+  const pdbBtn     = document.getElementById("download-pdb-btn");
+  const sdfBtn     = document.getElementById("download-sdf-btn");
+  const protacBtn  = document.getElementById("use-as-protac-btn");
+
+  // === MAIN PAGE DOWNLOAD BUTTONS ===
+  pdbBtn?.addEventListener("click", downloadPDB);
+  sdfBtn?.addEventListener("click", downloadSDF);
+
+  // === MAIN PAGE "Use as PROTAC" BUTTON ===
+  protacBtn?.addEventListener("click", openProtacPopupFromPage);
+
+  // === POPUP DOWNLOAD BUTTONS (NEW) ===
+  document.getElementById("popup-download-pdb-btn")
+    ?.addEventListener("click", downloadPDB);
+
+  document.getElementById("popup-download-sdf-btn")
+    ?.addEventListener("click", downloadSDF);
+
+  // === POPUP CANCEL ===
+  cancelBtn?.addEventListener("click", () => {
+    document.getElementById("protac-popup").classList.add("hidden");
+  });
+
+  // === POPUP CONFIRM ("Send to Builder") ===
+  confirmBtn?.addEventListener("click", handleProtacConfirm);
+});
+
+
+
+
+
+
+</script>
+
+<style>
+/* === Modern Tooltip Styling === */
+#sasa-3d-tooltip {
+  position: absolute;
+  z-index: 9999;
+  pointer-events: none;
+
+  min-width: 190px;
+  max-width: 260px;
+
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  color: #e2e8f0;
+
+  padding: 10px 12px;
+  border-radius: 10px;
+
+  font-size: 11px;
+  line-height: 1.35;
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.55),
+    0 0 12px rgba(56, 189, 248, 0.25);
+
+  backdrop-filter: blur(8px);
+}
+
+#sasa-3d-tooltip.hidden {
+  display: none;
+}
+
+.sasa-tooltip-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+
+  margin-bottom: 6px;
+}
+
+.sasa-tooltip-chip {
+  color: #020617;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 999px;
+}
+
+.sasa-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 3px;
+}
+
+.sasa-tooltip-row span {
+  color: #94a3b8;
+}
+
+.sasa-tooltip-row strong {
+  color: #f8fafc;
+}
+
+.sasa-tooltip-small {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltip-box {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+  transform: translateY(4px);
+  
+  position: absolute;
+  left: 50%;
+  bottom: 125%;
+  transform: translateX(-50%) translateY(4px);
+
+  background: rgba(15, 23, 42, 0.95); /* slate-900 */
+  border: 1px solid rgba(56, 189, 248, 0.4); /* sky-400 */
+  padding: 8px 10px;
+  border-radius: 8px;
+  min-width: 260px;
+  max-width: 360px;
+  color: #e2e8f0; /* gray-300 */
+  font-size: 0.75rem;
+  line-height: 1.15rem;
+  text-align: left;
+  z-index: 40;
+
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+/* arrow */
+.tooltip .tooltip-box::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent;
+}
+
+/* show on hover */
+.tooltip:hover .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0px);
+}
+
+
+/* ==========================================================
+   GLOBAL UI POLISH
+   ========================================================== */
+
+body {
+  background: #0f172a; /* nicer deep slate */
+  color: #e2e8f0;
+  font-smoothing: antialiased;
+}
+
+/* Smooth transitions everywhere */
+* {
+  transition: all 0.18s ease-out;
+}
+
+/* Improve card styling */
+.bg-slate-900,
+.bg-slate-800,
+.bg-slate-950\/50 {
+  border-radius: 1rem !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+/* Borders more subtle */
+.border-slate-700 {
+  border-color: rgba(148,163,184,0.25) !important;
+}
+
+/* Title improvements */
+h2, h3 {
+  letter-spacing: 0.3px;
+}
+
+/* Section titles */
+.text-amber-300,
+.text-white {
+  font-weight: 600 !important;
+}
+
+/* Paragraph spacing */
+p {
+  line-height: 1.65;
+}
+
+/* ==========================================================
+   TOOLTIP UPGRADE (nice floating glass style)
+   ========================================================== */
+
+[data-feather][title],
+.cursor-help[title] {
+  position: relative;
+}
+
+[data-feather][title]:hover::after,
+.cursor-help[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 50%;
+  top: -40px;
+  transform: translateX(-50%);
+  white-space: normal;
+  max-width: 360px;
+  padding: 8px 12px;
+  font-size: 11px;
+  background: rgba(30,41,59,0.9);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(148,163,184,0.35);
+  color: #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+  z-index: 100;
+  opacity: 1;
+}
+
+[data-feather][title]:hover::before,
+.cursor-help[title]:hover::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent rgba(30,41,59,0.9) transparent;
+  z-index: 99;
+}
+
+/* Prevent layout shifting */
+[data-feather][title]::after,
+[data-feather][title]::before {
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ==========================================================
+   2D STRUCTURE PANEL
+   ========================================================== */
+
+#svg2d-wrap {
+  border-radius: 0.75rem;
+  padding: 1rem !important;
+  background: linear-gradient(
+      rgba(30,41,59,0.8),
+      rgba(15,23,42,0.8)
+    ),
+    url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NkYGBgAAAABQABDQottAAAAABJRU5ErkJggg==');
+  background-size: 4px 4px;
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.4);
+}
+
+#svg2d svg {
+  max-height: 320px;
+  width: auto;
+  margin: 0 auto;
+  display: block;
+}
+
+/* 2D Legend styling */
+#legend-2d {
+  border-radius: 0.5rem;
+  padding: 10px 12px !important;
+}
+
+/* ==========================================================
+   3D VIEWER PANEL
+   ========================================================== */
+
+#ngl {
+  border-radius: 0.75rem !important;
+  box-shadow: inset 0 0 25px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+
+#ngl:focus {
+  outline: none;
+}
+
+/* Buttons for switching modes */
+#btn-2d-normal, #btn-2d-sasa,
+#btn-3d-normal, #btn-3d-sasa {
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-weight: 500;
+}
+
+/* Active button style */
+#btn-2d-normal.active,
+#btn-2d-sasa.active,
+#btn-3d-normal.active,
+#btn-3d-sasa.active {
+  background: #0284c7 !important;
+  color: white !important;
+}
+
+/* ==========================================================
+   RIGHT PANEL CARDS
+   ========================================================== */
+
+.bg-slate-900 {
+  padding: 1.2rem !important;
+}
+
+#chem-props li,
+#struct-metrics li {
+  padding-left: 2px;
+}
+
+#drug-rules span {
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+}
+
+/* ==========================================================
+   SASA SUMMARY BOX
+   ========================================================== */
+
+#sasa-summary {
+  background: rgba(30,41,59,0.55);
+  border: 1px solid rgba(148,163,184,0.25);
+  padding: 14px 16px !important;
+  border-radius: 10px;
+}
+
+#sasa-summary div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 3px 0;
+}
+
+/* ==========================================================
+   MISC TWEAKS
+   ========================================================== */
+
+#ligase-badge,
+#ligand-badge {
+  font-weight: 600;
+  padding: 4px 8px !important;
+  border-radius: 999px !important;
+}
+
+#scaffold-link {
+  font-size: 12px;
+  border-radius: 8px !important;
+}
+
+
+
+
+
+</style>
+<style>
+.tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.tooltip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  background: rgba(15, 23, 42, 0.95);
+  color: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  max-width: 260px;
+  white-space: pre-wrap;
+  border: 1px solid #334155;
+  z-index: 9999;
+}
+
+
+/* ===============================
+   FIX 3DMOL CLICK EVENTS IN MODAL
+   =============================== */
+
+#protac-popup {
+  pointer-events: auto !important;
+}
+
+#protac-popup * {
+  pointer-events: auto !important;
+}
+
+#protac-viewer {
+  position: relative !important;
+  z-index: 999 !important;
+  pointer-events: auto !important;
+}
+
+/* Optional: prevent accidental block by parent stacking */
+#protac-popup > div {
+  position: relative;
+  z-index: 900;
+}
+
+/* Make disabled state visibly disabled */
+#protac-confirm[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* Popup fixes */
+#protac-popup {
+  pointer-events: auto;
+}
+
+#protac-viewer {
+  position: relative;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Atom label style (3dmol) */
+.atomLabel {
+  font-size: 12px !important;
+  font-weight: bold !important;
+  color: #ffd700 !important;
+  pointer-events: none !important;
+}
+
+/* ===============================
+   MOLECULAR TOPOLOGY GRID CARDS
+   =============================== */
+
+.topo-card {
+  background: linear-gradient(
+    180deg,
+    rgba(30,41,59,0.75),
+    rgba(15,23,42,0.85)
+  );
+  border: 1px solid rgba(148,163,184,0.25);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow:
+    inset 0 0 18px rgba(0,0,0,0.35),
+    0 4px 14px rgba(0,0,0,0.45);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.topo-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 22px rgba(0,0,0,0.4),
+    0 8px 22px rgba(0,0,0,0.6);
+}
+
+/* Header row */
+.topo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #94a3b8; /* slate-400 */
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+
+/* Info icon */
+.topo-info {
+  width: 14px;
+  height: 14px;
+  color: #38bdf8; /* sky-400 */
+  cursor: help;
+}
+
+/* Big value */
+.topo-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #e5e7eb; /* gray-200 */
+  letter-spacing: 0.4px;
+}
+
+
+/* ================================
+   2D SASA LEGEND COLOR BARS
+================================ */
+
+.sasa-chip {
+  display: inline-block;
+  width: 34px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 6px rgba(255, 255, 255, 0.18),
+    inset 0 0 4px rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.sasa-green {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.sasa-yellow {
+  background: linear-gradient(90deg, #eab308, #facc15);
+}
+
+.sasa-red {
+  background: linear-gradient(90deg, #dc2626, #ef4444);
+}
+
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://3Dmol.org/build/3Dmol.js"></script>
+<script>
+let protacPopupStage = null;
+let protacPopupComp = null;
+
+async function openProtacPopup(sdfText, ligase, pdbFile) {
+  try {
+    originalSDF = sdfText;
+    window.currentSDFtext = sdfText;
+    window.currentLigase  = ligase;
+    window.currentPDB     = pdbFile;
+    window.currentPDBurl  = `/Ligases/${ligase}/PDB/${pdbFile}`;
+
+    const popup = document.getElementById("protac-popup");
+    const container = document.getElementById("protac-viewer");
+    const atomInput = document.getElementById("atom-index-input");
+    const atomDropdown = document.getElementById("atom-index-dropdown");
+
+    if (!popup || !container || !atomDropdown) {
+      console.error("PROTAC popup elements missing");
+      alert("Popup elements are missing.");
+      return;
+    }
+
+    popup.classList.remove("hidden");
+
+    atomInput.value = "";
+    atomDropdown.innerHTML = "";
+    atomDropdown.classList.add("hidden");
+    container.innerHTML = "";
+
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    if (protacPopupStage) {
+      try {
+        protacPopupStage.removeAllComponents();
+        protacPopupStage.dispose();
+      } catch (e) {
+        console.warn("Previous popup stage cleanup failed:", e);
+      }
+      protacPopupStage = null;
+      protacPopupComp = null;
+    }
+
+    protacPopupStage = new NGL.Stage("protac-viewer", {
+      backgroundColor: "#0f172a"
+    });
+
+    protacPopupComp = await protacPopupStage.loadFile(
+      new Blob([sdfText], { type: "text/plain" }),
+      { ext: "sdf" }
+    );
+
+    // Main molecule rendering
+    protacPopupComp.addRepresentation("ball+stick", {
+      multipleBond: true
+    });
+
+    // Atom index labels drawn by NGL
+    protacPopupComp.addRepresentation("label", {
+      labelType: "atomindex",
+      color: "yellow",
+      showBackground: true,
+      backgroundColor: "black",
+      backgroundOpacity: 0.65,
+      zOffset: 2.0,
+      attachment: "middle-center"
+    });
+
+    protacPopupComp.autoView();
+    protacPopupStage.handleResize();
+
+    // Build dropdown from the exact NGL atom indices
+    const atoms = [];
+    protacPopupComp.structure.eachAtom(atom => {
+      atoms.push({
+        index: atom.index,
+        element: atom.element || atom.atomname || "?"
+      });
+    });
+
+    atoms.forEach(a => {
+      const opt = document.createElement("option");
+      opt.value = a.index;
+      opt.textContent = `Atom ${a.index} (${a.element})`;
+      atomDropdown.appendChild(opt);
+    });
+
+    if (atoms.length) {
+      atomDropdown.classList.remove("hidden");
+    }
+
+    console.log("NGL popup ready", {
+      ligase,
+      pdbFile,
+      atomCount: atoms.length
+    });
+
+  } catch (err) {
+    console.error("Failed to open NGL PROTAC popup:", err);
+    alert("Failed to open the PROTAC popup.");
+  }
+}
+</script>
+
+{% endblock %}

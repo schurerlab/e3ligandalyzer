@@ -1,0 +1,973 @@
+{% extends "base.html" %}
+{% block title %}About — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --e3-bg: #020617;
+    --e3-panel: rgba(15, 23, 42, 0.74);
+    --e3-panel-strong: rgba(15, 23, 42, 0.92);
+    --e3-border: rgba(56, 189, 248, 0.28);
+    --e3-cyan: #38bdf8;
+    --e3-blue: #60a5fa;
+    --e3-teal: #2dd4bf;
+    --e3-purple: #c084fc;
+    --e3-gold: #facc15;
+    --e3-pink: #f472b6;
+    --e3-green: #34d399;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  /* Layout safety: prevents wide children/buttons from forcing horizontal scroll. */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { max-width: 100%; overflow-x: clip; }
+  .e3-about-shell,
+  .e3-about-shell * { min-width: 0; }
+
+
+  .e3-about-shell {
+    position: relative;
+    width: min(1180px, calc(100% - clamp(1rem, 4vw, 2rem)));
+    margin: 0 auto;
+    color: #dbeafe;
+    isolation: isolate;
+    overflow-x: clip;
+  }
+
+  .e3-about-shell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -3;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.22), transparent 30%),
+      radial-gradient(circle at 86% 10%, rgba(192, 132, 252, 0.18), transparent 28%),
+      radial-gradient(circle at 55% 72%, rgba(45, 212, 191, 0.12), transparent 34%),
+      linear-gradient(180deg, #020617 0%, #030712 42%, #020617 100%);
+  }
+
+  .e3-grid-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    opacity: 0.18;
+    background-image:
+      linear-gradient(rgba(56, 189, 248, 0.16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56, 189, 248, 0.16) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.1));
+    animation: e3-grid-drift 22s linear infinite;
+  }
+
+  .e3-scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 0;
+    z-index: 9999;
+    background: linear-gradient(90deg, var(--e3-cyan), var(--e3-teal), var(--e3-gold), var(--e3-pink));
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.9);
+    transition: width 0.12s ease-out;
+  }
+
+  .e3-noise {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.7) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.5) 0 1px, transparent 1px);
+    background-size: 80px 80px, 120px 120px;
+    animation: e3-sparkle 10s linear infinite;
+  }
+
+  .e3-hero {
+    position: relative;
+    min-height: 620px;
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 36px;
+    padding: clamp(2rem, 5vw, 5rem);
+    background:
+      linear-gradient(135deg, rgba(2,6,23,0.72), rgba(15,23,42,0.54)),
+      radial-gradient(circle at 78% 28%, rgba(56,189,248,0.28), transparent 38%),
+      radial-gradient(circle at 18% 75%, rgba(45,212,191,0.18), transparent 34%);
+    box-shadow: 0 0 60px rgba(56, 189, 248, 0.12), inset 0 0 80px rgba(56, 189, 248, 0.04);
+  }
+
+  .e3-hero::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.09), transparent);
+    transform: translateX(-120%);
+    animation: e3-hero-sheen 7s ease-in-out infinite;
+  }
+
+  .e3-orb {
+    position: absolute;
+    width: 340px;
+    height: 340px;
+    right: clamp(-120px, 3vw, 40px);
+    top: 70px;
+    border-radius: 999px;
+    border: 1px solid rgba(56,189,248,0.3);
+    box-shadow: inset 0 0 50px rgba(56,189,248,0.12), 0 0 70px rgba(56,189,248,0.16);
+    animation: e3-float 8s ease-in-out infinite;
+  }
+
+  .e3-orb::before,
+  .e3-orb::after {
+    content: "";
+    position: absolute;
+    inset: 38px;
+    border-radius: 999px;
+    border: 1px dashed rgba(250,204,21,0.45);
+    animation: e3-spin 22s linear infinite;
+  }
+
+  .e3-orb::after {
+    inset: 84px;
+    border-color: rgba(45,212,191,0.52);
+    animation-duration: 15s;
+    animation-direction: reverse;
+  }
+
+  .e3-atom {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--dot, var(--e3-cyan));
+    box-shadow: 0 0 18px var(--dot, var(--e3-cyan));
+  }
+  .e3-atom.one { top: 40px; left: 156px; --dot: #38bdf8; }
+  .e3-atom.two { bottom: 60px; right: 92px; --dot: #facc15; }
+  .e3-atom.three { top: 150px; left: 52px; --dot: #34d399; }
+  .e3-atom.four { bottom: 116px; left: 212px; --dot: #f472b6; }
+
+  @media (max-width: 900px) {
+    .e3-hero { min-height: auto; }
+    .e3-orb { opacity: 0.36; right: -130px; top: 36px; transform: scale(0.82); }
+  }
+  @media (max-width: 620px) {
+    .e3-orb { display: none; }
+    .e3-title { letter-spacing: -0.06em; }
+    .e3-hero-actions { width: 100%; }
+    .e3-btn { width: 100%; }
+  }
+
+  .e3-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: fit-content;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid rgba(56,189,248,0.35);
+    border-radius: 999px;
+    color: #bae6fd;
+    background: rgba(8,47,73,0.35);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 22px rgba(56,189,248,0.12);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .e3-pulse-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--e3-green);
+    box-shadow: 0 0 0 0 rgba(52,211,153,0.9);
+    animation: e3-pulse 1.8s infinite;
+  }
+
+  .e3-title {
+    margin-top: 1.2rem;
+    font-size: clamp(3.2rem, 8vw, 7.5rem);
+    line-height: 0.92;
+    font-weight: 950;
+    letter-spacing: -0.08em;
+    color: #e0f2fe;
+    text-shadow: 0 0 40px rgba(56,189,248,0.2);
+  }
+
+  .e3-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15, #f472b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 20px rgba(56,189,248,0.25));
+  }
+
+  .e3-title,
+  .e3-section-title,
+  .e3-section-copy,
+  .e3-hero-copy {
+    overflow-wrap: anywhere;
+  }
+
+  .e3-hero-copy {
+    max-width: 760px;
+    margin-top: 1.35rem;
+    color: #cbd5e1;
+    font-size: clamp(1.03rem, 1.9vw, 1.25rem);
+    line-height: 1.8;
+  }
+
+  .e3-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-top: 2rem;
+  }
+
+  .e3-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 46px;
+    padding: 0.8rem 1.05rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.35);
+    color: #e0f2fe;
+    background: rgba(15,23,42,0.68);
+    box-shadow: 0 10px 30px rgba(2,6,23,0.35), inset 0 0 18px rgba(56,189,248,0.04);
+    overflow: hidden;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .e3-btn:hover {
+    transform: translateY(-3px);
+    border-color: rgba(250,204,21,0.7);
+    box-shadow: 0 16px 40px rgba(56,189,248,0.16), 0 0 22px rgba(250,204,21,0.16);
+  }
+  .e3-btn.primary {
+    border-color: rgba(45,212,191,0.58);
+    background: linear-gradient(135deg, rgba(14,165,233,0.26), rgba(20,184,166,0.24));
+  }
+
+  .e3-metric-dock {
+    position: relative;
+    margin-top: 1.25rem;
+    padding: 0;
+    z-index: 4;
+  }
+
+  .e3-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .e3-metric-card,
+  .e3-card,
+  .e3-tool-card,
+  .e3-science-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(56,189,248,0.22);
+    background: linear-gradient(180deg, rgba(15,23,42,0.82), rgba(2,6,23,0.76));
+    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 42px rgba(2,6,23,0.35);
+  }
+
+  .e3-metric-card {
+    padding: 1.25rem;
+    border-radius: 24px;
+    transform-style: preserve-3d;
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+  .e3-metric-card:hover {
+    border-color: rgba(45,212,191,0.52);
+    box-shadow: 0 22px 58px rgba(56,189,248,0.16);
+  }
+  .e3-metric-card::before,
+  .e3-tool-card::before,
+  .e3-card::before,
+  .e3-science-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(56,189,248,0.18), transparent 34%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .e3-metric-card:hover::before,
+  .e3-tool-card:hover::before,
+  .e3-card:hover::before,
+  .e3-science-card:hover::before { opacity: 1; }
+
+  .e3-metric-label { color: #94a3b8; font-size: 0.88rem; margin-top: 0.35rem; }
+  .e3-metric-value {
+    color: #67e8f9;
+    font-weight: 900;
+    font-size: clamp(2rem, 5vw, 3.1rem);
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(56,189,248,0.28);
+  }
+  .e3-gold-value { color: #fde68a; text-shadow: 0 0 20px rgba(250,204,21,0.36); }
+
+  .e3-section {
+    position: relative;
+    margin-top: 5rem;
+  }
+  .e3-section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: end;
+    margin-bottom: 1.25rem;
+  }
+  @media (max-width: 780px) { .e3-section-head { display: block; } }
+
+  .e3-section-kicker {
+    color: #67e8f9;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 800;
+  }
+  .e3-section-title {
+    margin-top: 0.45rem;
+    color: #f8fafc;
+    font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    letter-spacing: -0.05em;
+  }
+  .e3-section-copy {
+    max-width: 740px;
+    color: #94a3b8;
+    line-height: 1.75;
+  }
+
+  .e3-card {
+    border-radius: 30px;
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .e3-story-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 1.2rem;
+    align-items: stretch;
+  }
+  @media (max-width: 900px) { .e3-story-grid { grid-template-columns: 1fr; } }
+
+  .e3-callout {
+    border-radius: 26px;
+    border: 1px solid rgba(250,204,21,0.32);
+    background:
+      linear-gradient(135deg, rgba(250,204,21,0.14), rgba(14,165,233,0.08)),
+      rgba(15,23,42,0.75);
+    padding: 1.35rem;
+    box-shadow: 0 18px 45px rgba(250,204,21,0.08);
+  }
+
+  .e3-count-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.3rem 0.2rem 0 0;
+    padding: 0.55rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.86);
+    border: 1px solid rgba(56,189,248,0.22);
+    color: #e2e8f0;
+  }
+  .e3-count-pill strong { color: #fde68a; }
+
+  .e3-science-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  @media (max-width: 900px) { .e3-science-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 620px) { .e3-science-grid { grid-template-columns: 1fr; } }
+
+  .e3-science-card {
+    min-height: 150px;
+    border-radius: 24px;
+    padding: 1.2rem;
+  }
+  .e3-science-card h3 {
+    position: relative;
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: #7dd3fc;
+  }
+  .e3-science-card p { position: relative; color: #94a3b8; font-size: 0.9rem; margin-top: 0.45rem; }
+  .e3-science-card .unit { color: #bae6fd; font-size: 1rem; }
+
+  .e3-timeline {
+    display: grid;
+    gap: 1rem;
+  }
+  .e3-step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  .e3-step-badge {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    color: #020617;
+    background: linear-gradient(135deg, var(--e3-cyan), var(--e3-gold));
+    box-shadow: 0 0 20px rgba(56,189,248,0.28);
+    font-weight: 900;
+  }
+  .e3-step h3 { color: #e0f2fe; font-weight: 800; }
+  .e3-step p { color: #94a3b8; line-height: 1.7; }
+
+  .e3-tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 1rem;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .e3-tool-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    min-height: 310px;
+    height: 100%;
+    border-radius: 28px;
+    padding: clamp(1.1rem, 2.4vw, 1.45rem);
+    text-decoration: none;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .e3-tool-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent, rgba(56,189,248,0.65));
+    box-shadow: 0 22px 60px var(--glow, rgba(56,189,248,0.16));
+  }
+  .e3-tool-icon {
+    position: relative;
+    z-index: 1;
+    width: 62px;
+    height: 62px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 21px;
+    font-size: 2rem;
+    background: color-mix(in srgb, var(--accent, #38bdf8) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent, #38bdf8) 42%, transparent);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--accent, #38bdf8) 30%, transparent);
+  }
+  .e3-tool-card h3 {
+    position: relative;
+    z-index: 1;
+    margin-top: 1rem;
+    color: color-mix(in srgb, var(--accent, #38bdf8) 75%, white);
+    font-size: clamp(1.18rem, 2vw, 1.35rem);
+    line-height: 1.15;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+  }
+  .e3-tool-card p {
+    position: relative;
+    z-index: 1;
+    margin-top: 0.65rem;
+    color: #94a3b8;
+    line-height: 1.65;
+    font-size: 0.94rem;
+    overflow-wrap: anywhere;
+  }
+  .e3-tool-cta {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    max-width: 100%;
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 12px;
+    color: #e0f2fe;
+    background: rgba(15,23,42,0.7);
+    border: 1px solid color-mix(in srgb, var(--accent, #38bdf8) 38%, transparent);
+    white-space: normal;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .e3-tool-actions {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 1.1rem;
+  }
+  .e3-mini-btn {
+    flex: 1 1 155px;
+    min-width: 0;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.68rem 0.78rem;
+    border-radius: 14px;
+    color: #e0f2fe;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.92rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    border: 1px solid rgba(56,189,248,0.36);
+    background: rgba(15,23,42,0.74);
+    box-shadow: inset 0 0 18px rgba(56,189,248,0.04), 0 10px 26px rgba(2,6,23,0.26);
+    transition: transform 0.25s ease, border-color 0.25s ease, color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+  }
+  .e3-mini-btn:hover { transform: translateY(-3px); }
+  .e3-mini-btn.github:hover {
+    color: #fde68a;
+    border-color: rgba(250,204,21,0.82);
+    background: rgba(250,204,21,0.10);
+    box-shadow: 0 0 18px rgba(250,204,21,0.34), inset 0 0 18px rgba(250,204,21,0.06);
+  }
+  .e3-mini-btn.preprint:hover {
+    color: #bbf7d0;
+    border-color: rgba(52,211,153,0.82);
+    background: rgba(52,211,153,0.10);
+    box-shadow: 0 0 18px rgba(52,211,153,0.34), inset 0 0 18px rgba(52,211,153,0.06);
+  }
+  .e3-mini-btn:active {
+    transform: translateY(-1px) scale(0.98);
+    border-color: rgba(56,189,248,0.92);
+    color: #bae6fd;
+    background: rgba(56,189,248,0.12);
+    box-shadow: 0 0 22px rgba(56,189,248,0.45);
+  }
+  @media (max-width: 430px) {
+    .e3-mini-btn { flex-basis: 100%; white-space: normal; }
+  }
+
+  .e3-contact-band {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    border: 1px solid rgba(45,212,191,0.34);
+    background:
+      radial-gradient(circle at 85% 50%, rgba(45,212,191,0.15), transparent 24%),
+      linear-gradient(135deg, rgba(8,47,73,0.52), rgba(15,23,42,0.82));
+    border-radius: 28px;
+    padding: clamp(1.2rem, 3vw, 2rem);
+  }
+  @media (max-width: 760px) { .e3-contact-band { grid-template-columns: 1fr; } }
+
+  .e3-footer {
+    margin: 4rem 0 2rem;
+    color: #64748b;
+    text-align: center;
+    font-size: 0.94rem;
+  }
+  .e3-footer a { color: #38bdf8; font-weight: 700; }
+
+  .e3-back-top {
+    position: fixed;
+    right: 1.2rem;
+    bottom: 1.2rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    z-index: 100;
+    color: white;
+    background: linear-gradient(135deg, #0284c7, #14b8a6);
+    box-shadow: 0 0 30px rgba(56,189,248,0.35);
+    border: 1px solid rgba(255,255,255,0.18);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: 0.25s ease;
+  }
+  .e3-back-top.show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+  .e3-reveal { opacity: 0; transform: translateY(28px) scale(0.98); transition: opacity 0.72s ease, transform 0.72s ease; }
+  .e3-reveal.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+  @keyframes e3-grid-drift { from { background-position: 0 0; } to { background-position: 44px 88px; } }
+  @keyframes e3-sparkle { from { transform: translateY(0); } to { transform: translateY(-80px); } }
+  @keyframes e3-hero-sheen { 0%, 30% { transform: translateX(-120%); } 55%, 100% { transform: translateX(120%); } }
+  @keyframes e3-float { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-18px) rotate(4deg); } }
+  @keyframes e3-spin { to { transform: rotate(360deg); } }
+  @keyframes e3-pulse { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.8); } 70% { box-shadow: 0 0 0 12px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    .e3-reveal { opacity: 1; transform: none; }
+  }
+</style>
+
+<div id="scrollProgress" class="e3-scroll-progress"></div>
+<div class="e3-grid-bg"></div>
+<div class="e3-noise"></div>
+
+<section class="e3-about-shell">
+  <header class="e3-hero e3-reveal" id="hero">
+    <div class="e3-orb" aria-hidden="true">
+      <span class="e3-atom one"></span>
+      <span class="e3-atom two"></span>
+      <span class="e3-atom three"></span>
+      <span class="e3-atom four"></span>
+    </div>
+
+    <div class="relative z-10 max-w-4xl">
+      <div class="e3-eyebrow"><span class="e3-pulse-dot"></span> Structure-first degrader intelligence</div>
+      <h1 class="e3-title">E3 Ligase <span>Ligandalyzer</span></h1>
+      <p class="e3-hero-copy">
+        A structure-first atlas of experimentally resolved E3 ligase–recruiter complexes, enabling researchers to compare recruiter ligands, scaffold diversity, solvent exposure, and binding-mode context across curated E3 ligases.
+      </p>
+      <div class="e3-hero-actions">
+        <a href="/explorer" class="e3-btn primary">🧭 Launch Explorer</a>
+        <a href="/scaffolds" class="e3-btn">🧱 View Scaffolds</a>
+        <a href="/docs" class="e3-btn">📘 Read Docs</a>
+        <a href="/api-reference" class="e3-btn">⚡ API Access</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="e3-metric-dock e3-reveal">
+    <div class="e3-metric-grid">
+      <div class="e3-metric-card e3-tilt">
+        <div class="e3-metric-value" id="structCount">0</div>
+        <p class="e3-metric-label">Recruiter-Bound Structures</p>
+      </div>
+      <div class="e3-metric-card e3-tilt">
+        <div class="e3-metric-value" id="ligaseCount">0</div>
+        <p class="e3-metric-label">E3 Ligases Profiled</p>
+      </div>
+      <div class="e3-metric-card e3-tilt">
+        <div class="e3-metric-value" id="ligandCount">0</div>
+        <p class="e3-metric-label">Unique Ligase Recruiters</p>
+      </div>
+      <div class="e3-metric-card e3-tilt">
+        <div class="e3-metric-value e3-gold-value" id="shippedCount">0</div>
+        <p class="e3-metric-label">Recruiters Shipped to PROTAC Builder</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="e3-section e3-reveal" id="counts">
+    <div class="e3-section-head">
+      <div>
+        <div class="e3-section-kicker">Dataset context</div>
+        <h2 class="e3-section-title">How to interpret the counts</h2>
+      </div>
+      <p class="e3-section-copy">
+        The Ligandalyzer distinguishes between unique recruiter ligands and curated structural instances, because the same ligand can appear in more than one structural context.
+      </p>
+    </div>
+    <div class="e3-callout">
+      <p class="text-slate-300 leading-relaxed">
+        In the current dataset, <strong class="text-amber-200">494 unique recruiter ligands</strong> are represented across <strong class="text-cyan-200">568 recruiter-bound structures</strong>. Multiple LR entries may correspond to the same ligand when that ligand appears in different co-crystal structures, binding poses, or conformational contexts.
+      </p>
+      <div class="mt-4">
+        <span class="e3-count-pill"><strong>494</strong> unique recruiters</span>
+        <span class="e3-count-pill"><strong>568</strong> structure instances</span>
+        <span class="e3-count-pill"><strong>LR codes</strong> preserve structural context</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="mission">
+    <div class="e3-story-grid">
+      <article class="e3-card e3-tilt">
+        <div class="e3-section-kicker">Our mission</div>
+        <h2 class="e3-section-title">Bring order to recruiter discovery.</h2>
+        <p class="mt-4 text-slate-300 leading-relaxed">
+          The <strong>E3 Ligase Ligandalyzer</strong> was built to bring order and insight to one of the most rapidly evolving areas of modern drug discovery — targeted protein degradation. This platform provides a living, interactive atlas of E3 ligase complexes, recruiter scaffolds, and ligand structures.
+        </p>
+        <p class="mt-4 text-slate-400 leading-relaxed">
+          From cryo-EM and crystal structures to virtual docking predictions, every data point contributes to a collective understanding of how molecular glues and PROTACs engage the ubiquitin system.
+        </p>
+        <p class="mt-4 text-slate-400 leading-relaxed">
+          What began as an internal visualization utility has grown into a full-fledged research companion — uniting <em>cheminformatics</em>, <em>bioinformatics</em>, and <em>structural biology</em> under one interactive interface.
+        </p>
+      </article>
+
+      <article class="e3-card e3-tilt">
+        <div class="e3-section-kicker">Scientific signal</div>
+        <h2 class="text-3xl font-black tracking-tight text-slate-50 mt-2">What the platform makes visible</h2>
+        <div class="e3-timeline mt-6">
+          <div class="e3-step"><div class="e3-step-badge">1</div><div><h3>Recruiter identity</h3><p>Trace LR recruiter codes back to ligand, ligase, PDB, variant, and structure-level context.</p></div></div>
+          <div class="e3-step"><div class="e3-step-badge">2</div><div><h3>Scaffold behavior</h3><p>Compare Murcko frameworks, scaffold diversity, ligase associations, and recruiter density.</p></div></div>
+          <div class="e3-step"><div class="e3-step-badge">3</div><div><h3>Exposure logic</h3><p>Use SASA and solvent-exposed atom mapping to identify potential linker vectors and degrader design opportunities.</p></div></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="metrics">
+    <div class="e3-section-head">
+      <div>
+        <div class="e3-section-kicker">Live scientific metrics</div>
+        <h2 class="e3-section-title">A dashboard with chemistry under the hood.</h2>
+      </div>
+      <p class="e3-section-copy">These values are pulled dynamically from the backend and help summarize scaffold diversity, molecular complexity, drug-likeness, and connectivity across the atlas.</p>
+    </div>
+
+    <div class="e3-science-grid">
+      <div class="e3-science-card e3-tilt"><h3><span id="avg_shannon">—</span></h3><p>Average Scaffold Diversity (Shannon Index). Higher values mean more structural variety.</p></div>
+      <div class="e3-science-card e3-tilt"><h3><span id="mean_connectivity">—</span></h3><p>Average Ligase–Scaffold Connectivity. Average number of ligase associations per scaffold.</p></div>
+      <div class="e3-science-card e3-tilt"><h3><span id="median_bertz">—</span></h3><p>Median Ligand Complexity (Bertz Index). Higher indicates more intricate structures.</p></div>
+      <div class="e3-science-card e3-tilt"><h3><span id="avg_qed">—</span></h3><p>Average Drug-Likeness (QED), representing pharmacologic desirability from 0–1.</p></div>
+      <div class="e3-science-card e3-tilt"><h3><span id="percent_lipinski">—</span><span class="unit">%</span></h3><p>Lipinski Rule-of-Five Compliance across the recruiter library.</p></div>
+      <div class="e3-science-card e3-tilt"><h3><span id="avg_norm_div">—</span></h3><p>Normalized Scaffold Diversity, scaled 0–1 for easy comparison.</p></div>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="vision">
+    <div class="e3-card e3-tilt">
+      <div class="e3-section-kicker">The vision ahead</div>
+      <h2 class="e3-section-title">An open ecosystem for rational degrader design.</h2>
+      <p class="mt-4 text-slate-300 leading-relaxed">
+        Our long-term goal is to establish an open-access ecosystem for degrader science — where researchers can not only visualize and compare existing structures, but also <strong>design new linkers, rank ternary poses, and analyze interaction fingerprints</strong> in real time.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div class="e3-callout"><strong class="text-cyan-200">AI-assisted ligand ranking</strong><p class="text-slate-400 mt-1">Using interaction density and docking metrics to prioritize candidates.</p></div>
+        <div class="e3-callout"><strong class="text-cyan-200">Automated linker generation</strong><p class="text-slate-400 mt-1">Connecting recruiter–target pairs through design-aware linkers.</p></div>
+        <div class="e3-callout"><strong class="text-cyan-200">Cross-ligase scaffold comparison</strong><p class="text-slate-400 mt-1">Identifying shared pharmacophores and transferable recruiter logic.</p></div>
+        <div class="e3-callout"><strong class="text-cyan-200">Experimental + user data integration</strong><p class="text-slate-400 mt-1">Creating a living hub for community-driven degrader discovery.</p></div>
+      </div>
+      <p class="mt-6 text-slate-400 leading-relaxed">Together, these tools will transform the Ligandalyzer into a collaborative hub for rational degrader discovery.</p>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="collaborate">
+    <div class="e3-contact-band">
+      <div>
+        <div class="e3-section-kicker">Collaborate with us</div>
+        <h2 class="text-3xl md:text-4xl font-black tracking-tight text-slate-50 mt-2">Let’s build the future of degrader discovery together.</h2>
+        <p class="text-slate-400 mt-3 leading-relaxed">We believe innovation thrives through collaboration. Whether you're an academic researcher, biotech innovator, or computational scientist, we welcome you to connect and help expand the frontiers of E3 ligase biology and therapeutic design.</p>
+      </div>
+      <a href="mailto:jxs794@miami.edu" class="e3-btn primary">📧 Contact Us</a>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="tools">
+    <div class="e3-section-head">
+      <div>
+        <div class="e3-section-kicker">PROTAC ecosystem</div>
+        <h2 class="e3-section-title">Try our other tools.</h2>
+      </div>
+      <p class="e3-section-copy">Explore companion platforms that expand the Ligandalyzer ecosystem — from viral ligand intelligence and warhead discovery to custom PROTAC design.</p>
+    </div>
+
+    <div class="e3-tool-grid">
+      <a class="e3-tool-card e3-tilt" style="--accent:#38bdf8;--glow:rgba(56,189,248,0.18)" href="https://vlisemod.com" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🧬</div><h3>V-LiSEMOD</h3>
+        <p>The <strong>Viral Ligand Solvent-Exposed Moiety Database</strong> — a platform for mapping viral protein–ligand interactions and identifying solvent-exposed warhead fragments for degrader and inhibitor design.</p>
+        <span class="e3-tool-cta">🌐 Visit VLiSEMOD</span>
+      </a>
+      <a class="e3-tool-card e3-tilt" style="--accent:#f472b6;--glow:rgba(244,114,182,0.18)" href="https://warheadhunter.com/" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🎯</div><h3>Warhead Hunter</h3>
+        <p>A focused discovery platform for identifying <strong>target-binding ligands, warhead opportunities, and fragmentable chemotypes</strong> that can be advanced into modern degrader-design workflows.</p>
+        <span class="e3-tool-cta">🎯 Open Warhead Hunter</span>
+      </a>
+      <a class="e3-tool-card e3-tilt" style="--accent:#2dd4bf;--glow:rgba(45,212,191,0.18)" href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🧪</div><h3>PROTAC Builder</h3>
+        <p>An interactive degrader-design engine for building <strong>target–linker–recruiter</strong> systems with precision and exporting designs into structural modeling and downstream computational workflows.</p>
+        <span class="e3-tool-cta">🧭 Launch PROTAC Builder</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="hub">
+    <div class="e3-section-head">
+      <div>
+        <div class="e3-section-kicker">Innovation hub</div>
+        <h2 class="e3-section-title">More from our research stack.</h2>
+      </div>
+      <p class="e3-section-copy">Explore complementary research utilities built around automation, AI, and structural analysis — all designed to accelerate discovery and empower scientific creativity.</p>
+    </div>
+
+    <div class="e3-tool-grid">
+      <a class="e3-tool-card e3-tilt" style="--accent:#60a5fa;--glow:rgba(96,165,250,0.18)" href="https://jmsum.com" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🧠</div><h3>Article Summarizer</h3>
+        <p>An AI-powered summarizer that condenses research articles into concise, scientifically faithful synopses — perfect for staying updated across disciplines in seconds.</p>
+        <span class="e3-tool-cta">🔍 Visit JMSum.com</span>
+      </a>
+      <article class="e3-tool-card e3-tilt" style="--accent:#22d3ee;--glow:rgba(34,211,238,0.18)">
+        <div class="e3-tool-icon">⚙️</div>
+        <h3>PyMacs Automation</h3>
+        <p>A modular MD automation suite integrating <strong>GROMACS</strong> and Python — designed for seamless simulation setup, checkpoint handling, and trajectory post-processing.</p>
+        <div class="e3-tool-actions" aria-label="PyMacs links">
+          <a class="e3-mini-btn github" href="https://github.com/schurerlab/Pymacs" target="_blank" rel="noopener noreferrer">🧩 View on GitHub</a>
+          <a class="e3-mini-btn preprint" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6584500" target="_blank" rel="noopener noreferrer">📄 Read Preprint</a>
+        </div>
+      </article>
+      <a class="e3-tool-card e3-tilt" style="--accent:#818cf8;--glow:rgba(129,140,248,0.18)" href="https://butters.rove-vernier.ts.net" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🧱</div><h3>AutoDock Building Suite</h3>
+        <p>A streamlined interface for automatically preparing <strong>AutoDock Vina</strong> environments — generating receptor, ligand, and grid configuration files for local or server execution.</p>
+        <span class="e3-tool-cta">🧬 Launch Builder</span>
+      </a>
+      <a class="e3-tool-card e3-tilt" style="--accent:#5eead4;--glow:rgba(94,234,212,0.18)" href="https://github.com/Joey305/af3-Auto-analysis" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🔍</div><h3>AF3 Output Fast Analyzer</h3>
+        <p>Automatically parses and compares <strong>AlphaFold 3</strong> complex predictions — quantifying binding-site similarity, interface conservation, and structural deviations across multiple proteins.</p>
+        <span class="e3-tool-cta">🧠 View on GitHub</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="e3-section e3-reveal" id="break">
+    <div class="e3-section-head">
+      <div>
+        <div class="e3-section-kicker">Need a break?</div>
+        <h2 class="e3-section-title">Check out our “J” suite of tools.</h2>
+      </div>
+      <p class="e3-section-copy">Take a breather from data and discovery. Recharge with fun, educational, and AI-powered companions designed to make learning and wellness more engaging.</p>
+    </div>
+
+    <div class="e3-tool-grid">
+      <a class="e3-tool-card e3-tilt" style="--accent:#facc15;--glow:rgba(250,204,21,0.18)" href="https://www.jeir.fun/" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🎮</div><h3>Jeir.Fun — Healthy Eating Game</h3>
+        <p>A fast, family-friendly 2D side-scroller where you collect healthy foods 🥕, dodge the unhealthy ones 🍦, and climb the leaderboard — created by Mindful Diabetes Inc. to make nutrition fun and mindful.</p>
+        <span class="e3-tool-cta">▶️ Play Now</span>
+      </a>
+      <a class="e3-tool-card e3-tilt" style="--accent:#34d399;--glow:rgba(52,211,153,0.18)" href="https://mindfuldiabetes.ai" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🤖</div><h3>JEIR — Type 3 Diabetes AI Assistant</h3>
+        <p>Learn about the science linking insulin resistance, metabolism, and brain health through JEIR — an educational AI assistant built by Mindful Diabetes Inc. for awareness, learning, and empowerment.</p>
+        <span class="e3-tool-cta">💬 Open JEIR</span>
+      </a>
+      <a class="e3-tool-card e3-tilt" style="--accent:#38bdf8;--glow:rgba(56,189,248,0.18)" href="https://hub.docker.com/repository/docker/joeyschulz/jeiral-chatterbot/general" target="_blank" rel="noopener noreferrer">
+        <div class="e3-tool-icon">🧬</div><h3>JEIRAL — Viral AI Research Assistant</h3>
+        <p>A specialized viral AI chatbot for analyzing ligand–protein interactions and research data across viral families. Currently under maintenance, but soon returning to power the next generation of molecular insight.</p>
+        <span class="e3-tool-cta">🧩 Repository · Under Maintenance</span>
+      </a>
+    </div>
+  </section>
+
+  <footer class="e3-footer e3-reveal">
+    Developed by <a href="https://github.com/Joey305" target="_blank" rel="noopener noreferrer">Joseph-Michael Schulz</a> — University of Miami | Schürer Lab<br>
+    Designed with curiosity, collaboration, and a touch of Miami cyan 🌴
+  </footer>
+</section>
+
+<button id="backToTop" class="e3-back-top" aria-label="Back to top">⬆️</button>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const progress = document.getElementById("scrollProgress");
+  const backBtn = document.getElementById("backToTop");
+  const revealEls = document.querySelectorAll(".e3-reveal");
+
+  const updateScroll = () => {
+    const denom = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const pct = (window.scrollY / denom) * 100;
+    if (progress) progress.style.width = pct + "%";
+    if (backBtn) backBtn.classList.toggle("show", window.scrollY > 450);
+  };
+  window.addEventListener("scroll", updateScroll, { passive: true });
+  updateScroll();
+
+  if (backBtn) backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.14 });
+  revealEls.forEach((el, idx) => {
+    el.style.transitionDelay = Math.min(idx * 0.055, 0.35) + "s";
+    observer.observe(el);
+  });
+
+  document.querySelectorAll(".e3-tilt").forEach((card) => {
+    card.addEventListener("mousemove", (event) => {
+      const rect = card.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const px = x / rect.width;
+      const py = y / rect.height;
+      card.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+      card.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+      const rotateY = (px - 0.5) * 5;
+      const rotateX = (0.5 - py) * 5;
+      card.style.transform = "perspective(900px) rotateX(" + rotateX.toFixed(2) + "deg) rotateY(" + rotateY.toFixed(2) + "deg) translateY(-3px)";
+    });
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "";
+    });
+  });
+
+  Promise.allSettled([
+    fetch("/api/global-stats").then((r) => r.json()),
+    fetch("/api/visits").then((r) => r.json()),
+    fetch("/api/shipped-count").then((r) => r.json())
+  ]).then((results) => {
+    const stats = results[0].status === "fulfilled" ? results[0].value : {};
+    const visits = results[1].status === "fulfilled" ? results[1].value : {};
+    const shipped = results[2].status === "fulfilled" ? results[2].value : {};
+
+    const metricMap = {
+      structCount: stats.structures,
+      ligaseCount: stats.ligases,
+      ligandCount: stats.ligands,
+      visitCount: visits.total || 0,
+      shippedCount: shipped.total || 0,
+      avg_shannon: stats.avg_shannon,
+      mean_connectivity: stats.mean_connectivity,
+      median_bertz: stats.median_bertz,
+      avg_qed: stats.avg_qed,
+      percent_lipinski: stats.percent_lipinski,
+      avg_norm_div: stats.avg_norm_div
+    };
+    Object.entries(metricMap).forEach(([id, val]) => animateCounter(id, val));
+  });
+
+  function animateCounter(id, target) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const num = Number(target);
+    if (!Number.isFinite(num)) {
+      el.textContent = target || "—";
+      return;
+    }
+    const decimals = num > 0 && num < 10 && !Number.isInteger(num) ? 2 : 0;
+    const start = performance.now();
+    const duration = 1100;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const current = num * eased;
+      el.textContent = decimals ? current.toFixed(decimals) : Math.round(current).toLocaleString();
+      if (t < 1) requestAnimationFrame(tick);
+      else el.textContent = decimals ? num.toFixed(decimals) : Math.round(num).toLocaleString();
+    };
+    requestAnimationFrame(tick);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,554 @@
+class CustomNavbar extends HTMLElement {
+  connectedCallback() {
+    this.attachShadow({ mode: "open" });
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          --primary: #38bdf8;
+          --accent: #facc15;
+          --text-muted: #cbd5e1;
+          --bg-glass: rgba(15, 23, 42, 0.75);
+          --border-glow: rgba(56, 189, 248, 0.25);
+          font-family: 'Inter', sans-serif;
+        }
+
+        /* =====================================================
+           NAV CONTAINER
+        ===================================================== */
+        nav {
+          background: var(--bg-glass);
+          border-bottom: 1px solid var(--border-glow);
+          backdrop-filter: blur(10px);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.8rem 1.5rem;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+        }
+
+        /* Electric frame */
+        nav::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 8px;
+          border: 2px solid transparent;
+          background: linear-gradient(
+            135deg,
+            rgba(56,189,248,0.9),
+            rgba(250,204,21,0.9),
+            rgba(56,189,248,0.9)
+          ) border-box;
+          -webkit-mask:
+            linear-gradient(#000 0 0) padding-box,
+            linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+
+        /* =====================================================
+           BRAND
+        ===================================================== */
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: var(--primary);
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 1.2rem;
+          z-index: 2;
+        }
+
+        /* =====================================================
+           DESKTOP MENU
+        ===================================================== */
+        .menu {
+          display: flex;
+          gap: 1.2rem;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          align-items: center;
+          z-index: 2;
+        }
+
+        .menu a,
+        .menu button {
+          color: var(--text-muted);
+          background: none;
+          border: none;
+          font-weight: 500;
+          padding: 0.4rem 0.8rem;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .menu a:hover,
+        .menu button:hover {
+          background: rgba(56,189,248,0.12);
+          color: var(--primary);
+        }
+
+        .menu a.active {
+          color: var(--accent);
+          border-bottom: 2px solid var(--accent);
+        }
+
+        /* =====================================================
+           DESKTOP DROPDOWN
+        ===================================================== */
+        .dropdown {
+          position: relative;
+        }
+
+        .dropdown-content {
+          position: absolute;
+          top: 2.4rem;
+          right: 0;
+          min-width: 275px;
+          background: rgba(15,23,42,0.97);
+          border: 1px solid var(--border-glow);
+          border-radius: 8px;
+          padding: 0.4rem 0;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+          z-index: 200;
+        }
+
+        .dropdown.open .dropdown-content {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .dropdown-content a {
+          padding: 0.6rem 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 0.9rem;
+          font-size: 0.9rem;
+        }
+
+        .module-label {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          min-width: 0;
+          white-space: nowrap;
+        }
+
+        .module-badges {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          margin-left: auto;
+          flex-shrink: 0;
+        }
+
+        .badge,
+        .badge-soon,
+        .badge-preprint,
+        .badge-github {
+          font-size: 0.68rem;
+          font-weight: 700;
+          line-height: 1;
+          padding: 0.22rem 0.42rem;
+          border-radius: 999px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+
+        .badge {
+          background: rgba(34, 197, 94, 0.18);
+          color: #bbf7d0;
+          border: 1px solid rgba(74, 222, 128, 0.65);
+          box-shadow: 0 0 8px rgba(34, 197, 94, 0.25);
+        }
+
+        .badge-soon {
+          background: rgba(250, 204, 21, 0.15);
+          color: #fef08a;
+          border: 1px solid rgba(250, 204, 21, 0.65);
+          box-shadow: 0 0 8px rgba(250, 204, 21, 0.25);
+        }
+
+        .badge-preprint {
+          background: rgba(239, 68, 68, 0.18);
+          color: #fecaca;
+          border: 1px solid rgba(248, 113, 113, 0.75);
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+        }
+
+        .badge-github {
+          background: rgba(148, 163, 184, 0.16);
+          color: #e2e8f0;
+          border: 1px solid rgba(203, 213, 225, 0.5);
+          box-shadow: 0 0 8px rgba(148, 163, 184, 0.22);
+        }
+
+        /* =====================================================
+           LUCKY BUTTON
+        ===================================================== */
+        .lucky-btn {
+          background: var(--accent);
+          color: #1e293b;
+          font-weight: 600;
+          padding: 0.45rem 0.9rem;
+          border-radius: 6px;
+          border: none;
+        }
+
+        /* =====================================================
+           HAMBURGER BUTTON
+        ===================================================== */
+        .menu-toggle {
+          display: none;
+          width: 32px;
+          height: 26px;
+          flex-direction: column;
+          justify-content: space-between;
+          background: none;
+          border: none;
+          cursor: pointer;
+        }
+
+        .bar {
+          height: 3px;
+          background: var(--text-muted);
+          border-radius: 3px;
+        }
+
+        /* =====================================================
+           MOBILE OVERRIDES
+        ===================================================== */
+        @media (max-width: 768px) {
+          .menu-toggle {
+            display: flex;
+          }
+
+          .menu {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            flex-direction: column;
+            padding: 4.5rem 1rem 2rem;
+            gap: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-6px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+          }
+
+          .menu.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+          }
+
+          .menu li {
+            width: 100%;
+          }
+
+          .menu a,
+          .menu button {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 0;
+            background: #000;
+            text-align: left;
+          }
+
+          .menu li:not(:last-child) {
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+          }
+
+          .dropdown-content {
+            position: static;
+            opacity: 1;
+            pointer-events: auto;
+            background: transparent;
+            border: none;
+            padding: 0;
+            min-width: 100%;
+          }
+
+          .dropdown-content a {
+            padding-left: 1.35rem;
+          }
+
+          .dropdown > button {
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            cursor: default;
+          }
+
+          .module-badges {
+            margin-left: auto;
+          }
+        }
+
+        a,
+        a:visited,
+        a:hover,
+        a:active,
+        a:focus {
+          text-decoration: none !important;
+        }
+
+        @media (max-width: 768px) {
+          #mobile-filter-block.collapsed {
+            display: none;
+          }
+        }
+
+        @media (max-width: 768px) {
+          #search-results {
+            max-height: calc(100vh - 160px);
+          }
+        }
+
+        .adv-toggle {
+          cursor: pointer;
+        }
+
+        .adv-toggle:hover {
+          color: var(--primary);
+        }
+      </style>
+
+      <nav>
+        <a href="/" class="brand">
+          <img src="/static/images/favicon2.png" alt="logo" width="26" height="26" style="border-radius:6px;">
+          <span>Ligase Recruiter Ligandalyzer</span>
+        </a>
+
+        <!-- HAMBURGER -->
+        <button class="menu-toggle" aria-label="Toggle navigation">
+          <div class="bar bar1"></div>
+          <div class="bar bar2"></div>
+          <div class="bar bar3"></div>
+        </button>
+
+        <!-- MENU -->
+        <ul class="menu">
+          <li>
+            <button id="luckyBtn" class="lucky-btn">
+              🎲 I'm Feeling Lucky
+            </button>
+          </li>
+
+          <li>
+            <a href="/" data-page="home">
+              <i data-feather="home"></i>Home
+            </a>
+          </li>
+
+          <li>
+            <a href="/explorer" data-page="explorer">
+              <i data-feather="search"></i>Explorer
+            </a>
+          </li>
+
+          <li>
+            <a href="/scaffolds" data-page="scaffolds">
+              <i data-feather="layers"></i>Scaffolds
+            </a>
+          </li>
+
+          <li>
+            <a href="/ligases" data-page="ligases">
+              <i data-feather="database"></i>Ligases
+            </a>
+          </li>
+
+          <li>
+            <a href="/about" data-page="about">
+              <i data-feather="info"></i>About
+            </a>
+          </li>
+
+          <li>
+            <a href="#" id="globalSearchBtn">
+              <span><i data-feather="search"></i>🔍 Search</span>
+            </a>
+          </li>
+
+          <!-- 🧩 Modules Dropdown -->
+          <li class="dropdown" id="modulesDropdown">
+            <button type="button">
+              <i data-feather="box"></i>Modules ▾
+            </button>
+
+            <div class="dropdown-content">
+
+              <a href="#" id="protacLink">
+                <span class="module-label">
+                  <i data-feather="tool"></i> PROTAC Builder
+                </span>
+                <span class="module-badges">
+                  <span class="badge">Live</span>
+                </span>
+              </a>
+
+              <a href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">
+                <span class="module-label">
+                  <i data-feather="crosshair"></i> Warhead Hunter
+                </span>
+                <span class="module-badges">
+                  <span class="badge">Live</span>
+                </span>
+              </a>
+
+              <a href="https://vlisemod.com" target="_blank" rel="noopener noreferrer">
+                <span class="module-label">
+                  <i data-feather="activity"></i> V-LiSEMOD
+                </span>
+                <span class="module-badges">
+                  <span class="badge">Live</span>
+                </span>
+              </a>
+
+              <a href="https://github.com/schurerlab/Pymacs" target="_blank" rel="noopener noreferrer">
+                <span class="module-label">
+                  <i data-feather="cpu"></i> PyMACS
+                </span>
+                <span class="module-badges">
+                  <span class="badge-preprint">Preprint</span>
+                </span>
+              </a>
+
+              <a href="https://butters.rove-vernier.ts.net" target="_blank" rel="noopener noreferrer">
+                <span class="module-label">
+                  <i data-feather="flask"></i> AutoDock Suite
+                </span>
+                <span class="module-badges">
+                  <span class="badge">Live</span>
+                </span>
+              </a>
+
+              <a href="https://github.com/Joey305/af3-Auto-analysis" target="_blank" rel="noopener noreferrer">
+                <span class="module-label">
+                  <i data-feather="bar-chart-2"></i> AF3 Auto Analyzer
+                </span>
+                <span class="module-badges">
+                  <span class="badge-github">GitHub</span>
+                </span>
+              </a>
+
+            </div>
+          </li>
+        </ul>
+      </nav>
+    `;
+
+    /* ELEMENT REFERENCES */
+    const shadow = this.shadowRoot;
+    const menuBtn = shadow.querySelector(".menu-toggle");
+    const menu = shadow.querySelector(".menu");
+    const nav = shadow.querySelector("nav");
+    const dropdown = shadow.querySelector("#modulesDropdown");
+    const dropdownBtn = dropdown.querySelector("button");
+    const protacLink = shadow.querySelector("#protacLink");
+    const searchBtn = shadow.querySelector("#globalSearchBtn");
+
+    searchBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.dispatchEvent(new Event("open-global-search"));
+    });
+
+    /* ✅ Dynamic PROTAC Builder link */
+    protacLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const base = window.PROTACSUITE || "https://protacbuilder.com/";
+      window.open(base, "_blank");
+    });
+
+    /* 📱 Mobile menu toggle */
+    menuBtn.addEventListener("click", () => {
+      const isOpen = menu.classList.toggle("show");
+      menuBtn.classList.toggle("active", isOpen);
+      document.body.style.overflow = isOpen ? "hidden" : "";
+    });
+
+    /* 🧭 Highlight active route */
+    const currentPath = window.location.pathname.split("/")[1] || "home";
+    shadow.querySelectorAll(".menu a").forEach((link) => {
+      const page = link.getAttribute("data-page");
+      if (page === currentPath) link.classList.add("active");
+    });
+
+    /* 🌫️ Scroll shrink effect */
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 20) {
+        nav.style.padding = "0.5rem 1.2rem";
+        nav.style.background = "rgba(15,23,42,0.9)";
+      } else {
+        nav.style.padding = "0.8rem 1.5rem";
+        nav.style.background = "var(--bg-glass)";
+      }
+    });
+
+    /* 🧩 Dropdown: desktop hover, mobile tap */
+    let dropdownTimer;
+
+    dropdown.addEventListener("mouseenter", () => {
+      if (window.innerWidth > 768) {
+        clearTimeout(dropdownTimer);
+        dropdown.classList.add("open");
+      }
+    });
+
+    dropdown.addEventListener("mouseleave", () => {
+      if (window.innerWidth > 768) {
+        dropdownTimer = setTimeout(() => dropdown.classList.remove("open"), 200);
+      }
+    });
+
+    dropdownBtn.addEventListener("click", (e) => {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        dropdown.classList.toggle("open");
+      }
+    });
+
+    /* 🎲 I'M FEELING LUCKY */
+    const luckyBtn = shadow.querySelector("#luckyBtn");
+
+    const blockedRecruiters = new Set([
+      // Add blocked recruiter IDs here if needed.
+    ]);
+
+    function getRandomRecruiter() {
+      while (true) {
+        const num = Math.floor(Math.random() * 603) + 1;
+        const code = "LR" + String(num).padStart(5, "0");
+        if (!blockedRecruiters.has(code)) return code;
+      }
+    }
+
+    luckyBtn.addEventListener("click", () => {
+      luckyBtn.disabled = true;
+      luckyBtn.textContent = "🎲 Loading...";
+      const next = getRandomRecruiter();
+      window.location.href = `/ligand/${next}`;
+    });
+
+    /* Feather icons */
+    if (window.feather) {
+      feather.replace();
+    }
+  }
+}
+
+customElements.define("custom-navbar", CustomNavbar);

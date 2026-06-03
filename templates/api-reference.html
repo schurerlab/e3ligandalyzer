@@ -1,0 +1,713 @@
+{% extends "base.html" %}
+{% block title %}API Reference — E3 Recruiter Ligandalyzer{% endblock %}
+
+{% block content %}
+<div id="scrollProgress" class="fixed top-0 left-0 w-0 h-1 bg-gradient-to-r from-cyan-300 via-sky-400 to-amber-300 z-50 transition-[width] duration-150"></div>
+
+<section class="max-w-7xl mx-auto text-slate-200 leading-relaxed space-y-14">
+
+  <!-- HERO -->
+  <section id="top" class="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-slate-950/90 shadow-2xl shadow-cyan-950/40 fade-section">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.28),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.18),transparent_35%)]"></div>
+    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/80 to-transparent"></div>
+    <div class="relative z-10 px-6 py-16 md:px-12 md:py-20 text-center">
+      <p class="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-200 mb-6">
+        <span class="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.9)]"></span>
+        Copy-paste terminal examples · canonical LR recruiter codes
+      </p>
+
+      <h1 class="text-4xl md:text-6xl font-black tracking-tight text-white">
+        E3 Recruiter Ligandalyzer API
+        <span class="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-400 to-amber-300">
+          Data downloads that actually paste into Bash
+        </span>
+      </h1>
+
+      <p class="mt-6 max-w-4xl mx-auto text-lg md:text-xl text-slate-300">
+        Use this page to pull JSON, CSV, PDB, SDF, and ZIP bundles directly from STAN. Every visible command below is written for a terminal unless explicitly labeled as Python.
+      </p>
+
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+        <a href="#bash-quickstart" class="hero-action cyan">Terminal Quickstart</a>
+        <a href="#download-api" class="hero-action amber">Download Files</a>
+        <a href="#json-api" class="hero-action sky">Query JSON</a>
+      </div>
+
+      <div class="mt-8 max-w-4xl mx-auto rounded-2xl border border-red-400/30 bg-red-950/20 p-4 text-left">
+        <div class="flex gap-3">
+          <div class="text-2xl">⚠️</div>
+          <div>
+            <h2 class="font-black text-red-200">Do not paste <code class="rounded bg-slate-950/80 px-1 text-red-100">fetch(...)</code> into Bash.</h2>
+            <p class="text-sm text-slate-300 mt-1">
+              <code class="rounded bg-slate-950/80 px-1 text-cyan-200">fetch()</code> is JavaScript for a browser console or web app. Terminal users should copy the <strong>curl</strong> or <strong>Python</strong> examples on this page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STICKY NAV -->
+  <nav class="sticky top-4 z-40 rounded-2xl border border-slate-700/70 bg-slate-950/85 backdrop-blur-xl px-4 py-3 shadow-xl fade-section">
+    <div class="flex flex-wrap justify-center gap-2 text-sm font-semibold">
+      <a class="nav-pill" href="#bash-quickstart">Quickstart</a>
+      <a class="nav-pill" href="#download-api">Downloads</a>
+      <a class="nav-pill" href="#json-api">JSON</a>
+      <a class="nav-pill" href="#csv-api">CSV</a>
+      <a class="nav-pill" href="#python-workflows">Python</a>
+      <a class="nav-pill" href="#browser-js">Browser JS</a>
+    </div>
+  </nav>
+
+  <!-- API BASE -->
+  <section id="base" class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-section">
+    <div class="lg:col-span-2 rounded-3xl border border-sky-500/20 bg-slate-900/75 p-8 shadow-xl">
+      <h2 class="section-title">Base URL</h2>
+      <p class="text-slate-400 mt-3">
+        For now, use STAN as the live API host. When the production domain is ready, replace the base URL with <span class="text-cyan-300">https://e3ligandalyzer.com/api</span>.
+      </p>
+      <pre class="code-block mt-5"><button class="copy-code" data-copy-target="baseExport">Copy</button><code id="baseExport">export BASE="https://stan.rove-vernier.ts.net/api"</code></pre>
+      <p class="text-xs text-slate-500 mt-3">Tip: after copying this once, every terminal block that starts with <code>$BASE</code> will work in the same shell session.</p>
+    </div>
+
+    <div class="rounded-3xl border border-amber-300/25 bg-gradient-to-br from-slate-900 to-amber-950/30 p-8 shadow-xl">
+      <h3 class="text-xl font-bold text-amber-200">Canonical recruiter code format</h3>
+      <p class="text-slate-400 text-sm mt-2">Use <strong>LR</strong> followed by five digits.</p>
+      <div class="mt-4 code-card text-lg text-center">LR00001</div>
+      <p class="text-slate-500 text-xs mt-4">
+        The public examples below intentionally use <span class="text-cyan-300">LR00001</span>, <span class="text-cyan-300">LR00002</span>, etc. There are no public <span class="text-red-300">non-LR</span> examples here.
+      </p>
+    </div>
+  </section>
+
+  <!-- QUICKSTART -->
+  <section id="bash-quickstart" class="space-y-6 fade-section">
+    <div>
+      <h2 class="section-title">Copy-paste terminal quickstart</h2>
+      <p class="text-slate-400 mt-2 max-w-4xl">
+        These commands are meant to paste directly into macOS/Linux Bash or Zsh. They use <code>curl</code>, <code>python -m json.tool</code>, and <code>unzip</code>.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <article class="big-code-card">
+        <div class="card-kicker">JSON sanity check</div>
+        <h3>View the full download manifest</h3>
+        <p>Confirms the API is reachable and prints pretty JSON.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdManifest">Copy Bash</button><code id="cmdManifest">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="big-code-card">
+        <div class="card-kicker">Ligase bundle</div>
+        <h3>Download all CRBN PDB + SDF files</h3>
+        <p>This is the exact style of command that worked in your terminal.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdCRBN">Copy Bash</button><code id="cmdCRBN">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/all.zip" -o CRBN_ligandalyzer_bundle.zip
+unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
+      </article>
+
+      <article class="big-code-card">
+        <div class="card-kicker">Recruiter discovery</div>
+        <h3>Find valid LR recruiter codes for CRBN</h3>
+        <p>Use this first if you are not sure which recruiter IDs are downloadable.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiterCodes">Copy Bash</button><code id="cmdRecruiterCodes">curl -sS "https://stan.rove-vernier.ts.net/api/download/recruiter-codes?ligase=CRBN&limit=25" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="big-code-card">
+        <div class="card-kicker">Selected recruiters</div>
+        <h3>Download multiple LR recruiter bundles</h3>
+        <p>Uses canonical LR IDs and saves the ZIP locally.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiters">Copy Bash</button><code id="cmdRecruiters">curl -L "https://stan.rove-vernier.ts.net/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD API -->
+  <section id="download-api" class="space-y-6 fade-section">
+    <div>
+      <h2 class="section-title">Download API — files, bundles, and manifests</h2>
+      <p class="text-slate-400 mt-2 max-w-4xl">
+        Every card includes a terminal-safe Bash command. ZIP endpoints use <code>curl -L ... -o file.zip</code>; JSON endpoints use <code>curl -sS ... | python -m json.tool</code>.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Manifest</p><h3>GET /api/download/manifest</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/manifest" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Discover downloadable ligases, file counts, ZIP links, and public CSV table exports.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifest">Copy Bash</button><code id="dlManifest">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Manifest filtered by ligase</p><h3>GET /api/download/manifest?ligase=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/manifest?ligase=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Show only the downloadable CRBN assets and generated bundle links.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifestCRBN">Copy Bash</button><code id="dlManifestCRBN">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest?ligase=CRBN" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Manifest filtered by recruiter</p><h3>GET /api/download/manifest?recruiter_code=LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/manifest?recruiter_code=LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Resolve one canonical LR recruiter ID to available PDB/SDF files and bundle links.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManifestLR">Copy Bash</button><code id="dlManifestLR">curl -sS "https://stan.rove-vernier.ts.net/api/download/manifest?recruiter_code=LR00001" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Ligase index</p><h3>GET /api/download/ligases</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligases" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Compact JSON list of ligases with PDB/SDF counts and bundle links.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlLigases">Copy Bash</button><code id="dlLigases">curl -sS "https://stan.rove-vernier.ts.net/api/download/ligases" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Valid LR code discovery</p><h3>GET /api/download/recruiter-codes</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/recruiter-codes?ligase=CRBN&limit=25" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Return recruiter codes that actually map to database rows and downloadable files.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCodes">Copy Bash</button><code id="dlCodes">curl -sS "https://stan.rove-vernier.ts.net/api/download/recruiter-codes?ligase=CRBN&limit=25" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Ligase full bundle</p><h3>GET /api/download/ligase/CRBN/all.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/all.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all CRBN PDB + SDF files as one ZIP bundle.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNAll">Copy Bash</button><code id="dlCRBNAll">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/all.zip" -o CRBN_all.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Ligase PDB ZIP</p><h3>GET /api/download/ligase/CRBN/pdbs.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download only the CRBN PDB files.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNPDB">Copy Bash</button><code id="dlCRBNPDB">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/pdbs.zip" -o CRBN_pdbs.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Ligase SDF ZIP</p><h3>GET /api/download/ligase/CRBN/sdfs.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/sdfs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download only the CRBN SDF files.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlCRBNSDF">Copy Bash</button><code id="dlCRBNSDF">curl -L "https://stan.rove-vernier.ts.net/api/download/ligase/CRBN/sdfs.zip" -o CRBN_sdfs.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Single recruiter bundle</p><h3>GET /api/download/recruiter/LR00001.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/recruiter/LR00001.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all mapped PDB/SDF files for one canonical LR recruiter code.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlOneRecruiter">Copy Bash</button><code id="dlOneRecruiter">curl -L "https://stan.rove-vernier.ts.net/api/download/recruiter/LR00001.zip" -o LR00001_bundle.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Multiple recruiter bundle</p><h3>GET /api/download/recruiters.zip?codes=LR00001,LR00002</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all mapped PDB/SDF files for selected LR recruiter codes.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManyRecruiters">Copy Bash</button><code id="dlManyRecruiters">curl -L "https://stan.rove-vernier.ts.net/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>All PDBs</p><h3>GET /api/download/all/pdbs.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/all/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all PDB files across every ligase folder.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllPDBs">Copy Bash</button><code id="dlAllPDBs">curl -L "https://stan.rove-vernier.ts.net/api/download/all/pdbs.zip" -o E3Ligandalyzer_ALL_pdbs.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>All structures</p><h3>GET /api/download/all/structures.zip</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/all/structures.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all available PDB + SDF assets across the full dataset.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllStructures">Copy Bash</button><code id="dlAllStructures">curl -L "https://stan.rove-vernier.ts.net/api/download/all/structures.zip" -o E3Ligandalyzer_ALL_structures.zip</code></pre>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- JSON API -->
+  <section id="json-api" class="space-y-6 fade-section">
+    <div>
+      <h2 class="section-title">JSON API — terminal-safe examples</h2>
+      <p class="text-slate-400 mt-2 max-w-4xl">
+        These are JSON routes. The visible commands pipe into <code>python -m json.tool</code> so the output is readable in your terminal.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Basic</p><h3>GET /api/ligases</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/ligases" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>List all ligases for dropdowns and discovery.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonLigases">Copy Bash</button><code id="jsonLigases">curl -sS "https://stan.rove-vernier.ts.net/api/ligases" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Recruiter search</p><h3>GET /api/featured-recruiters?ligase=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/featured-recruiters?ligase=CRBN&min_qed=0.5" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Retrieve recruiter cards with optional filters such as ligase, scaffold class, QED range, limit, and offset.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonFeatured">Copy Bash</button><code id="jsonFeatured">curl -sS "https://stan.rove-vernier.ts.net/api/featured-recruiters?ligase=CRBN&min_qed=0.5&limit=25" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Scaffold dashboard</p><h3>GET /api/scaffold-data?ligase=VHL</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-data?ligase=VHL" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Return scaffold diversity records formatted for the scaffold dashboard.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldData">Copy Bash</button><code id="jsonScaffoldData">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-data?ligase=VHL" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Scaffold summary</p><h3>GET /api/scaffold-summary</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-summary" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Summarize scaffold diversity metrics by ligase.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldSummary">Copy Bash</button><code id="jsonScaffoldSummary">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-summary" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Scaffold frequency</p><h3>GET /api/scaffold-frequency?ligase=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-frequency?ligase=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Return scaffold frequency records for one ligase or the full dataset.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldFreq">Copy Bash</button><code id="jsonScaffoldFreq">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-frequency?ligase=CRBN" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Recruiter-to-scaffold map</p><h3>GET /api/scaffold-recruiters?ligase=CHIP</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/scaffold-recruiters?ligase=CHIP" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Map recruiters to scaffold IDs and scaffold SMILES.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonScaffoldRecruiters">Copy Bash</button><code id="jsonScaffoldRecruiters">curl -sS "https://stan.rove-vernier.ts.net/api/scaffold-recruiters?ligase=CHIP" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Descriptors</p><h3>GET /api/descriptors/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/descriptors/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Retrieve chemical descriptors for one canonical LR recruiter code.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonDescriptors">Copy Bash</button><code id="jsonDescriptors">curl -sS "https://stan.rove-vernier.ts.net/api/descriptors/LR00001" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Recruiter SMILES</p><h3>GET /api/recruiter-smiles/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/recruiter-smiles/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Resolve one recruiter code to its SMILES string.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSmiles">Copy Bash</button><code id="jsonSmiles">curl -sS "https://stan.rove-vernier.ts.net/api/recruiter-smiles/LR00001" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Ligand visual payload</p><h3>GET /api/ligand-visual/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/ligand-visual/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Return descriptors, metadata, SASA summary, atom-level SASA, and PDB path for one recruiter.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonLigandVisual">Copy Bash</button><code id="jsonLigandVisual">curl -sS "https://stan.rove-vernier.ts.net/api/ligand-visual/LR00001" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Full SASA payload</p><h3>GET /api/sasa-full/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/sasa-full/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Return the composite-key SASA summary and atom-level SASA table for one recruiter.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSasaFull">Copy Bash</button><code id="jsonSasaFull">curl -sS "https://stan.rove-vernier.ts.net/api/sasa-full/LR00001" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>RDKit SVG render</p><h3>GET /api/render-smiles-by-code/LR00001</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/render-smiles-by-code/LR00001" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download the RDKit-rendered 2D SVG structure for one recruiter code.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonSVG">Copy Bash</button><code id="jsonSVG">curl -L "https://stan.rove-vernier.ts.net/api/render-smiles-by-code/LR00001" -o LR00001_structure.svg</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>ELiAH expression</p><h3>GET /api/eliah/expression?gene=CRBN</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/eliah/expression?gene=CRBN" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Query ELiAH expression data for ligase biology context.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="jsonEliah">Copy Bash</button><code id="jsonEliah">curl -sS "https://stan.rove-vernier.ts.net/api/eliah/expression?gene=CRBN" | python -m json.tool</code></pre>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- CSV API -->
+  <section id="csv-api" class="space-y-6 fade-section">
+    <div>
+      <h2 class="section-title">CSV exports</h2>
+      <p class="text-slate-400 mt-2 max-w-4xl">
+        CSV routes are meant for spreadsheets, pandas, R, and offline analysis.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Table index</p><h3>GET /api/download/tables</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/tables" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>List whitelisted SQLite tables available as CSV downloads.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvIndex">Copy Bash</button><code id="csvIndex">curl -sS "https://stan.rove-vernier.ts.net/api/download/tables" | python -m json.tool</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Scaffold data CSV</p><h3>GET /api/download/table/Ligase_Scaffold_Data.csv</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/table/Ligase_Scaffold_Data.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Export the main scaffold data table.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvScaffold">Copy Bash</button><code id="csvScaffold">curl -L "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Scaffold_Data.csv" -o Ligase_Scaffold_Data.csv</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>SASA summary CSV</p><h3>GET /api/download/table/Ligase_Ligand_SASA_summary.csv</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/table/Ligase_Ligand_SASA_summary.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Export ligand-level solvent exposure summaries.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvSasaSummary">Copy Bash</button><code id="csvSasaSummary">curl -L "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Ligand_SASA_summary.csv" -o Ligase_Ligand_SASA_summary.csv</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Descriptors CSV</p><h3>GET /api/download/table/Ligase_Chemical_Descriptors.csv</h3></div><a class="open-link" href="https://stan.rove-vernier.ts.net/api/download/table/Ligase_Chemical_Descriptors.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Export recruiter chemical descriptors for local filtering.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvDescriptors">Copy Bash</button><code id="csvDescriptors">curl -L "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Chemical_Descriptors.csv" -o Ligase_Chemical_Descriptors.csv</code></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- PYTHON WORKFLOWS -->
+  <section id="python-workflows" class="space-y-6 fade-section">
+    <div>
+      <h2 class="section-title">Python workflows</h2>
+      <p class="text-slate-400 mt-2 max-w-4xl">
+        These are real Python snippets. Paste them into a Python session or save them as <code>.py</code> files.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <article class="big-code-card">
+        <div class="card-kicker">Python ZIP download</div>
+        <h3>Download and extract one ligase bundle</h3>
+        <pre class="code-block"><button class="copy-code" data-copy-target="pyLigaseZip">Copy Python</button><code id="pyLigaseZip">import requests, zipfile, io
+
+BASE = "https://stan.rove-vernier.ts.net/api"
+url = f"{BASE}/download/ligase/CRBN/all.zip"
+
+r = requests.get(url, timeout=120)
+r.raise_for_status()
+
+with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+    z.extractall("E3Ligandalyzer_CRBN")
+
+print("Downloaded CRBN PDB/SDF bundle")</code></pre>
+      </article>
+
+      <article class="big-code-card">
+        <div class="card-kicker">Python recruiter bundle</div>
+        <h3>Download selected LR recruiter bundles</h3>
+        <pre class="code-block"><button class="copy-code" data-copy-target="pyRecruitersZip">Copy Python</button><code id="pyRecruitersZip">import requests
+
+BASE = "https://stan.rove-vernier.ts.net/api"
+codes = "LR00001,LR00002,LR00003"
+
+url = f"{BASE}/download/recruiters.zip?codes={codes}"
+r = requests.get(url, timeout=120)
+r.raise_for_status()
+
+with open("selected_recruiters.zip", "wb") as f:
+    f.write(r.content)
+
+print("Saved selected_recruiters.zip")</code></pre>
+      </article>
+
+      <article class="big-code-card">
+        <div class="card-kicker">Python JSON query</div>
+        <h3>Load CRBN recruiters into pandas</h3>
+        <pre class="code-block"><button class="copy-code" data-copy-target="pyPandas">Copy Python</button><code id="pyPandas">import requests
+import pandas as pd
+
+BASE = "https://stan.rove-vernier.ts.net/api"
+url = f"{BASE}/featured-recruiters?ligase=CRBN&min_qed=0.5&limit=500"
+
+rows = requests.get(url, timeout=60).json()
+df = pd.DataFrame(rows)
+
+print(df.head())
+print(df.shape)</code></pre>
+      </article>
+
+      <article class="big-code-card">
+        <div class="card-kicker">Python CSV export</div>
+        <h3>Download CSV and read locally</h3>
+        <pre class="code-block"><button class="copy-code" data-copy-target="pyCSV">Copy Python</button><code id="pyCSV">import pandas as pd
+
+url = "https://stan.rove-vernier.ts.net/api/download/table/Ligase_Chemical_Descriptors.csv"
+df = pd.read_csv(url)
+
+print(df.head())
+print(df.columns.tolist())</code></pre>
+      </article>
+    </div>
+  </section>
+
+  <!-- BROWSER JS -->
+  <section id="browser-js" class="space-y-6 fade-section">
+    <div class="rounded-3xl border border-purple-400/20 bg-purple-950/10 p-8 shadow-xl">
+      <h2 class="section-title">Browser JavaScript examples</h2>
+      <p class="text-slate-400 mt-2 max-w-4xl">
+        These are intentionally separated from the terminal examples. Use <code>fetch()</code> inside browser developer tools or frontend code only.
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <article class="big-code-card">
+          <div class="card-kicker">Browser console only</div>
+          <h3>Fetch ligase list</h3>
+          <pre class="code-block"><button class="copy-code" data-copy-target="jsLigases">Copy JS</button><code id="jsLigases">fetch("https://stan.rove-vernier.ts.net/api/ligases")
+  .then(r => r.json())
+  .then(console.log);</code></pre>
+        </article>
+
+        <article class="big-code-card">
+          <div class="card-kicker">Browser console only</div>
+          <h3>Fetch CRBN recruiter cards</h3>
+          <pre class="code-block"><button class="copy-code" data-copy-target="jsCRBN">Copy JS</button><code id="jsCRBN">fetch("https://stan.rove-vernier.ts.net/api/featured-recruiters?ligase=CRBN&min_qed=0.5")
+  .then(r => r.json())
+  .then(console.log);</code></pre>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <section class="rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-slate-900 via-slate-950 to-cyan-950/30 p-8 text-center shadow-xl fade-section">
+    <h2 class="section-title">Designed for direct use</h2>
+    <p class="text-slate-400 mt-3 max-w-3xl mx-auto">
+      The default copy buttons now copy commands that can run directly in Bash or Python. Browser JavaScript examples are isolated in their own section so users do not accidentally paste <code>fetch()</code> into a terminal.
+    </p>
+  </section>
+
+  <footer class="text-center text-sm text-slate-500 pb-10 fade-section">
+    Developed by <a href="https://github.com/Joey305" target="_blank" rel="noopener noreferrer" class="text-cyan-300 hover:text-cyan-200">Joseph-Michael Schulz</a> — University of Miami | Schürer Lab
+  </footer>
+</section>
+
+<button id="backToTop" class="fixed bottom-6 right-6 rounded-full border border-cyan-400/30 bg-slate-900/90 p-3 text-cyan-200 shadow-xl opacity-0 pointer-events-none transition-all duration-300 hover:bg-cyan-400 hover:text-slate-950">↑</button>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const scriptRoot = "{{ request.script_root }}".replace(/\/$/, "");
+
+  document.querySelectorAll(".copy-code").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const target = document.getElementById(btn.dataset.copyTarget);
+      if (!target) return;
+      await navigator.clipboard.writeText(target.textContent.trim());
+      const old = btn.textContent;
+      btn.textContent = "Copied";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = old;
+        btn.classList.remove("copied");
+      }, 950);
+    });
+  });
+
+  const fadeEls = document.querySelectorAll(".fade-section");
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add("fade-visible");
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.10 });
+
+  fadeEls.forEach((el, i) => {
+    el.style.transitionDelay = `${Math.min(i * 0.045, 0.32)}s`;
+    observer.observe(el);
+  });
+
+  window.addEventListener("scroll", () => {
+    const denom = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = denom > 0 ? (window.scrollY / denom) * 100 : 0;
+    const bar = document.getElementById("scrollProgress");
+    if (bar) bar.style.width = `${progress}%`;
+
+    const backBtn = document.getElementById("backToTop");
+    if (backBtn) {
+      backBtn.classList.toggle("opacity-100", window.scrollY > 400);
+      backBtn.classList.toggle("pointer-events-none", window.scrollY <= 400);
+    }
+  });
+
+  const back = document.getElementById("backToTop");
+  if (back) back.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+});
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+
+  .fade-section {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .75s ease, transform .75s ease;
+  }
+  .fade-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .section-title {
+    font-size: clamp(1.65rem, 2vw, 2.35rem);
+    font-weight: 950;
+    letter-spacing: -0.035em;
+    color: white;
+  }
+
+  .hero-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    padding: .9rem 1.25rem;
+    font-weight: 900;
+    transition: .22s ease;
+    border: 1px solid rgba(148,163,184,.22);
+    background: rgba(15,23,42,.70);
+  }
+  .hero-action:hover { transform: translateY(-2px); }
+  .hero-action.cyan { color:#042f2e; background:#22d3ee; box-shadow: 0 16px 35px rgba(34,211,238,.18); }
+  .hero-action.amber { color:#fef3c7; border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.12); }
+  .hero-action.sky { color:#bae6fd; border-color:rgba(56,189,248,.35); background:rgba(14,165,233,.12); }
+
+  .nav-pill {
+    border: 1px solid rgba(56,189,248,.22);
+    background: rgba(15,23,42,.8);
+    color: #bae6fd;
+    padding: .55rem .8rem;
+    border-radius: 999px;
+    transition: .2s;
+  }
+  .nav-pill:hover {
+    border-color: rgba(56,189,248,.8);
+    background: rgba(14,165,233,.16);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  .code-card {
+    border: 1px solid rgba(56,189,248,.2);
+    background: rgba(2,6,23,.72);
+    color: #bae6fd;
+    padding: .9rem;
+    border-radius: .9rem;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    box-shadow: inset 0 0 25px rgba(8,145,178,.08);
+  }
+
+  .big-code-card,
+  .endpoint-card {
+    border: 1px solid rgba(56,189,248,.16);
+    background:
+      radial-gradient(circle at top right, rgba(56,189,248,.08), transparent 38%),
+      rgba(15,23,42,.72);
+    border-radius: 1.35rem;
+    padding: 1.35rem;
+    box-shadow: 0 18px 45px rgba(2,6,23,.24);
+    transition: .25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .big-code-card::before,
+  .endpoint-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 0%, rgba(34,211,238,.08) 45%, transparent 65%);
+    transform: translateX(-120%);
+    transition: .65s ease;
+    pointer-events: none;
+  }
+
+  .big-code-card:hover,
+  .endpoint-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(56,189,248,.45);
+    box-shadow: 0 25px 70px rgba(8,145,178,.16);
+  }
+
+  .big-code-card:hover::before,
+  .endpoint-card:hover::before {
+    transform: translateX(120%);
+  }
+
+  .card-kicker,
+  .endpoint-head p {
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: .72rem;
+    color: rgba(103,232,249,.90);
+    font-weight: 900;
+    margin-bottom: .35rem;
+  }
+
+  .big-code-card h3,
+  .endpoint-head h3 {
+    color: white;
+    font-weight: 950;
+    letter-spacing: -.02em;
+    font-size: 1.08rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+
+  .big-code-card p,
+  .endpoint-card > p {
+    color: #94a3b8;
+    margin-top: .65rem;
+    font-size: .92rem;
+  }
+
+  .endpoint-head {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: .9rem;
+  }
+
+  .open-link {
+    flex: none;
+    border: 1px solid rgba(251,191,36,.35);
+    color: #fde68a;
+    background: rgba(120,53,15,.28);
+    border-radius: .75rem;
+    padding: .35rem .65rem;
+    font-size: .75rem;
+    font-weight: 900;
+    transition: .2s ease;
+  }
+  .open-link:hover {
+    color: #111827;
+    background: #fcd34d;
+    border-color: #fcd34d;
+  }
+
+  .code-block {
+    position: relative;
+    margin-top: 1rem;
+    border: 1px solid rgba(56,189,248,.18);
+    background: #020617;
+    color: #bae6fd;
+    padding: 1rem;
+    padding-top: 2.75rem;
+    border-radius: 1rem;
+    overflow-x: auto;
+    font-size: .86rem;
+    line-height: 1.55;
+    box-shadow: inset 0 0 28px rgba(14,165,233,.08);
+  }
+
+  .code-block code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: pre;
+  }
+
+  .copy-code {
+    position: absolute;
+    right: .75rem;
+    top: .65rem;
+    border: 1px solid rgba(56,189,248,.35);
+    background: rgba(8,47,73,.72);
+    color: #bae6fd;
+    border-radius: .65rem;
+    padding: .35rem .65rem;
+    font-weight: 900;
+    font-size: .75rem;
+    transition: .2s;
+    white-space: nowrap;
+    z-index: 3;
+  }
+
+  .copy-code:hover {
+    background: rgba(56,189,248,.22);
+    color: white;
+    border-color: rgba(56,189,248,.8);
+  }
+
+  .copy-code.copied {
+    background: rgba(52,211,153,.25);
+    color: #bbf7d0;
+    border-color: rgba(52,211,153,.8);
+  }
+
+  code {
+    color: #bae6fd;
+  }
+
+  @media (max-width: 640px) {
+    .code-block {
+      font-size: .78rem;
+    }
+    .endpoint-head {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}

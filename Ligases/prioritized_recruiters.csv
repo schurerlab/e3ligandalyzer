@@ -1,0 +1,15 @@
+Ligase,PROTAC_Feasibility_Score,Readiness_Class,Druggability_Tier,Expansion_Priority,Current_PDB_Count,Current_SDF_Count,Gap_Score,Recommended_Expansion,Rationale
+CRBN,18.0,CLINICAL,TIER_1,MAINTAIN,110,79,0,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+VHL,18.0,CLINICAL,TIER_1,MAINTAIN,60,81,0,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+MDM2,16.0,PRECLINICAL,TIER_1,MAINTAIN,181,122,0,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+TRIM21,16.0,PRECLINICAL,TIER_1,MAINTAIN,106,118,0,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+XIAP,15.0,PRECLINICAL,TIER_1,MAINTAIN,37,41,0,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+KEAP1,14.0,RESEARCH,TIER_1,MAINTAIN,93,106,0,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+cIAP1,13.0,PRECLINICAL,TIER_1,HIGH,13,17,2,PROTAC_VALIDATION,Ready for degradation validation experiments
+DCAF1,12.0,RESEARCH,TIER_1,HIGH,25,17,2,PROTAC_VALIDATION,Ready for degradation validation experiments
+DCAF15,11.0,PRECLINICAL,TIER_2,HIGH,9,7,4,URGENT_LIGAND_DISCOVERY,High readiness but insufficient ligand diversity for PROTAC development
+CHIP,10.0,RESEARCH,TIER_1,HIGH,5,19,4,PROTAC_VALIDATION,Ready for degradation validation experiments
+SOCS2,7.0,EXPLORATORY,TIER_2,MEDIUM,6,5,4,STRUCTURAL_EXPANSION,Moderate potential; expand structural database for better recruiter design
+DCAF16,6.0,EXPLORATORY,TIER_3,MAINTAIN,1,1,4,MAINTAIN_CURRENT,Well-established; continue current development trajectory
+LIVIN,1.0,NASCENT,TIER_2,LOW,7,8,8,MONITOR,Limited evidence; await better screening hits or structural data
+HUWE1,0.0,NASCENT,TIER_3,LOW,2,2,8,MONITOR,Limited evidence; await better screening hits or structural data
