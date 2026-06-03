@@ -6,4 +6,5 @@ requests
 biopython
 matplotlib
 SQLAlchemy
+psycopg2-binary
 rdkit

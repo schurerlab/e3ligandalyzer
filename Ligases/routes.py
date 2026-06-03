@@ -19,6 +19,7 @@ import requests
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
 import pandas as pd
 from Ligases import randy_client
+from Ligases import shipment_store
 
 
 # ---------------------------------------------------------------------------
@@ -2254,48 +2255,24 @@ def render_smiles_by_code(recruiter_code):
 
 
 
-def log_ligase_shipment(ip_address: str):
-    """
-    Append a simple backend log entry containing 
-    user IP + timestamp to Ligases_Shipped_To_Builder.csv
-    """
-    import os, csv, datetime
-
-    csv_dir = "Ligases"
-    csv_path = os.path.join(csv_dir, "Ligases_Shipped_To_Builder.csv")
-
-    # ensure folder exists
-    os.makedirs(csv_dir, exist_ok=True)
-
-    # check if we need header
-    create_header = not os.path.exists(csv_path)
-
-    try:
-        with open(csv_path, "a", newline="") as f:
-            writer = csv.writer(f)
-
-            if create_header:
-                writer.writerow(["IP_ADDRESS", "DATE"])
-
-            writer.writerow([
-                ip_address,
-                datetime.datetime.now().isoformat()
-            ])
-
-        print(f"📦 Logged shipment → {os.path.abspath(csv_path)}")
-
-    except Exception as e:
-        print(f"⚠️ Failed to log shipment: {e}")
+def log_ligase_shipment(ip_address: str, **event_fields):
+    """Compatibility wrapper for legacy shipment logging."""
+    event = {
+        "client_ip": str(ip_address or "").strip(),
+        "source": event_fields.get("source", "convert_atom_to_v"),
+        "status": event_fields.get("status", "success"),
+        "backend_mode": "remote" if randy_client.remote_enabled() else "local",
+        "session_id": str(event_fields.get("session_id", "") or "").strip(),
+        "recruiter_code": str(event_fields.get("recruiter_code", "") or "").strip(),
+        "skip_modify": bool(event_fields.get("skip_modify", False)),
+        "metadata_json": event_fields.get("metadata_json") or {},
+    }
+    return shipment_store.record_shipment_event(event)
 
 
 @ligases_bp.get("/shipped-count")
 def shipped_count():
-    try:
-        with open("Ligases/Ligases_Shipped_To_Builder.csv") as f:
-            total = sum(1 for _ in f) - 1  # subtract header
-            return jsonify({"total": max(total, 0)})
-    except:
-        return jsonify({"total": 0})
+    return jsonify(shipment_store.get_shipment_count())
 
 
 
@@ -2313,30 +2290,20 @@ def convert_atom_to_v():
 
     try:
         # ---------------------------
-        # RAW REQUEST DATA LOGGING
-        # ---------------------------
-        try:
-            raw_json = request.get_json()
-            print(f"📥 RAW JSON: {raw_json}")
-        except:
-            print("⚠️ Could not read request JSON safely.")
-
-        # ---------------------------
-        # GET CLIENT IP
-        # ---------------------------
-        ip = request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
-        print(f"🌐 User IP parsed → {ip}")
-        log_ligase_shipment(ip)
-
-
-        # ---------------------------
         # LOAD INPUT FIELDS
         # ---------------------------
-        data = request.json
-        sdf_text     = data["sdf"]
-        atom_index   = int(data["atom_index"])
-        recruiter    = data.get("recruiter", "UNKNOWN")
-        skip_modify  = bool(data.get("skip_modify", False))
+        data = request.get_json(silent=True) or {}
+        sdf_text = data["sdf"]
+        atom_index = int(data["atom_index"])
+        recruiter = data.get("recruiter") or data.get("RECRUITER") or "UNKNOWN"
+        skip_modify = bool(data.get("skip_modify", False))
+
+        ip = request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
+        print(
+            "📥 convert_atom_to_v payload "
+            f"(has_sdf={bool(sdf_text)}, recruiter={recruiter}, atom_index={atom_index}, skip_modify={skip_modify})"
+        )
+        print(f"🌐 User IP parsed → {ip}")
 
         print(f"🔹 Recruiter: {recruiter}")
         print(f"🔹 atom_index: {atom_index}")
@@ -2410,38 +2377,59 @@ def convert_atom_to_v():
         csv_dir = "Ligases"
         csv_path = os.path.join(csv_dir, "converted-ligases-by-user.csv")
 
-        print(f"📝 Preparing CSV log at → {csv_path}")
-        os.makedirs(csv_dir, exist_ok=True)
+        try:
+            print(f"📝 Preparing CSV log at → {csv_path}")
+            os.makedirs(csv_dir, exist_ok=True)
 
-        create_header = not os.path.exists(csv_path)
+            create_header = not os.path.exists(csv_path)
 
-        with open(csv_path, "a", newline="") as csvfile:
-            writer = csv.writer(csvfile)
+            with open(csv_path, "a", newline="") as csvfile:
+                writer = csv.writer(csvfile)
 
-            if create_header:
-                print("📌 Creating CSV header row…")
+                if create_header:
+                    print("📌 Creating CSV header row…")
+                    writer.writerow([
+                        "Timestamp",
+                        "User_IP",
+                        "Recruiter",
+                        "Converted_SMILES",
+                        "Original_SMILES",
+                        "Session_ID",
+                        "Modified"
+                    ])
+
                 writer.writerow([
-                    "Timestamp",
-                    "User_IP",
-                    "Recruiter",
-                    "Converted_SMILES",
-                    "Original_SMILES",
-                    "Session_ID",
-                    "Modified"
+                    datetime.datetime.now().isoformat(),
+                    ip,
+                    recruiter,
+                    converted_smiles,
+                    original_smiles,
+                    session_id,
+                    modified
                 ])
 
-            writer.writerow([
-                datetime.datetime.now().isoformat(),
-                ip,
-                recruiter,
-                converted_smiles,
-                original_smiles,
-                session_id,
-                modified
-            ])
+            print("🧾 CSV logging completed successfully")
+            print(f"📁 CSV absolute path → {os.path.abspath(csv_path)}")
+        except Exception as csv_error:
+            print(f"⚠️ Converted-ligases CSV logging failed: {csv_error}")
 
-        print("🧾 CSV logging completed successfully")
-        print(f"📁 CSV absolute path → {os.path.abspath(csv_path)}")
+        try:
+            shipment_result = log_ligase_shipment(
+                ip,
+                session_id=session_id,
+                recruiter_code=recruiter,
+                skip_modify=skip_modify,
+                metadata_json={
+                    "modified": bool(modified),
+                    "atom_index": atom_index,
+                },
+            )
+            print(
+                "📦 Shipment event recorded "
+                f"(source={shipment_result.source}, duplicate={shipment_result.duplicate}, backup_ok={shipment_result.backup_ok})"
+            )
+        except Exception as shipment_error:
+            print(f"⚠️ Shipment event logging failed: {shipment_error}")
 
         print("✅ [convert_atom_to_v] COMPLETED")
         print("==============================\n")

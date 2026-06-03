@@ -72,6 +72,34 @@ python app.py
 
 Then open your browser at **[http://127.0.0.1:5000](http://127.0.0.1:5000)**.
 
+## Shipment Count Persistence
+
+`/api/shipped-count` now reads successful PROTAC Builder shipment events from a persistent store instead of relying on the ephemeral Heroku filesystem.
+
+Supported modes:
+
+* `E3_SHIPMENT_STORAGE=auto` chooses `postgres` when `DATABASE_URL` is available, otherwise RANDY if shipment backup is configured, otherwise local SQLite.
+* `E3_SHIPMENT_STORAGE=postgres` stores shipment events in a Postgres table using `DATABASE_URL`.
+* `E3_SHIPMENT_STORAGE=sqlite` stores shipment events in `E3_SHIPMENT_DB_PATH`.
+* `E3_SHIPMENT_STORAGE=randy` uses the RANDY `/backup/e3/shipments` service as the source of truth.
+* `E3_SHIPMENT_STORAGE=csv-fallback` keeps the legacy CSV path for local compatibility only.
+
+Recommended production setups:
+
+* Heroku with Postgres:
+  * `E3_SHIPMENT_STORAGE=postgres`
+  * `DATABASE_URL=<Heroku Postgres URL>`
+* Heroku with RANDY as source of truth:
+  * `E3_SHIPMENT_STORAGE=randy`
+  * `E3_SHIPMENT_RANDY_BACKUP_ENABLED=true`
+  * `E3_SHIPMENT_RANDY_BASE_URL=https://<randy-host>/backup/e3`
+  * `E3_SHIPMENT_RANDY_TOKEN=<shared-secret>`
+* Local development:
+  * `E3_SHIPMENT_STORAGE=sqlite`
+  * `E3_SHIPMENT_DB_PATH=instance/e3_shipments.db`
+
+RANDY stores shipment events in a separate SQLite database at `E3_SHIPMENT_DB_PATH`, defaulting there to `/home/jxs794/PROTAC_BUILDER/data/e3_shipments.db`.
+
 ---
 
 ## 🌍 Citation & Attribution

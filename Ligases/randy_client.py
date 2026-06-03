@@ -52,12 +52,35 @@ def base_url() -> str:
     return value
 
 
+def shipment_base_url() -> str:
+    raw = (
+        os.environ.get("E3_SHIPMENT_RANDY_BASE_URL", "").strip()
+        or os.environ.get("RANDY_E3_SHIPMENT_BASE_URL", "").strip()
+    )
+    if raw:
+        value = raw.rstrip("/")
+        if value.endswith("/backup/e3"):
+            return value
+        if value.endswith("/backup"):
+            return f"{value}/e3"
+        return value
+    return base_url()
+
+
 def token() -> str:
     return (
         os.environ.get("E3_RANDY_TOKEN", "").strip()
         or os.environ.get("RANDY_E3_TOKEN", "").strip()
         or os.environ.get("RANDY_BACKUP_TOKEN", "").strip()
         or os.environ.get("PROTAC_BACKUP_TOKEN", "").strip()
+    )
+
+
+def shipment_token() -> str:
+    return (
+        os.environ.get("E3_SHIPMENT_RANDY_TOKEN", "").strip()
+        or os.environ.get("RANDY_E3_SHIPMENT_TOKEN", "").strip()
+        or token()
     )
 
 
@@ -73,9 +96,23 @@ def configured() -> bool:
     return bool(base_url() and token())
 
 
+def shipment_backup_configured() -> bool:
+    return bool(shipment_base_url() and shipment_token())
+
+
 def headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     out = {"User-Agent": "e3-ligandalyzer-randy-client/1.0"}
     tok = token()
+    if tok:
+        out["Authorization"] = f"Bearer {tok}"
+    if extra:
+        out.update(extra)
+    return out
+
+
+def shipment_headers(extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    out = {"User-Agent": "e3-ligandalyzer-shipment-client/1.0"}
+    tok = shipment_token()
     if tok:
         out["Authorization"] = f"Bearer {tok}"
     if extra:
@@ -87,6 +124,13 @@ def _url(path: str) -> str:
     root = base_url()
     if not root:
         raise RuntimeError("E3_RANDY_BASE_URL is not configured")
+    return f"{root}/{path.lstrip('/')}"
+
+
+def _shipment_url(path: str) -> str:
+    root = shipment_base_url()
+    if not root:
+        raise RuntimeError("E3 shipment RANDY base URL is not configured")
     return f"{root}/{path.lstrip('/')}"
 
 
@@ -134,6 +178,37 @@ def get_json(path: str, params: Optional[Dict[str, Any]] = None) -> Any:
     if isinstance(payload, dict) and payload.get("ok") is False:
         raise RuntimeError(payload.get("error") or f"RANDY E3 request failed: {path}")
     return payload
+
+
+def shipment_get_json(path: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    resp = requests.get(_shipment_url(path), params=params or {}, headers=shipment_headers(), timeout=timeout_seconds())
+    resp.raise_for_status()
+    payload = resp.json()
+    if isinstance(payload, dict) and payload.get("ok") is False:
+        raise RuntimeError(payload.get("error") or f"RANDY shipment request failed: {path}")
+    return payload
+
+
+def shipment_post_json(path: str, payload: Dict[str, Any]) -> Any:
+    resp = requests.post(
+        _shipment_url(path),
+        json=payload,
+        headers=shipment_headers({"Accept": "application/json"}),
+        timeout=timeout_seconds(),
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if isinstance(data, dict) and data.get("ok") is False:
+        raise RuntimeError(data.get("error") or f"RANDY shipment request failed: {path}")
+    return data
+
+
+def post_shipment_event(payload: Dict[str, Any]) -> Dict[str, Any]:
+    return shipment_post_json("shipments", payload)
+
+
+def get_shipment_count() -> Dict[str, Any]:
+    return shipment_get_json("shipments/count")
 
 
 def proxy_file(path: str, *, download_name: Optional[str] = None, mimetype: Optional[str] = None) -> Response:

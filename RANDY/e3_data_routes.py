@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import re
 import sqlite3
@@ -17,6 +18,9 @@ DEFAULT_E3_DB_PATH = PROJECT_ROOT / "Ligases" / "Ligase_Recruiter.db"
 DEFAULT_E3_ELIAH_DB_PATH = PROJECT_ROOT / "Ligases" / "eliah.db"
 DEFAULT_E3_ASSET_ROOT = PROJECT_ROOT / "Ligases"
 DEFAULT_E3_TABLE_ROOT = PROJECT_ROOT / "Ligase_Table"
+DEFAULT_E3_SHIPMENT_DB_PATH = Path(
+    os.environ.get("E3_SHIPMENT_DB_PATH", "/home/jxs794/PROTAC_BUILDER/data/e3_shipments.db")
+).expanduser()
 
 MAX_QUERY_ROWS = int(os.environ.get("E3_MAX_QUERY_ROWS", "50000"))
 SAFE_SQL_RE = re.compile(r"^\s*(SELECT|WITH)\b", re.IGNORECASE)
@@ -54,6 +58,10 @@ def _asset_root() -> Path:
 
 def _table_root() -> Path:
     return Path(os.environ.get("E3_TABLE_ROOT", str(DEFAULT_E3_TABLE_ROOT))).expanduser()
+
+
+def _shipment_db_path() -> Path:
+    return Path(os.environ.get("E3_SHIPMENT_DB_PATH", str(DEFAULT_E3_SHIPMENT_DB_PATH))).expanduser()
 
 
 def _safe_under(base: Path, path: Path) -> bool:
@@ -233,6 +241,95 @@ def _database_path(name: str) -> Path:
     raise ValueError("database must be 'main' or 'eliah'")
 
 
+def _ensure_shipment_store() -> None:
+    db_path = _shipment_db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(db_path) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS e3_shipment_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                recruiter_code TEXT,
+                client_ip TEXT,
+                session_id TEXT UNIQUE,
+                skip_modify INTEGER DEFAULT 0,
+                source TEXT,
+                status TEXT DEFAULT 'success',
+                backend_mode TEXT,
+                metadata_json TEXT
+            )
+            """
+        )
+        conn.commit()
+
+
+def _normalize_shipment_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    metadata = payload.get("metadata_json")
+    if not isinstance(metadata, dict):
+        metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    return {
+        "created_at": str(payload.get("created_at") or "").strip(),
+        "recruiter_code": str(payload.get("recruiter_code") or "").strip(),
+        "client_ip": str(payload.get("client_ip") or "").strip(),
+        "session_id": str(payload.get("session_id") or "").strip(),
+        "skip_modify": 1 if bool(payload.get("skip_modify")) else 0,
+        "source": str(payload.get("source") or "convert_atom_to_v").strip(),
+        "status": str(payload.get("status") or "success").strip(),
+        "backend_mode": str(payload.get("backend_mode") or "remote").strip(),
+        "metadata_json": metadata,
+    }
+
+
+def _shipment_created_at(payload: dict[str, Any]) -> str:
+    value = str(payload.get("created_at") or "").strip()
+    if value:
+        return value
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _store_shipment_event(payload: dict[str, Any]) -> bool:
+    _ensure_shipment_store()
+    clean = _normalize_shipment_payload(payload)
+    clean["created_at"] = _shipment_created_at(payload)
+    with sqlite3.connect(_shipment_db_path()) as conn:
+        before = conn.total_changes
+        conn.execute(
+            """
+            INSERT INTO e3_shipment_events (
+                created_at, recruiter_code, client_ip, session_id, skip_modify,
+                source, status, backend_mode, metadata_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(session_id) DO NOTHING
+            """,
+            (
+                clean["created_at"],
+                clean["recruiter_code"],
+                clean["client_ip"],
+                clean["session_id"],
+                clean["skip_modify"],
+                clean["source"],
+                clean["status"],
+                clean["backend_mode"],
+                json.dumps(clean["metadata_json"], sort_keys=True),
+            ),
+        )
+        conn.commit()
+        return conn.total_changes > before
+
+
+def _shipment_success_count() -> int:
+    _ensure_shipment_store()
+    with sqlite3.connect(_shipment_db_path()) as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) FROM e3_shipment_events WHERE status = ?",
+            ("success",),
+        ).fetchone()
+    return int(row[0] if row else 0)
+
+
 def register_e3_routes(app) -> None:
     if "randy_e3" in app.blueprints:
         return
@@ -275,6 +372,8 @@ def register_e3_routes(app) -> None:
                 "asset_root_exists": _asset_root().exists(),
                 "table_root": str(_table_root()),
                 "table_root_exists": _table_root().exists(),
+                "shipment_db_path": str(_shipment_db_path()),
+                "shipment_db_exists": _shipment_db_path().exists(),
             }
         )
 
@@ -313,6 +412,37 @@ def register_e3_routes(app) -> None:
                 "count": len(rows),
                 "truncated": truncated,
                 "rows": rows,
+            }
+        )
+
+    @bp.post("/shipments")
+    def store_shipment():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"ok": False, "error": "Expected JSON object."}), 400
+
+        session_id = str(payload.get("session_id") or "").strip()
+        if not session_id:
+            return jsonify({"ok": False, "error": "session_id is required."}), 400
+
+        stored = _store_shipment_event(payload)
+        return jsonify(
+            {
+                "ok": True,
+                "stored": stored,
+                "duplicate": not stored,
+                "source": "randy",
+            }
+        )
+
+    @bp.get("/shipments/count")
+    def shipment_count():
+        return jsonify(
+            {
+                "ok": True,
+                "total": _shipment_success_count(),
+                "source": "randy",
+                "backup_ok": True,
             }
         )
 
