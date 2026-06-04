@@ -41,6 +41,16 @@ ELIAH_DB_PATH = os.environ.get(
 )
 import uuid
 
+
+def public_site_url() -> str:
+    """Canonical public site root for documentation and generated download URLs."""
+    return (os.environ.get("PUBLIC_SITE_URL", "https://e3ligandalyzer.com") or "https://e3ligandalyzer.com").rstrip("/")
+
+
+def public_api_base() -> str:
+    """Canonical public API root used in manifests and user-facing examples."""
+    return f"{public_site_url()}/api"
+
 # ---------------------------------------------------------------------------
 # 🔹 Database Query Helpers
 # ---------------------------------------------------------------------------
@@ -2984,9 +2994,11 @@ def _zip_response(files, download_name: str, metadata: dict | None = None):
 
 
 def _api_url(path: str) -> str:
-    """Create an absolute URL that respects reverse-proxy script roots when present."""
-    script_root = request.script_root.rstrip("/")
-    return f"{request.host_url.rstrip('/')}{script_root}/api{path}"
+    """Create an absolute public API URL for manifests and browser-facing docs."""
+    normalized = str(path or "")
+    if normalized and not normalized.startswith("/"):
+        normalized = f"/{normalized}"
+    return f"{public_api_base()}{normalized}"
 
 
 def _variant_stems(pdb_id, ligand, variant=None):

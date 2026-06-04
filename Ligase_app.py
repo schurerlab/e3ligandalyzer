@@ -17,6 +17,14 @@ import random
 logger = logging.getLogger(__name__)
 
 
+def get_public_site_url() -> str:
+    return (os.environ.get("PUBLIC_SITE_URL", "https://e3ligandalyzer.com") or "https://e3ligandalyzer.com").rstrip("/")
+
+
+def get_public_api_base() -> str:
+    return f"{get_public_site_url()}/api"
+
+
 def get_protac_builder_base_url() -> str:
     return (os.environ.get("PROTAC_BUILDER_BASE_URL", "https://protacbuilder.com") or "https://protacbuilder.com").rstrip("/")
 
@@ -134,6 +142,8 @@ def create_app():
         template_folder='templates'
     )
 
+    app.config["PUBLIC_SITE_URL"] = get_public_site_url()
+    app.config["PUBLIC_API_BASE"] = get_public_api_base()
     app.config["PROTAC_BUILDER_BASE_URL"] = get_protac_builder_base_url()
 
     # Register your API blueprint normally (no prefix)
@@ -144,6 +154,8 @@ def create_app():
     @app.context_processor
     def inject_protac_builder_config():
         return {
+            "PUBLIC_SITE_URL": app.config["PUBLIC_SITE_URL"],
+            "PUBLIC_API_BASE": app.config["PUBLIC_API_BASE"],
             "PROTAC_BUILDER_BASE_URL": app.config["PROTAC_BUILDER_BASE_URL"],
         }
 

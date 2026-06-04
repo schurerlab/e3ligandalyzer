@@ -211,7 +211,7 @@
       This page is the human-readable Version 1 download manifest for E3 Ligase Ligandalyzer. It summarizes the current public download surface for ligase bundles, table exports, and dataset-wide structure archives. For reproducible analysis, pair downloaded files with the <a class="text-sky-300 hover:text-sky-200" href="/release">Release Notes</a>, <a class="text-sky-300 hover:text-sky-200" href="/methods">Methods</a>, and <a class="text-sky-300 hover:text-sky-200" href="/schema">Database Schema</a> pages.
     </p>
     <div class="manifest-links">
-      <a class="manifest-btn primary" href="/api/download/manifest" target="_blank" rel="noopener noreferrer">Raw JSON manifest</a>
+      <a class="manifest-btn primary" href="{{ PUBLIC_API_BASE }}/download/manifest" target="_blank" rel="noopener noreferrer">Raw JSON manifest</a>
       <a class="manifest-btn" href="/api-reference">API Reference</a>
       <a class="manifest-btn" href="/release">V1 Release Notes</a>
       <a class="manifest-btn" href="/methods">Methods</a>
@@ -235,7 +235,7 @@
         <tbody>
           <tr><td>Base URL</td><td><span class="mono">{{ manifest.base_url }}</span></td></tr>
           <tr><td>Version</td><td>Version 1.0 public release manifest</td></tr>
-          <tr><td>Machine-readable endpoint</td><td><a class="text-sky-300 hover:text-sky-200" href="/api/download/manifest" target="_blank" rel="noopener noreferrer">/api/download/manifest</a></td></tr>
+          <tr><td>Machine-readable endpoint</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ PUBLIC_API_BASE }}/download/manifest" target="_blank" rel="noopener noreferrer"><span class="mono">{{ PUBLIC_API_BASE }}/download/manifest</span></a></td></tr>
           <tr><td>Recommended companion pages</td><td><a class="text-sky-300 hover:text-sky-200" href="/release">Release</a>, <a class="text-sky-300 hover:text-sky-200" href="/methods">Methods</a>, <a class="text-sky-300 hover:text-sky-200" href="/schema">Schema</a></td></tr>
         </tbody>
       </table>
@@ -317,9 +317,9 @@
       <div class="manifest-card-grid">
         <article class="manifest-card">
           <h3>Raw JSON URL</h3>
-          <p><span class="mono">/api/download/manifest</span></p>
+          <p><span class="mono">{{ PUBLIC_API_BASE }}/download/manifest</span></p>
           <div class="manifest-card-actions">
-            <a class="manifest-mini-btn" href="/api/download/manifest" target="_blank" rel="noopener noreferrer">Open raw API JSON</a>
+            <a class="manifest-mini-btn" href="{{ PUBLIC_API_BASE }}/download/manifest" target="_blank" rel="noopener noreferrer">Open raw API JSON</a>
           </div>
         </article>
         <article class="manifest-card">

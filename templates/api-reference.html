@@ -2,8 +2,7 @@
 {% block title %}API Reference — E3 Recruiter Ligandalyzer{% endblock %}
 
 {% block content %}
-{% set site_root = request.host_url.rstrip('/') ~ request.script_root.rstrip('/') %}
-{% set api_base = site_root ~ '/api' %}
+{% set api_base = PUBLIC_API_BASE %}
 <div id="scrollProgress" class="fixed top-0 left-0 w-0 h-1 bg-gradient-to-r from-cyan-300 via-sky-400 to-amber-300 z-50 transition-[width] duration-150"></div>
 
 <section class="max-w-7xl mx-auto text-slate-200 leading-relaxed space-y-14">
@@ -67,7 +66,7 @@
     <div class="lg:col-span-2 rounded-3xl border border-sky-500/20 bg-slate-900/75 p-8 shadow-xl">
       <h2 class="section-title">Base URL</h2>
       <p class="text-slate-400 mt-3">
-        All public examples on this page use the current E3 Ligandalyzer host, so downloads and JSON queries stay on the public API surface.
+        All public examples on this page use the canonical E3 Ligandalyzer API host, so copy-paste commands stay aligned with the public application domain.
       </p>
       <pre class="code-block mt-5"><button class="copy-code" data-copy-target="baseExport">Copy</button><code id="baseExport">export BASE="{{ api_base }}"</code></pre>
       <p class="text-xs text-slate-500 mt-3">Tip: after copying this once, every terminal block that starts with <code>$BASE</code> will work in the same shell session.</p>
