@@ -180,7 +180,23 @@ class CustomFooter extends HTMLElement {
         @media (max-width: 768px) {
           .grid {
             grid-template-columns: 1fr;
-            text-align: center;
+            gap: 1.4rem;
+            padding: 1.6rem 1rem;
+            text-align: left;
+          }
+          h3 {
+            margin-bottom: 0.6rem;
+          }
+          li + li {
+            margin-top: 0.45rem;
+          }
+          a {
+            min-height: 44px;
+            width: 100%;
+          }
+          .copyright {
+            padding: 0.9rem 1rem 1.2rem;
+            line-height: 1.5;
           }
           a:hover { transform: none; }
         }

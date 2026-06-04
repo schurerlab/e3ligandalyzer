@@ -60,7 +60,12 @@ class CustomNavbar extends HTMLElement {
           text-decoration: none;
           font-weight: 600;
           font-size: 1.2rem;
+          min-width: 0;
           z-index: 2;
+        }
+
+        .brand span {
+          min-width: 0;
         }
 
         /* =====================================================
@@ -227,25 +232,82 @@ class CustomNavbar extends HTMLElement {
           border-radius: 3px;
         }
 
+        .menu-backdrop {
+          display: none;
+        }
+
         /* =====================================================
            MOBILE OVERRIDES
         ===================================================== */
         @media (max-width: 768px) {
+          nav {
+            gap: 0.75rem;
+            padding: 0.8rem 1rem;
+          }
+
+          .brand {
+            flex: 1;
+            font-size: 1rem;
+          }
+
+          .brand img {
+            flex-shrink: 0;
+          }
+
+          .brand span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
           .menu-toggle {
             display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 10px;
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            background: rgba(15, 23, 42, 0.8);
+            z-index: 3;
+          }
+
+          .menu-backdrop {
+            position: fixed;
+            inset: 0;
+            display: block;
+            background: rgba(2, 6, 23, 0.72);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            z-index: 98;
+          }
+
+          .menu-backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
           }
 
           .menu {
             position: fixed;
-            inset: 0;
-            background: #000;
+            top: calc(100% + 0.35rem);
+            left: 0.75rem;
+            right: 0.75rem;
+            max-height: calc(100vh - 5.75rem);
+            overflow-y: auto;
+            background: rgba(2, 6, 23, 0.98);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 18px;
             flex-direction: column;
-            padding: 4.5rem 1rem 2rem;
+            align-items: stretch;
+            padding: 0.35rem 0;
             gap: 0;
             opacity: 0;
             pointer-events: none;
             transform: translateY(-6px);
             transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 99;
           }
 
           .menu.show {
@@ -261,9 +323,10 @@ class CustomNavbar extends HTMLElement {
           .menu a,
           .menu button {
             width: 100%;
+            min-height: 44px;
             padding: 0.9rem 1rem;
             border-radius: 0;
-            background: #000;
+            background: transparent;
             text-align: left;
           }
 
@@ -273,12 +336,23 @@ class CustomNavbar extends HTMLElement {
 
           .dropdown-content {
             position: static;
-            opacity: 1;
-            pointer-events: auto;
-            background: transparent;
-            border: none;
+            opacity: 0;
+            pointer-events: none;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(56, 189, 248, 0.14);
+            border-radius: 12px;
             padding: 0;
             min-width: 100%;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s ease, opacity 0.2s ease;
+            margin: 0 0.75rem 0.5rem;
+          }
+
+          .dropdown.open .dropdown-content {
+            opacity: 1;
+            pointer-events: auto;
+            max-height: 60vh;
           }
 
           .dropdown-content a {
@@ -286,11 +360,12 @@ class CustomNavbar extends HTMLElement {
           }
 
           .dropdown > button {
-            font-size: 0.75rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #94a3b8;
-            cursor: default;
+            font-size: 0.92rem;
+            letter-spacing: normal;
+            text-transform: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            justify-content: space-between;
           }
 
           .module-badges {
@@ -339,6 +414,8 @@ class CustomNavbar extends HTMLElement {
           <div class="bar bar2"></div>
           <div class="bar bar3"></div>
         </button>
+
+        <div class="menu-backdrop" hidden></div>
 
         <!-- MENU -->
         <ul class="menu">
@@ -509,6 +586,7 @@ class CustomNavbar extends HTMLElement {
     /* ELEMENT REFERENCES */
     const shadow = this.shadowRoot;
     const menuBtn = shadow.querySelector(".menu-toggle");
+    const menuBackdrop = shadow.querySelector(".menu-backdrop");
     const menu = shadow.querySelector(".menu");
     const nav = shadow.querySelector("nav");
     const dropdowns = Array.from(shadow.querySelectorAll(".dropdown"));
@@ -520,6 +598,48 @@ class CustomNavbar extends HTMLElement {
       document.dispatchEvent(new Event("open-global-search"));
     });
 
+    dropdowns.forEach((dropdown) => {
+      const button = dropdown.querySelector("button");
+      const content = dropdown.querySelector(".dropdown-content");
+      const dropdownId = dropdown.id || `dropdown-${Math.random().toString(36).slice(2, 8)}`;
+      dropdown.id = dropdownId;
+      content.id = `${dropdownId}-content`;
+      button.setAttribute("aria-haspopup", "true");
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-controls", content.id);
+    });
+
+    function closeDropdowns() {
+      dropdowns.forEach((dropdown) => {
+        dropdown.classList.remove("open");
+        const button = dropdown.querySelector("button");
+        if (button) button.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    function closeMenu() {
+      menu.classList.remove("show");
+      menuBtn.classList.remove("active");
+      menuBtn.setAttribute("aria-expanded", "false");
+      menuBackdrop.classList.remove("show");
+      menuBackdrop.hidden = true;
+      document.body.style.overflow = "";
+      closeDropdowns();
+    }
+
+    function openMenu() {
+      menu.classList.add("show");
+      menuBtn.classList.add("active");
+      menuBtn.setAttribute("aria-expanded", "true");
+      menuBackdrop.hidden = false;
+      menuBackdrop.classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+
+    menuBtn.setAttribute("aria-expanded", "false");
+    menuBtn.setAttribute("aria-controls", "primary-navigation");
+    menu.id = "primary-navigation";
+
     /* ✅ Dynamic PROTAC Builder link */
     protacLink.addEventListener("click", (e) => {
       e.preventDefault();
@@ -529,9 +649,18 @@ class CustomNavbar extends HTMLElement {
 
     /* 📱 Mobile menu toggle */
     menuBtn.addEventListener("click", () => {
-      const isOpen = menu.classList.toggle("show");
-      menuBtn.classList.toggle("active", isOpen);
-      document.body.style.overflow = isOpen ? "hidden" : "";
+      if (menu.classList.contains("show")) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    menuBackdrop.addEventListener("click", closeMenu);
+    menu.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth <= 768) closeMenu();
+      });
     });
 
     /* 🧭 Highlight active route */
@@ -573,9 +702,24 @@ class CustomNavbar extends HTMLElement {
       dropdownBtn.addEventListener("click", (e) => {
         if (window.innerWidth <= 768) {
           e.preventDefault();
-          dropdown.classList.toggle("open");
+          const willOpen = !dropdown.classList.contains("open");
+          closeDropdowns();
+          dropdown.classList.toggle("open", willOpen);
+          dropdownBtn.setAttribute("aria-expanded", String(willOpen));
         }
       });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 768) {
+        closeMenu();
+      }
     });
 
     /* 🎲 I'M FEELING LUCKY */

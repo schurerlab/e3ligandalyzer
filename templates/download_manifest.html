@@ -228,6 +228,7 @@
   <main class="manifest-main">
     <section class="manifest-panel">
       <h2>Manifest metadata</h2>
+      <div class="mobile-table-wrap">
       <table class="manifest-table">
         <thead>
           <tr><th>Field</th><th>Value</th></tr>
@@ -239,6 +240,7 @@
           <tr><td>Recommended companion pages</td><td><a class="text-sky-300 hover:text-sky-200" href="/release">Release</a>, <a class="text-sky-300 hover:text-sky-200" href="/methods">Methods</a>, <a class="text-sky-300 hover:text-sky-200" href="/schema">Schema</a></td></tr>
         </tbody>
       </table>
+      </div>
       <div class="manifest-note">
         The raw JSON manifest remains intentionally unstyled because it is meant for scripts, `curl`, Python workflows, and other machine-readable use cases. This page is the browser-friendly companion for human users.
       </div>
@@ -273,6 +275,7 @@
 
     <section class="manifest-panel">
       <h2>Table downloads</h2>
+      <div class="mobile-table-wrap">
       <table class="manifest-table">
         <thead>
           <tr><th>Table</th><th>Purpose</th><th>Download</th></tr>
@@ -285,10 +288,12 @@
           <tr><td><span class="mono">Ligase_Scaffold_Data.csv</span></td><td>Scaffold-level summary table used by the public scaffold dashboard.</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ manifest.tables.scaffold_data_csv }}">Download</a></td></tr>
         </tbody>
       </table>
+      </div>
     </section>
 
     <section class="manifest-panel">
       <h2>Per-ligase bundle index</h2>
+      <div class="mobile-table-wrap">
       <table class="manifest-table">
         <thead>
           <tr><th>Ligase</th><th>PDB files</th><th>SDF files</th><th>Bundle downloads</th></tr>
@@ -310,6 +315,7 @@
           {% endfor %}
         </tbody>
       </table>
+      </div>
     </section>
 
     <section class="manifest-panel">
