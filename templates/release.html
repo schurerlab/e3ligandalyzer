@@ -184,14 +184,14 @@
   </header>
 
   <section class="release-grid" aria-label="Database snapshot statistics">
-    <article class="release-stat"><div class="release-stat-label">Version</div><div class="release-stat-value">{{ release.short_label }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">Ligases</div><div class="release-stat-value">{{ release.stats.ligases }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">Recruiter records</div><div class="release-stat-value">{{ release.stats.recruiter_records }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">Unique ligands</div><div class="release-stat-value">{{ release.stats.unique_ligands }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">PDB structures</div><div class="release-stat-value">{{ release.stats.pdb_structures }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">Scaffolds</div><div class="release-stat-value">{{ release.stats.scaffolds }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">Complete SASA rows</div><div class="release-stat-value">{{ release.stats.complete_sasa }}</div></article>
-    <article class="release-stat"><div class="release-stat-label">Download tables</div><div class="release-stat-value">{{ release.download_table_count }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Version</div><div class="release-stat-value">{{ release.short_label or "Version 1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Ligases</div><div class="release-stat-value">{{ release.stats.ligases if release.stats.ligases is not none else "Not separately tracked in V1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Recruiter records</div><div class="release-stat-value">{{ release.stats.recruiter_records if release.stats.recruiter_records is not none else "Not separately tracked in V1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Unique ligands</div><div class="release-stat-value">{{ release.stats.unique_ligands if release.stats.unique_ligands is not none else "Not separately tracked in V1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">PDB structures</div><div class="release-stat-value">{{ release.stats.pdb_structures if release.stats.pdb_structures is not none else "Not separately tracked in V1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Scaffolds</div><div class="release-stat-value">{{ release.stats.scaffolds if release.stats.scaffolds is not none else "Not separately tracked in V1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Complete SASA rows</div><div class="release-stat-value">{{ release.stats.complete_sasa if release.stats.complete_sasa is not none else "Not separately tracked in V1" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Download tables</div><div class="release-stat-value">{{ release.download_table_count if release.download_table_count is not none else "Calculated in V1 manifest" }}</div></article>
   </section>
 
   <div class="release-layout">
@@ -223,6 +223,7 @@
         <div class="release-note">
           Version 1 is the first public database release for this resource. Pair downloaded files with the V1 manifest, schema page, methods page, and this release record when documenting downstream analysis.
         </div>
+        <p class="mt-4 text-sm text-slate-400">{{ release.stats_source_note }}</p>
       </section>
 
       <section class="release-panel">

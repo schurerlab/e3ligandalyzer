@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import logging
 from datetime import datetime
 from urllib.parse import urlencode
 from flask import Flask, render_template, send_from_directory, request, redirect
@@ -13,6 +14,9 @@ from werkzeug.wrappers import Request
 import random
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_protac_builder_base_url() -> str:
     return (os.environ.get("PROTAC_BUILDER_BASE_URL", "https://protacbuilder.com") or "https://protacbuilder.com").rstrip("/")
 
@@ -22,14 +26,73 @@ def build_protac_builder_session_url(session_id: str) -> str:
     return f"{get_protac_builder_base_url()}/builder?{query}"
 
 
-def _safe_scalar(query, fallback=None):
+def _extract_scalar(row, key="value", fallback=None):
+    if row is None:
+        return fallback
     try:
-        rows = query_db(query)
-        if rows:
-            return rows[0][0]
+        if isinstance(row, dict):
+            return row.get(key, fallback)
+        return row[key]
     except Exception:
         pass
+    try:
+        return row[0]
+    except Exception:
+        return fallback
+
+
+def _safe_scalar(query, fallback=None):
+    try:
+        row = query_db(query, one=True)
+        return _extract_scalar(row, fallback=fallback)
+    except Exception:
+        logger.exception("Release stat query failed: %s", query)
     return fallback
+
+
+def build_release_stats():
+    return {
+        "ligases": _safe_scalar(
+            "SELECT COUNT(DISTINCT Ligase) AS value FROM Ligase_Scaffold_Data",
+            "Not separately tracked in V1",
+        ),
+        "recruiter_records": _safe_scalar(
+            "SELECT COUNT(DISTINCT RECRUITER_CODE) AS value FROM Ligand_Instance_Recruiter_Codes",
+            "Not separately tracked in V1",
+        ),
+        "unique_ligands": _safe_scalar(
+            """
+            SELECT COUNT(
+                DISTINCT COALESCE(
+                    NULLIF(TRIM(InChIKey), ''),
+                    NULLIF(TRIM(Canonical_SMILES), ''),
+                    NULLIF(TRIM(Ligand), '')
+                )
+            ) AS value
+            FROM Ligase_Ligand_Metadata
+            """,
+            "Not separately tracked in V1",
+        ),
+        "pdb_structures": _safe_scalar(
+            "SELECT COUNT(DISTINCT pdb_id) AS value FROM Ligand_Instance_Recruiter_Codes",
+            "Not separately tracked in V1",
+        ),
+        "scaffolds": _safe_scalar(
+            "SELECT COUNT(DISTINCT Scaffold_ID) AS value FROM Ligase_Scaffold_Data",
+            "Not separately tracked in V1",
+        ),
+        "complete_sasa": _safe_scalar(
+            """
+            SELECT COUNT(*) AS value
+            FROM Ligase_Ligand_SASA_summary
+            WHERE RECRUITER_CODE IS NOT NULL
+              AND TRIM(RECRUITER_CODE) != ''
+              AND [%Exposed] IS NOT NULL
+              AND [%Buried] IS NOT NULL
+            """,
+            "Not separately tracked in V1",
+        ),
+    }
 
 
 def build_release_context():
@@ -44,21 +107,7 @@ def build_release_context():
     except OSError:
         snapshot_date = None
 
-    stats = {
-        "ligases": _safe_scalar("SELECT COUNT(DISTINCT Ligase) FROM Ligase_Scaffold_Data"),
-        "recruiter_records": _safe_scalar("SELECT COUNT(DISTINCT RECRUITER_CODE) FROM Ligand_Instance_Recruiter_Codes"),
-        "unique_ligands": _safe_scalar("SELECT COUNT(DISTINCT Ligand) FROM Ligand_Instance_Recruiter_Codes"),
-        "pdb_structures": _safe_scalar("SELECT COUNT(DISTINCT pdb_id) FROM Ligand_Instance_Recruiter_Codes"),
-        "scaffolds": _safe_scalar("SELECT COUNT(DISTINCT Scaffold_ID) FROM Ligase_Scaffold_Data"),
-        "scaffold_superclusters": _safe_scalar("SELECT COUNT(DISTINCT Supercluster_Key) FROM Ligase_Scaffold_Superclusters"),
-        "complete_sasa": _safe_scalar(
-            "SELECT COUNT(*) FROM Ligase_Ligand_SASA_summary WHERE [%Exposed] IS NOT NULL AND [%Buried] IS NOT NULL"
-        ),
-        "missing_data": _safe_scalar(
-            "SELECT COUNT(*) FROM Ligase_Ligand_SASA_summary WHERE [%Exposed] IS NULL OR [%Buried] IS NULL",
-            0,
-        ),
-    }
+    stats = build_release_stats()
 
     return {
         "version_label": "Version 1.0",
@@ -70,6 +119,7 @@ def build_release_context():
         "snapshot_date": snapshot_date,
         "stats": stats,
         "download_table_count": 5,
+        "stats_source_note": "Version 1 statistics are calculated from the currently deployed Ligandalyzer database snapshot and the active download manifest.",
     }
 
 
