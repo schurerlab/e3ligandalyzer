@@ -378,6 +378,50 @@ class CustomNavbar extends HTMLElement {
             </a>
           </li>
 
+          <li class="dropdown" id="resourcesDropdown">
+            <button type="button">
+              <i data-feather="book-open"></i>Resources ▾
+            </button>
+
+            <div class="dropdown-content">
+              <a href="/docs" data-page="docs">
+                <span class="module-label">
+                  <i data-feather="file-text"></i> Documentation
+                </span>
+              </a>
+              <a href="/api-reference" data-page="api-reference">
+                <span class="module-label">
+                  <i data-feather="code"></i> API Reference
+                </span>
+              </a>
+              <a href="/methods" data-page="methods">
+                <span class="module-label">
+                  <i data-feather="git-branch"></i> Methods
+                </span>
+              </a>
+              <a href="/schema" data-page="schema">
+                <span class="module-label">
+                  <i data-feather="layout"></i> Database Schema
+                </span>
+              </a>
+              <a href="/release" data-page="release">
+                <span class="module-label">
+                  <i data-feather="archive"></i> Release Notes
+                </span>
+              </a>
+              <a href="/case-studies" data-page="case-studies">
+                <span class="module-label">
+                  <i data-feather="clipboard"></i> Case Studies
+                </span>
+              </a>
+              <a href="/contribute" data-page="contribute">
+                <span class="module-label">
+                  <i data-feather="upload-cloud"></i> Submit Data / Contribute
+                </span>
+              </a>
+            </div>
+          </li>
+
           <li>
             <a href="#" id="globalSearchBtn">
               <span><i data-feather="search"></i>🔍 Search</span>
@@ -457,8 +501,7 @@ class CustomNavbar extends HTMLElement {
     const menuBtn = shadow.querySelector(".menu-toggle");
     const menu = shadow.querySelector(".menu");
     const nav = shadow.querySelector("nav");
-    const dropdown = shadow.querySelector("#modulesDropdown");
-    const dropdownBtn = dropdown.querySelector("button");
+    const dropdowns = Array.from(shadow.querySelectorAll(".dropdown"));
     const protacLink = shadow.querySelector("#protacLink");
     const searchBtn = shadow.querySelector("#globalSearchBtn");
 
@@ -499,27 +542,30 @@ class CustomNavbar extends HTMLElement {
       }
     });
 
-    /* 🧩 Dropdown: desktop hover, mobile tap */
-    let dropdownTimer;
+    /* 🧩 Dropdowns: desktop hover, mobile tap */
+    dropdowns.forEach((dropdown) => {
+      const dropdownBtn = dropdown.querySelector("button");
+      let dropdownTimer;
 
-    dropdown.addEventListener("mouseenter", () => {
-      if (window.innerWidth > 768) {
-        clearTimeout(dropdownTimer);
-        dropdown.classList.add("open");
-      }
-    });
+      dropdown.addEventListener("mouseenter", () => {
+        if (window.innerWidth > 768) {
+          clearTimeout(dropdownTimer);
+          dropdown.classList.add("open");
+        }
+      });
 
-    dropdown.addEventListener("mouseleave", () => {
-      if (window.innerWidth > 768) {
-        dropdownTimer = setTimeout(() => dropdown.classList.remove("open"), 200);
-      }
-    });
+      dropdown.addEventListener("mouseleave", () => {
+        if (window.innerWidth > 768) {
+          dropdownTimer = setTimeout(() => dropdown.classList.remove("open"), 200);
+        }
+      });
 
-    dropdownBtn.addEventListener("click", (e) => {
-      if (window.innerWidth <= 768) {
-        e.preventDefault();
-        dropdown.classList.toggle("open");
-      }
+      dropdownBtn.addEventListener("click", (e) => {
+        if (window.innerWidth <= 768) {
+          e.preventDefault();
+          dropdown.classList.toggle("open");
+        }
+      });
     });
 
     /* 🎲 I'M FEELING LUCKY */

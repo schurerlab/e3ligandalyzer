@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}Release Notes — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --rel-border: rgba(56,189,248,0.22);
+    --rel-copy: #cbd5e1;
+    --rel-muted: #94a3b8;
+  }
+  .release-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    color: var(--rel-copy);
+  }
+  .release-hero,
+  .release-panel,
+  .release-stat {
+    border: 1px solid var(--rel-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.84));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .release-hero {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 28%),
+      radial-gradient(circle at left center, rgba(45,212,191,0.16), transparent 22%),
+      linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.9));
+  }
+  .release-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56,189,248,0.32);
+    background: rgba(8,47,73,0.3);
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .release-title {
+    margin-top: 1rem;
+    font-size: clamp(2.7rem, 5vw, 4.9rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .release-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .release-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .release-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .release-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.72rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+  }
+  .release-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .release-stat {
+    padding: 1rem;
+    background: rgba(15,23,42,0.76);
+  }
+  .release-stat-label {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .release-stat-value {
+    margin-top: 0.45rem;
+    color: #f8fafc;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+  }
+  .release-layout {
+    display: grid;
+    grid-template-columns: 1.3fr 0.9fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .release-main {
+    display: grid;
+    gap: 1rem;
+  }
+  .release-side {
+    display: grid;
+    gap: 1rem;
+    align-self: start;
+  }
+  .release-panel {
+    padding: 1.2rem;
+  }
+  .release-panel h2,
+  .release-panel h3 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .release-panel p,
+  .release-panel li {
+    line-height: 1.75;
+  }
+  .release-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  .release-list {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1rem;
+  }
+  .release-item {
+    border: 1px solid rgba(56,189,248,0.18);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(15,23,42,0.72);
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    color: #7dd3fc;
+  }
+  @media (max-width: 1100px) {
+    .release-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .release-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 680px) {
+    .release-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="release-shell">
+  <header class="release-hero">
+    <div class="release-kicker">Versioning and reproducibility</div>
+    <h1 class="release-title">Current database <span>release state</span></h1>
+    <p class="release-copy">
+      This page tracks the current public snapshot of E3 Ligase Ligandalyzer, including database-wide summary statistics, known limitations, and the release metadata that should accompany downstream analyses. Where a formal archived release manifest is not yet exposed, the page states that explicitly rather than inferring unpublished release labels.
+    </p>
+    <div class="release-links">
+      <a class="release-btn" href="/api/download/manifest">Download manifest</a>
+      <a class="release-btn" href="/api-reference">API Reference</a>
+      <a class="release-btn" href="/methods">Methods</a>
+      <a class="release-btn" href="/schema">Database Schema</a>
+    </div>
+  </header>
+
+  <section class="release-grid" aria-label="Database snapshot statistics">
+    <article class="release-stat"><div class="release-stat-label">Ligases</div><div class="release-stat-value">{{ release.stats.ligases if release.stats.ligases is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Recruiter records</div><div class="release-stat-value">{{ release.stats.recruiter_records if release.stats.recruiter_records is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Unique ligands</div><div class="release-stat-value">{{ release.stats.unique_ligands if release.stats.unique_ligands is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Unique PDB structures</div><div class="release-stat-value">{{ release.stats.pdb_structures if release.stats.pdb_structures is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Scaffolds</div><div class="release-stat-value">{{ release.stats.scaffolds if release.stats.scaffolds is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Scaffold superclusters</div><div class="release-stat-value">{{ release.stats.scaffold_superclusters if release.stats.scaffold_superclusters is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Complete SASA rows</div><div class="release-stat-value">{{ release.stats.complete_sasa if release.stats.complete_sasa is not none else "Pending" }}</div></article>
+    <article class="release-stat"><div class="release-stat-label">Missing-data rows</div><div class="release-stat-value">{{ release.stats.missing_data if release.stats.missing_data is not none else "Pending" }}</div></article>
+  </section>
+
+  <div class="release-layout">
+    <main class="release-main">
+      <section class="release-panel">
+        <h2>Current version record</h2>
+        <div class="release-list">
+          <div class="release-item">
+            <h3>Version label</h3>
+            <p>{{ release.version_label }}</p>
+          </div>
+          <div class="release-item">
+            <h3>Release date</h3>
+            <p>{{ release.release_date }}</p>
+          </div>
+          <div class="release-item">
+            <h3>Local snapshot timestamp</h3>
+            <p>{{ release.snapshot_date if release.snapshot_date else "Snapshot timestamp unavailable." }}</p>
+          </div>
+        </div>
+        <div class="release-note">
+          The current site exposes a reproducible database snapshot and public downloads, but a formal archived release manifest with frozen version naming is still pending. Until that manifest is published, pair analyses with the snapshot date, manifest, schema page, and methods page used at the time of download.
+        </div>
+      </section>
+
+      <section class="release-panel">
+        <h2>Changelog</h2>
+        <div class="release-list">
+          <div class="release-item">
+            <h3>June 2026 — scholarly resource upgrade</h3>
+            <p>The site now includes dedicated Methods, Database Schema, Release Notes, Submit Data / Contribute, and Case Studies pages to support citation, transparency, and researcher onboarding.</p>
+          </div>
+          <div class="release-item">
+            <h3>Current database snapshot</h3>
+            <p>Live statistics on this page are computed from the current SQLite-backed application snapshot rather than entered manually. This keeps the release page aligned with the deployed data state.</p>
+          </div>
+          <div class="release-item">
+            <h3>Formal release archiving</h3>
+            <p>Archived release packaging, frozen version tags, and machine-readable release manifests remain planned follow-up work for publication-grade release tracking.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="release-panel">
+        <h2>Known limitations</h2>
+        <ul class="list-disc pl-5 mt-3 space-y-2">
+          <li>The current public site does not yet expose a formal semantic release label or archived release tarball index.</li>
+          <li>Scaffold totals in the live app snapshot may differ from manuscript-facing or external pipeline summaries when upstream curation has moved faster than formal release packaging.</li>
+          <li>Missing-data counts shown here reflect the currently loaded SASA summary snapshot and should not be interpreted as a global guarantee for every future table or asset type.</li>
+          <li>Users should treat the release manifest, schema page, and methods page as a set when documenting reproducible downloads.</li>
+        </ul>
+      </section>
+
+      <section class="release-panel">
+        <h2>Archived prior releases</h2>
+        <p>
+          No formal archived prior releases are exposed on the public site yet. Once archived releases are published, this section should list the release label, release date, snapshot counts, manifest link, and any schema or pipeline changes that affect reproducibility.
+        </p>
+      </section>
+    </main>
+
+    <aside class="release-side">
+      <section class="release-panel">
+        <h2>Citation and reproducibility note</h2>
+        <p>
+          If you use the current workflow, code, or generated dataset, cite the associated E3 Recruiter Ligandalyzer manuscript when available. The pipeline repository currently suggests the following interim citation language:
+        </p>
+        <p class="mt-3">
+          <span class="mono">Schulz JM, Reynolds RC, Schürer SC. E3 Recruiter Ligandalyzer: A Structure-First, Ligand-Centric Platform for E3 Ligase Recruiter Selection. Manuscript in preparation.</span>
+        </p>
+      </section>
+
+      <section class="release-panel">
+        <h2>Maintenance policy</h2>
+        <p>
+          The codebase and update repositories indicate an actively maintained, appendable resource. New structural additions should move through the curated update workflow, carry manifest and audit information, and regenerate downstream tables before being treated as release-ready.
+        </p>
+      </section>
+
+      <section class="release-panel">
+        <h2>Related resources</h2>
+        <ul class="space-y-2">
+          <li><a class="text-sky-300 hover:text-sky-200" href="/api-reference">API Reference</a></li>
+          <li><a class="text-sky-300 hover:text-sky-200" href="/api/download/manifest">Download manifest</a></li>
+          <li><a class="text-sky-300 hover:text-sky-200" href="/methods">Methods and curation pipeline</a></li>
+          <li><a class="text-sky-300 hover:text-sky-200" href="/schema">Database schema</a></li>
+          <li><a class="text-sky-300 hover:text-sky-200" href="/contribute">Submit Data / Contribute</a></li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</section>
+{% endblock %}

@@ -396,6 +396,7 @@
         <a class="doc-btn" href="/scaffolds">🧱 Scaffold Dashboard</a>
         <a class="doc-btn" href="/ligases">🧬 Ligase Library</a>
         <a class="doc-btn" href="/api-reference">⚡ API Reference</a>
+        <a class="doc-btn" href="/methods">🧪 Methods</a>
       </div>
     </div>
   </header>
@@ -410,6 +411,7 @@
         <a href="#ligands">🧬 Ligand pages</a>
         <a href="#scaffolds">🧱 Scaffolds</a>
         <a href="#downloads">⬇️ Data downloads</a>
+        <a href="#resource-pages">🗂️ Resource pages</a>
         <a href="#metrics">📊 Metrics</a>
         <a href="#workflow">🔁 Design workflow</a>
         <a href="#faq">❓ FAQ</a>
@@ -481,6 +483,19 @@
         </div>
       </section>
 
+      <section class="doc-section doc-reveal searchable" id="resource-pages" data-search="methods schema release case studies contribute submit data scholarly resource curation reproducibility">
+        <div class="doc-kicker">Database resource pages</div>
+        <h2>Use the publication-facing resource pages.</h2>
+        <p>The Ligandalyzer documentation now includes dedicated pages for curation methods, database schema, release notes, contribution guidance, and workflow-oriented case studies. Use these pages when you need citation support, schema clarity, or release-aware provenance rather than only interactive browsing.</p>
+        <div class="doc-card-grid">
+          <a class="doc-card" href="/methods"><h3>🧪 Methods</h3><p>Read the structure-selection, recruiter extraction, LR-code, scaffold, and SASA workflow notes.</p></a>
+          <a class="doc-card" href="/schema"><h3>🗃️ Database Schema</h3><p>See how recruiter, ligase, scaffold, and SASA objects are represented in the public resource.</p></a>
+          <a class="doc-card" href="/release"><h3>📦 Release Notes</h3><p>Track current snapshot statistics, changelog notes, and reproducibility guidance.</p></a>
+          <a class="doc-card" href="/case-studies"><h3>📘 Case Studies</h3><p>Follow example analysis workflows for recruiter selection, scaffold comparison, and download handoff.</p></a>
+          <a class="doc-card" href="/contribute"><h3>🤝 Submit Data / Contribute</h3><p>Report missing records, suggest new ligases, and submit recruiter or scaffold corrections.</p></a>
+        </div>
+      </section>
+
       <section class="doc-section doc-reveal searchable" id="metrics" data-search="metrics qed logp molecular weight lipinski shannon bertz density connectivity exposed buried">
         <div class="doc-kicker">Metric glossary</div>
         <h2>Know what the numbers mean.</h2>
@@ -507,7 +522,7 @@
         <details class="doc-detail" open><summary>Why do some recruiters have missing data?</summary><div class="doc-detail-body">Some recruiter codes may have descriptor or SMILES data but lack complete structure, SASA, or file-level context. Missing pages are routed to a support page so they can be curated or reported.</div></details>
         <details class="doc-detail"><summary>Why can one ligand appear more than once?</summary><div class="doc-detail-body">The same chemical ligand can appear in different ligases, PDB entries, variants, poses, or structural contexts. LR records preserve this structure-level context instead of collapsing everything into one chemical-only entry.</div></details>
         <details class="doc-detail"><summary>Where is the API documentation?</summary><div class="doc-detail-body">The complete API documentation now lives on <a class="text-sky-300 hover:text-sky-200" href="/api-reference">the API Reference page</a>. This Docs page is focused on how to use the Ligandalyzer as a researcher.</div></details>
-        <details class="doc-detail"><summary>How can collaborators contribute?</summary><div class="doc-detail-body">Use the contribution page or contact the team directly at <a class="text-sky-300 hover:text-sky-200" href="mailto:jxs794@miami.edu">jxs794@miami.edu</a> with structures, ligase systems, recruiter data, or feature ideas.</div></details>
+        <details class="doc-detail"><summary>How can collaborators contribute?</summary><div class="doc-detail-body">Use the <a class="text-sky-300 hover:text-sky-200" href="/contribute">Submit Data / Contribute page</a> or contact the team directly at <a class="text-sky-300 hover:text-sky-200" href="mailto:jxs794@miami.edu">jxs794@miami.edu</a> with structures, ligase systems, recruiter data, scaffold notes, or feature ideas.</div></details>
       </section>
     </main>
   </div>

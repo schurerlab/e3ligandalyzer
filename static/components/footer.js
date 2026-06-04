@@ -233,6 +233,10 @@ class CustomFooter extends HTMLElement {
               </li>
               <li><a href="/docs"><i data-feather="file-text"></i>Documentation</a></li>
               <li><a href="/api-reference"><i data-feather="code"></i>API Reference</a></li>
+              <li><a href="/methods"><i data-feather="git-branch"></i>Methods</a></li>
+              <li><a href="/schema"><i data-feather="layout"></i>Database Schema</a></li>
+              <li><a href="/release"><i data-feather="archive"></i>Release Notes</a></li>
+              <li><a href="/case-studies"><i data-feather="clipboard"></i>Case Studies</a></li>
             </ul>
           </div>
 
@@ -242,7 +246,7 @@ class CustomFooter extends HTMLElement {
               <li><a href="mailto:jxs794@miami.edu"><i data-feather="mail"></i>Contact</a></li>
               <li><a href="mailto:jxs794@miami.edu?subject=Ligandalyzer Feedback">
                 <i data-feather="send"></i>Feedback</a></li>
-              <li><a href="/contribute"><i data-feather="heart"></i>Contribute</a></li>
+              <li><a href="/contribute"><i data-feather="upload-cloud"></i>Submit Data / Contribute</a></li>
             </ul>
           </div>
         </div>

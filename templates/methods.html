@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+{% block title %}Methods — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --res-bg: #020617;
+    --res-panel: rgba(15, 23, 42, 0.84);
+    --res-border: rgba(56, 189, 248, 0.22);
+    --res-cyan: #38bdf8;
+    --res-teal: #2dd4bf;
+    --res-gold: #facc15;
+    --res-copy: #cbd5e1;
+    --res-muted: #94a3b8;
+  }
+  .resource-shell {
+    max-width: 1220px;
+    margin: 0 auto;
+    color: var(--res-copy);
+  }
+  .resource-hero,
+  .resource-panel {
+    border: 1px solid var(--res-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.82));
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34);
+  }
+  .resource-hero {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(45,212,191,0.18), transparent 28%),
+      radial-gradient(circle at left center, rgba(56,189,248,0.16), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.94), rgba(2,6,23,0.88));
+  }
+  .resource-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    border: 1px solid rgba(56,189,248,0.34);
+    border-radius: 999px;
+    padding: 0.45rem 0.8rem;
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(8,47,73,0.3);
+  }
+  .resource-title {
+    margin-top: 1rem;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.06em;
+    color: white;
+  }
+  .resource-title span {
+    display: block;
+    background: linear-gradient(90deg, var(--res-cyan), var(--res-teal), var(--res-gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .resource-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+    color: var(--res-copy);
+  }
+  .resource-actions,
+  .resource-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+  .resource-btn,
+  .resource-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    border-radius: 14px;
+    padding: 0.72rem 1rem;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+  }
+  .resource-btn.primary {
+    background: linear-gradient(135deg, rgba(14,165,233,0.24), rgba(20,184,166,0.2));
+    border-color: rgba(45,212,191,0.48);
+  }
+  .resource-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: start;
+  }
+  .resource-sidebar,
+  .resource-panel {
+    padding: 1.2rem;
+  }
+  .resource-sidebar {
+    position: sticky;
+    top: 86px;
+    border: 1px solid var(--res-border);
+    border-radius: 24px;
+    background: rgba(15,23,42,0.78);
+    backdrop-filter: blur(14px);
+  }
+  .resource-sidebar h2,
+  .resource-panel h2 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .resource-nav a {
+    display: block;
+    padding: 0.6rem 0.75rem;
+    border-radius: 14px;
+    color: var(--res-muted);
+    transition: 0.2s ease;
+  }
+  .resource-nav a:hover {
+    background: rgba(56,189,248,0.08);
+    color: #e0f2fe;
+    transform: translateX(4px);
+  }
+  .resource-main {
+    display: grid;
+    gap: 1rem;
+  }
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .resource-card {
+    border: 1px solid rgba(56,189,248,0.18);
+    border-radius: 20px;
+    background: rgba(15,23,42,0.72);
+    padding: 1rem;
+  }
+  .resource-card h3,
+  .resource-step h3,
+  .resource-panel h3 {
+    color: #bae6fd;
+    font-weight: 800;
+  }
+  .resource-card p,
+  .resource-panel p,
+  .resource-panel li,
+  .resource-step p {
+    line-height: 1.75;
+    color: var(--res-copy);
+  }
+  .resource-stepper {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1rem;
+  }
+  .resource-step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.85rem;
+    align-items: start;
+  }
+  .resource-step-num {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.25), rgba(250,204,21,0.22));
+    color: #f8fafc;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(56,189,248,0.34);
+  }
+  .resource-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.65);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245, 158, 11, 0.08);
+    color: #fef3c7;
+  }
+  .resource-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+  .resource-link {
+    display: block;
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(15,23,42,0.7);
+  }
+  .resource-link strong {
+    color: #f8fafc;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    color: #7dd3fc;
+  }
+  @media (max-width: 980px) {
+    .resource-layout {
+      grid-template-columns: 1fr;
+    }
+    .resource-sidebar {
+      position: relative;
+      top: 0;
+    }
+  }
+  @media (max-width: 760px) {
+    .resource-grid,
+    .resource-links {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="resource-shell">
+  <header class="resource-hero">
+    <div class="resource-kicker">Methods and curation pipeline</div>
+    <h1 class="resource-title">How the <span>Ligandalyzer is built</span></h1>
+    <p class="resource-copy">
+      E3 Ligase Ligandalyzer is a structure-first curated database resource. The public web application sits on top of a multi-step structural and cheminformatics workflow that retrieves recruiter-bound E3 ligase structures, standardizes recruiter identities, computes ligand descriptors and SASA features, assigns scaffolds, and packages release-aware tables for downstream database and download use.
+    </p>
+    <div class="resource-actions">
+      <a class="resource-btn primary" href="https://github.com/Joey305/E3-Ligandalyzer-Scripts" target="_blank" rel="noopener noreferrer">Pipeline scripts repository</a>
+      <a class="resource-btn" href="https://github.com/Joey305/E3_UPDATE_TOOL" target="_blank" rel="noopener noreferrer">Update and ingestion utilities</a>
+      <a class="resource-btn" href="/release">Release notes</a>
+      <a class="resource-btn" href="/schema">Database schema</a>
+    </div>
+    <div class="resource-chip-row">
+      <span class="resource-chip">Structure-first curation</span>
+      <span class="resource-chip">SQLite-backed public resource</span>
+      <span class="resource-chip">LR-coded recruiter instances</span>
+      <span class="resource-chip">SASA-aware recruiter analysis</span>
+    </div>
+  </header>
+
+  <div class="resource-layout">
+    <aside class="resource-sidebar">
+      <h2>Page Map</h2>
+      <nav class="resource-nav">
+        <a href="#overview">Overview</a>
+        <a href="#selection">Structure selection</a>
+        <a href="#normalization">Ligase normalization</a>
+        <a href="#extraction">Recruiter extraction</a>
+        <a href="#lr-codes">LR code assignment</a>
+        <a href="#duplicates">Duplicates and variants</a>
+        <a href="#scaffolds">Scaffolds and superclusters</a>
+        <a href="#sasa">SASA workflow</a>
+        <a href="#quality">Quality control</a>
+        <a href="#reproducibility">Reproducibility</a>
+        <a href="#related">Related resources</a>
+      </nav>
+    </aside>
+
+    <main class="resource-main">
+      <section class="resource-panel" id="overview">
+        <h2>Overview of the curation workflow</h2>
+        <p>
+          The current build logic is documented in the numbered workflow scripts from the public <a class="text-sky-300 hover:text-sky-200" href="https://github.com/Joey305/E3-Ligandalyzer-Scripts" target="_blank" rel="noopener noreferrer">E3-Ligandalyzer-Scripts</a> repository and the update-oriented utilities in <a class="text-sky-300 hover:text-sky-200" href="https://github.com/Joey305/E3_UPDATE_TOOL" target="_blank" rel="noopener noreferrer">E3_UPDATE_TOOL</a>. The pipeline is intentionally staged: structure acquisition and cleanup happen before ligand metadata, SASA, scaffolding, database assembly, and dataset summary generation.
+        </p>
+        <div class="resource-stepper">
+          <div class="resource-step"><div class="resource-step-num">1</div><div><h3>Acquire and prepare structures</h3><p><span class="mono">0_LigaseCreator.py</span> and <span class="mono">1_E3_Ligase_Preparer.py</span> support future updates by creating ligase folders, downloading mmCIF structures, selecting ligands and protein chains, and exporting curated PDB assets with manifest and audit records.</p></div></div>
+          <div class="resource-step"><div class="resource-step-num">2</div><div><h3>Clean structural inputs</h3><p>The historical build scripts fetch candidate structures, clean PDBs, split ligand-containing entries, and standardize chain naming before downstream analysis.</p></div></div>
+          <div class="resource-step"><div class="resource-step-num">3</div><div><h3>Annotate recruiter chemistry</h3><p>Ligand metadata, SMILES mappings, duplicate-code handling, and descriptor calculation are generated before recruiter instances are packaged into crosswalk tables and the final SQLite database.</p></div></div>
+          <div class="resource-step"><div class="resource-step-num">4</div><div><h3>Compute SASA and scaffold context</h3><p>SASA summary and atom-level tables are generated alongside recruiter scaffold mappings, scaffold-level summaries, and scaffold supercluster tables.</p></div></div>
+          <div class="resource-step"><div class="resource-step-num">5</div><div><h3>Build database and release summaries</h3><p><span class="mono">17__BUILDdb.py</span> assembles SQLite tables, and <span class="mono">18_Data_Summary.py</span> regenerates manuscript-facing dataset summaries when upstream curation changes.</p></div></div>
+        </div>
+      </section>
+
+      <section class="resource-panel" id="selection">
+        <h2>PDB and structure selection strategy</h2>
+        <p>
+          The structural workflow is explicitly recruiter-bound and structure-linked. Repository documentation describes a curated, literature-guided approach paired with PDB searches and validation rather than automated bulk harvesting alone. Audit notes in the local codebase emphasize a <strong>PDB → protein → E3 validation</strong> strategy rather than assuming that a ligase name is sufficient to validate a structure.
+        </p>
+        <div class="resource-grid">
+          <div class="resource-card">
+            <h3>Curated entry discovery</h3>
+            <p>Candidate structures are collected from curated E3 ligase lists, literature-guided searches, and expert PDB review. The update tool is designed to help append new ligase folders and new structure files in a controlled, reproducible way.</p>
+          </div>
+          <div class="resource-card">
+            <h3>Ligand-containing complex preference</h3>
+            <p>Pipeline and update-tool notes both prioritize ligand-containing entries over apo structures or artifact-only entries, because the downstream database is designed around recruiter-centric structural interpretation.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="resource-panel" id="normalization">
+        <h2>E3 ligase definition and normalization</h2>
+        <p>
+          Ligase identity is normalized as a first-class field across the database. Local audit notes describe validation steps that include organism filtering, protein identity confirmation, and novelty checking against the existing ligase inventory before newly curated entries are accepted into an update workflow.
+        </p>
+        <div class="resource-note">
+          The public methods page does not assign undocumented thresholds for organism, confidence, or entry inclusion. Where exact cutoffs are not exposed by the current codebase, they should be treated as configured in the curation pipeline and reported formally in future release manifests.
+        </div>
+      </section>
+
+      <section class="resource-panel" id="extraction">
+        <h2>Recruiter ligand extraction</h2>
+        <p>
+          Recruiter extraction is handled through a sequence of structure cleanup, single-ligand isolation, and metadata reconciliation steps. The numbered scripts show that ligand-containing HETATM entries are separated, standardized, and later paired with SDF- and SMILES-derived metadata tables. The update tool mirrors the same philosophy interactively by asking the curator to retain the relevant ligand residue and protein chain before exporting curated PDB files.
+        </p>
+      </section>
+
+      <section class="resource-panel" id="lr-codes">
+        <h2>LR code assignment</h2>
+        <p>
+          The database distinguishes between an underlying ligand identity and a curated structural recruiter instance. Public pipeline documentation defines the LR code as a curated recruiter/conformation/instance identifier, and the local database preserves that mapping through tables such as <span class="mono">Recruiter_Master_Map</span>, <span class="mono">Recruiter_Code_Crosswalk</span>, and <span class="mono">Ligand_Instance_Recruiter_Codes</span>.
+        </p>
+        <div class="resource-grid">
+          <div class="resource-card">
+            <h3>Why LR codes exist</h3>
+            <p>A single ligand can recur across multiple PDB entries, poses, ligases, or variants. LR coding keeps those structural contexts visible instead of collapsing everything into one chemical-only record.</p>
+          </div>
+          <div class="resource-card">
+            <h3>Where code assignment is handled</h3>
+            <p>Duplicate-code handling and synchronized LR-table cleanup are exposed in scripts such as <span class="mono">7B_RenameDuplicateLigandCodes.py</span>, <span class="mono">10C_CLean.py</span>, and <span class="mono">16_TBLCreation.py</span>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="resource-panel" id="duplicates">
+        <h2>Handling duplicate ligands, conformations, variants, and alternate structures</h2>
+        <p>
+          Duplicate ligands are not treated as simple errors by default. The current resource preserves repeated structural instances when they reflect real differences in PDB context, ligand pose, or curated variant state. The local database uses fields such as <span class="mono">Variant</span>, <span class="mono">pdb_id</span>, <span class="mono">PDB_File</span>, and <span class="mono">Instance_Key</span> to keep those distinctions explicit.
+        </p>
+        <p>
+          Manual cleanup scripts are also present for exclusions and table harmonization. This means the workflow is semi-manual by design: duplicates can be retained, renamed, merged, or excluded depending on whether they represent meaningful structural context or problematic redundancy.
+        </p>
+      </section>
+
+      <section class="resource-panel" id="scaffolds">
+        <h2>Scaffold generation and scaffold clustering</h2>
+        <p>
+          Scaffold generation is built into the current pipeline through Bemis–Murcko-style framework decomposition and later unification steps. Public script names and local tables indicate a staged process: recruiter-to-scaffold mapping, scaffold-level summary generation, advanced scaffold data assembly, supercluster assignment, and scaffold unification before final database packaging.
+        </p>
+        <div class="resource-grid">
+          <div class="resource-card">
+            <h3>Scaffold generation</h3>
+            <p><span class="mono">14_ligasescaffolds.py</span> and related scaffold-data scripts populate recruiter-to-scaffold mappings and scaffold summaries used by the scaffold dashboards.</p>
+          </div>
+          <div class="resource-card">
+            <h3>Clusters and superclusters</h3>
+            <p><span class="mono">15B_ADV_ScafCluster.py</span> and <span class="mono">15C_ScaffoldUnifier.py</span> document the advanced clustering and unification stage. The live app exposes scaffold supercluster tables where available.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="resource-panel" id="sasa">
+        <h2>SASA calculation workflow and exposure definitions</h2>
+        <p>
+          SASA is a core resource feature rather than an afterthought. The current pipeline includes audited SASA calculation, SASA cleanup, ligand-level SASA summary tables, and atom-level SASA tables. In the public SQLite snapshot, each recruiter record can carry both aggregate exposure metrics and per-atom solvent exposure values.
+        </p>
+        <div class="resource-grid">
+          <div class="resource-card">
+            <h3>Ligand-level SASA summary</h3>
+            <p>The summary table reports total atoms, exposed atoms, total SASA in complex, and aggregate <span class="mono">%Exposed</span> and <span class="mono">%Buried</span> values for each curated recruiter instance.</p>
+          </div>
+          <div class="resource-card">
+            <h3>Atom-level SASA</h3>
+            <p>The atom table stores continuous <span class="mono">Exposure_A2</span> values for each mapped atom. This supports 2D and 3D exposure visualization, attachment-vector inspection, and downstream filtering.</p>
+          </div>
+        </div>
+        <div class="resource-note">
+          The current public tables explicitly define exposed atoms as atoms with measurable solvent exposure and keep exposure as a continuous SASA quantity. The site therefore supports a practical distinction between buried atoms, intermediate or partially exposed atoms, and strongly exposed atoms without claiming unpublished categorical thresholds.
+        </div>
+      </section>
+
+      <section class="resource-panel" id="quality">
+        <h2>Data quality checks, filters, and missing-data policy</h2>
+        <p>
+          The repository includes explicit audit and cleanup layers. Local audit documents describe true-ligase validation, artifact rejection, HETATM confirmation, novelty checking, and manual exclusion when structures or annotations do not meet curation expectations. Additional cleanup scripts remove or harmonize entries when table-level inconsistencies are discovered.
+        </p>
+        <ul class="list-disc pl-5 mt-3 space-y-2">
+          <li>Artifact-like small molecules can be filtered before recruiter acceptance.</li>
+          <li>Manual exclusion and table clean-up steps are present in the pipeline.</li>
+          <li>Missing or incomplete public records are surfaced through the site’s missing-data and missing-recruiter pages rather than silently hidden.</li>
+          <li>Future update submissions should preserve manifest, audit, and provenance information whenever possible.</li>
+        </ul>
+      </section>
+
+      <section class="resource-panel" id="reproducibility">
+        <h2>Reproducibility notes</h2>
+        <p>
+          Reproducibility depends on both the public web database and the companion curation repositories. The <a class="text-sky-300 hover:text-sky-200" href="https://github.com/Joey305/E3-Ligandalyzer-Scripts" target="_blank" rel="noopener noreferrer">E3-Ligandalyzer-Scripts</a> repository preserves the historical numbered build order, and the <a class="text-sky-300 hover:text-sky-200" href="https://github.com/Joey305/E3_UPDATE_TOOL" target="_blank" rel="noopener noreferrer">E3_UPDATE_TOOL</a> repository explains how future updates can be appended in a more maintainable structural-ingestion workflow.
+        </p>
+        <p>
+          The current site is therefore best interpreted as a release-aware curated resource backed by an explicit script trail, not as a black-box database. Formal release manifest annotation, frozen version labels, and archived downloadable snapshots are the next step for full publication-grade reproducibility.
+        </p>
+      </section>
+
+      <section class="resource-panel" id="related">
+        <h2>Related pages</h2>
+        <div class="resource-links">
+          <a class="resource-link" href="/api-reference"><strong>API Reference</strong>Inspect JSON, CSV, structure-download, and manifest routes.</a>
+          <a class="resource-link" href="/schema"><strong>Database Schema</strong>Review the main objects, fields, and cross-table identifiers.</a>
+          <a class="resource-link" href="/release"><strong>Release Notes</strong>See the current snapshot metrics, changelog, and reproducibility notes.</a>
+          <a class="resource-link" href="/contribute"><strong>Submit Data / Contribute</strong>Report missing records, propose new ligases, and submit annotations.</a>
+          <a class="resource-link" href="/missing"><strong>Missing-data reporting</strong>Use the missing-data page when structure-linked assets are incomplete.</a>
+          <a class="resource-link" href="/missing-recruiter"><strong>Missing recruiter page</strong>Escalate recruiter-specific issues with context for curation follow-up.</a>
+        </div>
+      </section>
+    </main>
+  </div>
+</section>
+{% endblock %}

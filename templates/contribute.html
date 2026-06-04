@@ -1,9 +1,211 @@
 {% extends "base.html" %}
-{% block title %}Contribute — E3 Ligase Ligandalyzer{% endblock %}
+{% block title %}Submit Data / Contribute — E3 Ligase Ligandalyzer{% endblock %}
+
 {% block content %}
-<section class="max-w-4xl mx-auto text-slate-300 space-y-8 fade-section">
-  <h1 class="text-3xl font-bold text-sky-400">Contribute</h1>
-  <p>We welcome collaborators and contributors who share our vision of open-access degrader science.</p>
-  <p>Submit pull requests, share datasets, or collaborate through <a href="mailto:jxs794@miami.edu" class="text-sky-400 hover:text-sky-300">direct contact</a> or our <a href="https://github.com/Joey305" target="_blank" class="text-sky-400 hover:text-sky-300">GitHub repository</a>.</p>
+<style>
+  :root {
+    --con-border: rgba(56,189,248,0.22);
+    --con-copy: #cbd5e1;
+  }
+  .con-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--con-copy);
+  }
+  .con-hero,
+  .con-panel,
+  .con-card {
+    border: 1px solid var(--con-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.84));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .con-hero {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 28%),
+      radial-gradient(circle at left bottom, rgba(250,204,21,0.12), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.9));
+  }
+  .con-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56,189,248,0.32);
+    background: rgba(8,47,73,0.3);
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .con-title {
+    margin-top: 1rem;
+    font-size: clamp(2.7rem, 5vw, 4.8rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .con-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .con-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .con-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .con-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.72rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+  }
+  .con-btn.primary {
+    background: linear-gradient(135deg, rgba(14,165,233,0.24), rgba(20,184,166,0.2));
+    border-color: rgba(45,212,191,0.48);
+  }
+  .con-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .con-panel,
+  .con-card {
+    padding: 1.2rem;
+  }
+  .con-panel h2,
+  .con-card h3 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .con-panel p,
+  .con-panel li,
+  .con-card p,
+  .con-card li {
+    line-height: 1.75;
+  }
+  .con-card {
+    background: rgba(15,23,42,0.76);
+  }
+  .con-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  @media (max-width: 860px) {
+    .con-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="con-shell">
+  <header class="con-hero">
+    <div class="con-kicker">Community curation</div>
+    <h1 class="con-title">Submit data <span>and contribute</span></h1>
+    <p class="con-copy">
+      E3 Ligase Ligandalyzer is designed as a curated database resource, so useful contributions are welcome when they improve structure coverage, recruiter annotation, scaffold interpretation, or missing-data resolution. Submissions are reviewed before inclusion so the public resource stays traceable, release-aware, and scientifically coherent.
+    </p>
+    <div class="con-actions">
+      <a class="con-btn primary" href="mailto:jxs794@miami.edu?subject=E3 Ligandalyzer data submission">Email the maintainers</a>
+      <a class="con-btn" href="https://github.com/Joey305" target="_blank" rel="noopener noreferrer">GitHub profile</a>
+      <a class="con-btn" href="/missing">Report missing structure context</a>
+      <a class="con-btn" href="/methods">Read curation methods</a>
+    </div>
+  </header>
+
+  <div class="con-grid">
+    <section class="con-panel">
+      <h2>Accepted contribution types</h2>
+      <ul class="list-disc pl-5 mt-3 space-y-2">
+        <li>Report missing structures or incomplete structure-linked assets.</li>
+        <li>Suggest new E3 ligases or substrate-receptor systems for future curation.</li>
+        <li>Submit new recruiter records or correct existing recruiter annotations.</li>
+        <li>Propose scaffold annotations, scaffold regrouping, or structure-level metadata fixes.</li>
+        <li>Share release, provenance, or literature notes that improve traceability.</li>
+      </ul>
+    </section>
+
+    <section class="con-panel">
+      <h2>Required metadata for a useful submission</h2>
+      <ul class="list-disc pl-5 mt-3 space-y-2">
+        <li>E3 ligase name</li>
+        <li>Recruiter or ligand name</li>
+        <li>PDB ID or other structural source</li>
+        <li>SMILES, SDF, or PDB file when available</li>
+        <li>Citation, DOI, or source link</li>
+        <li>Notes on ligand chain, residue, atom, or recruiter-code mapping</li>
+        <li>Submitter contact information for follow-up questions</li>
+      </ul>
+    </section>
+
+    <section class="con-card">
+      <h3>Report missing structures</h3>
+      <p>If a recruiter page, structure file, or SASA asset appears incomplete, send the recruiter code, PDB context, and the exact page or file path that failed. The site’s missing-data pages are useful starting points because they preserve context for follow-up curation.</p>
+      <div class="con-actions">
+        <a class="con-btn" href="/missing">Missing data page</a>
+        <a class="con-btn" href="/missing-recruiter">Missing recruiter page</a>
+      </div>
+    </section>
+
+    <section class="con-card">
+      <h3>Suggest new ligases</h3>
+      <p>When proposing a new E3 ligase, include the preferred ligase or gene name, candidate structures, and why the system belongs in a recruiter-focused E3 resource. Structure-linked evidence is more useful than a name alone.</p>
+    </section>
+
+    <section class="con-card">
+      <h3>Submit recruiter corrections</h3>
+      <p>Recruiter submissions are strongest when they explain the intended ligand identity, structure source, residue code, and whether the change affects duplicate handling, LR-code assignment, or scaffold mapping.</p>
+    </section>
+
+    <section class="con-card">
+      <h3>Submit scaffold or structure annotations</h3>
+      <p>Scaffold corrections, unified scaffold notes, or structure-quality observations are welcome when they are tied to concrete recruiter codes, scaffold IDs, or structure files already visible in the public resource.</p>
+    </section>
+
+    <section class="con-panel">
+      <h2>Validation and review policy</h2>
+      <p>
+        Submissions are reviewed before public inclusion. The current site and companion curation repositories emphasize ligase identity validation, recruiter-linked structure context, duplicate handling, and release-aware provenance rather than automatic ingestion without review.
+      </p>
+      <div class="con-note">
+        Inclusion is not immediate or guaranteed. Records may be held for clarification, normalized into the existing schema, or deferred until they can be incorporated into a reproducible release pass.
+      </div>
+    </section>
+
+    <section class="con-panel">
+      <h2>How to send a submission</h2>
+      <p>
+        The current public submission paths are the project contact email and the public GitHub pathway already linked from the site. If you open a GitHub issue or send email, include enough structural detail that the maintainers can connect your submission to the current curation pipeline.
+      </p>
+      <ul class="list-disc pl-5 mt-3 space-y-2">
+        <li>Email: <a class="text-sky-300 hover:text-sky-200" href="mailto:jxs794@miami.edu">jxs794@miami.edu</a></li>
+        <li>GitHub pathway: <a class="text-sky-300 hover:text-sky-200" href="https://github.com/Joey305" target="_blank" rel="noopener noreferrer">Joey305 on GitHub</a></li>
+        <li>Methods and schema context: link the relevant page or route if your submission affects a specific table, field, or workflow step.</li>
+      </ul>
+    </section>
+  </div>
 </section>
 {% endblock %}

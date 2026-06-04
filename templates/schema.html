@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}Database Schema — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --schema-bg: #020617;
+    --schema-panel: rgba(15,23,42,0.84);
+    --schema-border: rgba(56,189,248,0.22);
+    --schema-copy: #cbd5e1;
+    --schema-muted: #94a3b8;
+  }
+  .schema-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    color: var(--schema-copy);
+  }
+  .schema-hero,
+  .schema-panel {
+    border: 1px solid var(--schema-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.84));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .schema-hero {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 30%),
+      radial-gradient(circle at left bottom, rgba(250,204,21,0.12), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.9));
+  }
+  .schema-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(56,189,248,0.3);
+    border-radius: 999px;
+    padding: 0.45rem 0.78rem;
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: rgba(8,47,73,0.3);
+  }
+  .schema-title {
+    margin-top: 1rem;
+    font-size: clamp(2.7rem, 5vw, 4.9rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .schema-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .schema-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .schema-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .schema-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.72rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.28);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+  }
+  .schema-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .schema-sidebar {
+    position: sticky;
+    top: 86px;
+    border: 1px solid var(--schema-border);
+    border-radius: 24px;
+    padding: 1rem;
+    background: rgba(15,23,42,0.78);
+    backdrop-filter: blur(14px);
+    align-self: start;
+  }
+  .schema-sidebar a {
+    display: block;
+    padding: 0.58rem 0.72rem;
+    border-radius: 14px;
+    color: var(--schema-muted);
+    transition: 0.2s ease;
+  }
+  .schema-sidebar a:hover {
+    background: rgba(56,189,248,0.08);
+    color: #e0f2fe;
+    transform: translateX(4px);
+  }
+  .schema-main {
+    display: grid;
+    gap: 1rem;
+  }
+  .schema-panel {
+    padding: 1.2rem;
+  }
+  .schema-panel h2 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .schema-panel p,
+  .schema-panel li {
+    line-height: 1.75;
+  }
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .schema-card {
+    border: 1px solid rgba(56,189,248,0.18);
+    border-radius: 18px;
+    padding: 1rem;
+    background: rgba(15,23,42,0.72);
+  }
+  .schema-card h3 {
+    color: #bae6fd;
+    font-weight: 800;
+  }
+  .schema-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 18px;
+  }
+  .schema-table th,
+  .schema-table td {
+    padding: 0.85rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(56,189,248,0.14);
+  }
+  .schema-table th {
+    background: rgba(8,47,73,0.4);
+    color: #e0f2fe;
+    font-weight: 800;
+  }
+  .schema-table td {
+    background: rgba(15,23,42,0.72);
+    color: var(--schema-copy);
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    color: #7dd3fc;
+  }
+  .schema-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  @media (max-width: 980px) {
+    .schema-layout {
+      grid-template-columns: 1fr;
+    }
+    .schema-sidebar {
+      position: relative;
+      top: 0;
+    }
+  }
+  @media (max-width: 760px) {
+    .schema-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="schema-shell">
+  <header class="schema-hero">
+    <div class="schema-kicker">Researcher-facing data model</div>
+    <h1 class="schema-title">Database <span>schema and objects</span></h1>
+    <p class="schema-copy">
+      The Ligandalyzer database is organized around structure-linked recruiter instances rather than chemistry-only rows. The same ligand can therefore appear in more than one recruiter record when it is observed in distinct ligase, structure, or variant contexts. This page summarizes the main public objects exposed by the current SQLite-backed resource and download tables.
+    </p>
+    <div class="schema-links">
+      <a class="schema-btn" href="/api-reference">API Reference</a>
+      <a class="schema-btn" href="/methods">Methods</a>
+      <a class="schema-btn" href="/release">Release Notes</a>
+      <a class="schema-btn" href="/api/download/tables">CSV table index</a>
+    </div>
+  </header>
+
+  <div class="schema-layout">
+    <aside class="schema-sidebar">
+      <h2 class="text-white font-black mb-3">Schema Map</h2>
+      <a href="#keys">Identifiers and keys</a>
+      <a href="#recruiters">Recruiter records</a>
+      <a href="#ligases">Ligase records</a>
+      <a href="#scaffolds">Scaffold records</a>
+      <a href="#sasa-summary">SASA summary</a>
+      <a href="#sasa-atoms">Atom-level SASA</a>
+      <a href="#manifest">Download manifest</a>
+    </aside>
+
+    <main class="schema-main">
+      <section class="schema-panel" id="keys">
+        <h2>Core identifiers and cross-table keys</h2>
+        <div class="schema-grid">
+          <div class="schema-card">
+            <h3>LR recruiter code</h3>
+            <p><span class="mono">RECRUITER_CODE</span> is the main public recruiter identifier. It points to a curated recruiter/structure instance rather than only a chemical name.</p>
+          </div>
+          <div class="schema-card">
+            <h3>Instance key</h3>
+            <p><span class="mono">Instance_Key</span> preserves a composite structural identity across ligase, PDB, ligand code, and variant context, making duplicate handling and traceability explicit.</p>
+          </div>
+          <div class="schema-card">
+            <h3>PDB-linked identity</h3>
+            <p><span class="mono">pdb_id</span>, <span class="mono">Ligand</span>, <span class="mono">Residue_ID</span>, and <span class="mono">Variant</span> are used together to anchor recruiter rows to a resolved structural context.</p>
+          </div>
+          <div class="schema-card">
+            <h3>Scaffold-linked identity</h3>
+            <p><span class="mono">Scaffold_ID</span>, <span class="mono">Original_Scaffold_ID</span>, <span class="mono">Scaffold_Hash</span>, and unified scaffold fields support cross-record scaffold comparison.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="schema-panel" id="recruiters">
+        <h2>Recruiter records</h2>
+        <p>
+          Recruiter records are primarily assembled from <span class="mono">Ligand_Instance_Recruiter_Codes</span>, <span class="mono">Ligase_Ligand_Metadata</span>, <span class="mono">Ligase_Chemical_Descriptors</span>, <span class="mono">Recruiter_Code_Crosswalk</span>, and related mapping tables. The same public ligand page combines several of these objects into one record view.
+        </p>
+        <table class="schema-table">
+          <thead>
+            <tr><th>Field</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">RECRUITER_CODE</span></td><td>Canonical LR identifier used in URLs, downloads, descriptors, SASA summaries, and scaffold mappings.</td></tr>
+            <tr><td><span class="mono">Ligand</span></td><td>Original ligand/component identifier from the structure, typically a short PDB-style ligand code.</td></tr>
+            <tr><td><span class="mono">Ligase</span></td><td>Curated E3 ligase context for the recruiter instance.</td></tr>
+            <tr><td><span class="mono">pdb_id</span> / <span class="mono">PDB_File</span></td><td>Structure identifier and resolved structure asset used for traceability and downloads.</td></tr>
+            <tr><td><span class="mono">SMILES</span> / <span class="mono">Canonical_SMILES</span></td><td>2D structural representations used for descriptor generation, deduplication logic, rendering, and export.</td></tr>
+            <tr><td><span class="mono">Formula</span>, <span class="mono">InChI</span>, <span class="mono">InChIKey</span></td><td>Chemical identity fields when available from the metadata-cleanup workflow.</td></tr>
+            <tr><td><span class="mono">QED</span>, <span class="mono">LogP</span>, <span class="mono">TPSA</span>, <span class="mono">HBA</span>, <span class="mono">HBD</span></td><td>Descriptor values used for filtering, ranking, and chemical triage.</td></tr>
+            <tr><td><span class="mono">Scaffold_ID</span></td><td>Scaffold assignment linking the recruiter to scaffold dashboards and scaffold-level summaries.</td></tr>
+            <tr><td><span class="mono">Source_SDF</span> / <span class="mono">download assets</span></td><td>File-level references used to expose public PDB, SDF, ZIP, and manifest downloads.</td></tr>
+            <tr><td><span class="mono">External links</span></td><td>Recruiter pages may additionally resolve to PDB, ChEMBL, or related external resources when present in the frontend integration.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="schema-panel" id="ligases">
+        <h2>Ligase records</h2>
+        <p>
+          Ligase-level views are assembled from scaffold, recruiter, and ELiAH-linked expression sources rather than a single narrow ligase table. In practice, the ligase explorer and expression pages expose a derived ligase object with summary counts, associated structures, scaffold diversity, and tissue-expression context.
+        </p>
+        <table class="schema-table">
+          <thead>
+            <tr><th>Field</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">Ligase</span></td><td>Primary ligase name used throughout recruiter, scaffold, and download routes.</td></tr>
+            <tr><td><span class="mono">gene_name</span> or ELiAH query term</td><td>Expression-atlas gene query label when the ligase can be mapped into the ELiAH integration layer.</td></tr>
+            <tr><td><span class="mono">structure_count</span></td><td>Derived count of resolved recruiter-bound structures associated with that ligase.</td></tr>
+            <tr><td><span class="mono">recruiter_count</span></td><td>Derived count of recruiter records linked to that ligase.</td></tr>
+            <tr><td><span class="mono">scaffold_count</span></td><td>Derived count of scaffold identities linked to that ligase.</td></tr>
+            <tr><td><span class="mono">expression atlas integration</span></td><td>When available, ELiAH-backed expression, enrichment, and tissue search views provide a complementary biological context layer.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="schema-panel" id="scaffolds">
+        <h2>Scaffold records</h2>
+        <p>
+          Scaffold objects are built from the recruiter-to-scaffold map and the scaffold summary tables exposed by the live application. These tables support scaffold dashboards, scaffold detail pages, and full-network views.
+        </p>
+        <table class="schema-table">
+          <thead>
+            <tr><th>Field</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">Scaffold_ID</span></td><td>Public scaffold identifier used by scaffold routes and summary tables.</td></tr>
+            <tr><td><span class="mono">Scaffold_SMILES</span> / <span class="mono">Murcko_SMILES</span></td><td>Scaffold-level structure representations used for display and grouping.</td></tr>
+            <tr><td><span class="mono">RECRUITER_CODE</span> group</td><td>Recruiter records associated with the scaffold.</td></tr>
+            <tr><td><span class="mono">Ligase</span> group</td><td>Ligases carrying that scaffold or unified scaffold family.</td></tr>
+            <tr><td><span class="mono">Recruiter_Count</span></td><td>How frequently a scaffold appears in recruiter records.</td></tr>
+            <tr><td><span class="mono">Scaffold_Class</span></td><td>Higher-level chemical scaffold family label when assigned by the scaffold workflow.</td></tr>
+            <tr><td><span class="mono">Supercluster_Key</span> / unified scaffold fields</td><td>Advanced scaffold-clustering layer used when cross-scaffold grouping is available in the current database snapshot.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="schema-panel" id="sasa-summary">
+        <h2>SASA summary records</h2>
+        <p>
+          The <span class="mono">Ligase_Ligand_SASA_summary</span> table stores recruiter-level solvent accessibility in the bound structural context.
+        </p>
+        <table class="schema-table">
+          <thead>
+            <tr><th>Field</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">SASA_in_complex_A2</span></td><td>Total solvent-accessible surface area for the bound recruiter in the complex.</td></tr>
+            <tr><td><span class="mono">%Exposed</span></td><td>Fraction of the recruiter remaining solvent-accessible in the bound context.</td></tr>
+            <tr><td><span class="mono">%Buried</span></td><td>Complementary buried fraction in the same bound context.</td></tr>
+            <tr><td><span class="mono">Exposed_atoms</span></td><td>Count of atoms with measurable solvent exposure in the current summary logic.</td></tr>
+            <tr><td><span class="mono">Recruiter_Class</span></td><td>Recruiter-type label used by some dashboards and filters.</td></tr>
+            <tr><td><span class="mono">MW_Status</span> / <span class="mono">Warnings</span></td><td>Completeness or caution fields preserved when a recruiter row requires annotation.</td></tr>
+            <tr><td><span class="mono">record completeness</span></td><td>The live snapshot can be assessed by checking whether exposure summary fields are present; release notes should be used for release-level completeness summaries.</td></tr>
+          </tbody>
+        </table>
+        <div class="schema-note">
+          The public release does not currently expose a separate categorical field named <span class="mono">Exposure_Class</span> in the SASA summary table. Instead, atom-level and summary-level exposure are represented through continuous SASA values and aggregate exposed/buried fractions.
+        </div>
+      </section>
+
+      <section class="schema-panel" id="sasa-atoms">
+        <h2>Atom-level SASA records</h2>
+        <p>
+          The <span class="mono">Ligase_Ligand_SASA_atoms</span> table is the atom-resolved layer used by the recruiter page and structure-aware solvent exposure views.
+        </p>
+        <table class="schema-table">
+          <thead>
+            <tr><th>Field</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">atom_id</span></td><td>PDB-linked atom serial used for structural traceability.</td></tr>
+            <tr><td><span class="mono">exact_atom</span></td><td>Atom label, such as C7, O2, or N3, as represented in the curated structure.</td></tr>
+            <tr><td><span class="mono">atom_type</span></td><td>Element assignment used for visualization and interpretation.</td></tr>
+            <tr><td><span class="mono">Exposure_A2</span></td><td>Continuous solvent exposure value in square angstroms at atom resolution.</td></tr>
+            <tr><td><span class="mono">is_heavy_atom</span></td><td>Heavy-atom indicator used by heavy-atom SASA summaries and QC checks.</td></tr>
+            <tr><td><span class="mono">x</span>, <span class="mono">y</span>, <span class="mono">z</span></td><td>Coordinates retained for atom mapping and visualization context.</td></tr>
+            <tr><td><span class="mono">attachment relevance</span></td><td>The public site uses these atom-level exposure values to support attachment-vector inspection, but an explicit attachment-score field is not currently exposed in the live table schema.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="schema-panel" id="manifest">
+        <h2>Download manifest and file mapping</h2>
+        <p>
+          The download layer is designed so that public files can be mapped back to recruiter, ligase, and table objects without guessing. Use <a class="text-sky-300 hover:text-sky-200" href="/api/download/manifest">the manifest route</a> as the public index whenever you need release-aware download provenance.
+        </p>
+        <table class="schema-table">
+          <thead>
+            <tr><th>File type</th><th>How it maps to records</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="mono">JSON</span></td><td>API endpoints return recruiter, ligase, scaffold, manifest, and ELiAH-linked records in structured web-consumable form.</td></tr>
+            <tr><td><span class="mono">CSV</span></td><td>Table exports expose whitelisted SQLite tables for spreadsheet, pandas, or R workflows.</td></tr>
+            <tr><td><span class="mono">PDB</span></td><td>Structure-linked recruiter assets retain ligase and PDB context for direct modeling or viewer reuse.</td></tr>
+            <tr><td><span class="mono">SDF</span></td><td>Recruiter-linked structure files support cheminformatics workflows and compound-level export.</td></tr>
+            <tr><td><span class="mono">ZIP</span></td><td>Ligase, recruiter, and all-asset bundles package multiple PDB/SDF files into one transfer unit.</td></tr>
+            <tr><td><span class="mono">Bundles and manifests</span></td><td>For citation or reproducibility, pair a downloaded bundle with the matching release note, manifest, and schema version used at the time of analysis.</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+</section>
+{% endblock %}

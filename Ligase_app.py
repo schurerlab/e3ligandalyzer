@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from datetime import datetime
 from urllib.parse import urlencode
 from flask import Flask, render_template, send_from_directory, request, redirect
 from Ligases.routes import ligases_bp, query_db
@@ -19,6 +20,52 @@ def get_protac_builder_base_url() -> str:
 def build_protac_builder_session_url(session_id: str) -> str:
     query = urlencode({"session": str(session_id or "").strip()})
     return f"{get_protac_builder_base_url()}/builder?{query}"
+
+
+def _safe_scalar(query, fallback=None):
+    try:
+        rows = query_db(query)
+        if rows:
+            return rows[0][0]
+    except Exception:
+        pass
+    return fallback
+
+
+def build_release_context():
+    db_path = os.environ.get(
+        "E3_LOCAL_DB_PATH",
+        os.path.join(os.path.dirname(__file__), "Ligases", "Ligase_Recruiter.db"),
+    )
+
+    snapshot_date = None
+    try:
+        snapshot_date = datetime.fromtimestamp(os.path.getmtime(db_path)).strftime("%B %d, %Y").replace(" 0", " ")
+    except OSError:
+        snapshot_date = None
+
+    stats = {
+        "ligases": _safe_scalar("SELECT COUNT(DISTINCT Ligase) FROM Ligase_Scaffold_Data"),
+        "recruiter_records": _safe_scalar("SELECT COUNT(DISTINCT RECRUITER_CODE) FROM Ligand_Instance_Recruiter_Codes"),
+        "unique_ligands": _safe_scalar("SELECT COUNT(DISTINCT Ligand) FROM Ligand_Instance_Recruiter_Codes"),
+        "pdb_structures": _safe_scalar("SELECT COUNT(DISTINCT pdb_id) FROM Ligand_Instance_Recruiter_Codes"),
+        "scaffolds": _safe_scalar("SELECT COUNT(DISTINCT Scaffold_ID) FROM Ligase_Scaffold_Data"),
+        "scaffold_superclusters": _safe_scalar("SELECT COUNT(DISTINCT Supercluster_Key) FROM Ligase_Scaffold_Superclusters"),
+        "complete_sasa": _safe_scalar(
+            "SELECT COUNT(*) FROM Ligase_Ligand_SASA_summary WHERE [%Exposed] IS NOT NULL AND [%Buried] IS NOT NULL"
+        ),
+        "missing_data": _safe_scalar(
+            "SELECT COUNT(*) FROM Ligase_Ligand_SASA_summary WHERE [%Exposed] IS NULL OR [%Buried] IS NULL",
+            0,
+        ),
+    }
+
+    return {
+        "version_label": "Formal release annotation pending",
+        "release_date": "Reported in release manifest when available",
+        "snapshot_date": snapshot_date,
+        "stats": stats,
+    }
 
 
 # =============================================================================
@@ -133,13 +180,29 @@ def create_app():
     def docs():
         return render_template("docs.html")
 
+    @app.route("/methods")
+    def methods():
+        return render_template("methods.html")
+
+    @app.route("/schema")
+    def schema():
+        return render_template("schema.html")
+
     @app.route("/api-reference")
     def api_reference():
         return render_template("api-reference.html")
 
+    @app.route("/release")
+    def release():
+        return render_template("release.html", release=build_release_context())
+
     @app.route("/contribute")
     def contribute():
         return render_template("contribute.html")
+
+    @app.route("/case-studies")
+    def case_studies():
+        return render_template("case_studies.html")
 
     @app.route("/scaffold-network-full")
     def scaffold_network_full_page():

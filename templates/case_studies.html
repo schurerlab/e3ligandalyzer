@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block title %}Case Studies — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --case-border: rgba(56,189,248,0.22);
+    --case-copy: #cbd5e1;
+  }
+  .case-shell {
+    max-width: 1220px;
+    margin: 0 auto;
+    color: var(--case-copy);
+  }
+  .case-hero,
+  .case-card {
+    border: 1px solid var(--case-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.84));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .case-hero {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(45,212,191,0.18), transparent 28%),
+      radial-gradient(circle at left center, rgba(56,189,248,0.16), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.9));
+  }
+  .case-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(56,189,248,0.32);
+    background: rgba(8,47,73,0.3);
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .case-title {
+    margin-top: 1rem;
+    font-size: clamp(2.7rem, 5vw, 4.9rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .case-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .case-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .case-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .case-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.72rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+  }
+  .case-grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .case-card {
+    padding: 1.25rem;
+  }
+  .case-label {
+    color: #67e8f9;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+  .case-card h2 {
+    margin-top: 0.35rem;
+    color: #f8fafc;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .case-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .case-box {
+    border: 1px solid rgba(56,189,248,0.16);
+    border-radius: 18px;
+    background: rgba(15,23,42,0.72);
+    padding: 1rem;
+  }
+  .case-box h3 {
+    color: #bae6fd;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+  }
+  .case-box p,
+  .case-box li,
+  .case-card p {
+    line-height: 1.75;
+  }
+  .case-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.8rem;
+  }
+  .case-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.18);
+    color: #bae6fd;
+  }
+  .case-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  @media (max-width: 820px) {
+    .case-columns {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="case-shell">
+  <header class="case-hero">
+    <div class="case-kicker">Workflow-oriented examples</div>
+    <h1 class="case-title">Case studies <span>for practical analysis</span></h1>
+    <p class="case-copy">
+      These examples are written as researcher workflows rather than fixed benchmark claims. They show how to use the Ligandalyzer to move from a biological question to a structure-aware recruiter shortlist, scaffold interpretation, or downstream modeling handoff without inventing unsupported numerical conclusions.
+    </p>
+    <div class="case-actions">
+      <a class="case-btn" href="/explorer">Open Explorer</a>
+      <a class="case-btn" href="/scaffolds">Scaffold dashboard</a>
+      <a class="case-btn" href="/ligases">Ligase and ELiAH view</a>
+      <a class="case-btn" href="/api-reference">API and downloads</a>
+    </div>
+  </header>
+
+  <div class="case-grid">
+    <section class="case-card">
+      <div class="case-label">Case study 1</div>
+      <h2>CRBN recruiter selection by QED and SASA</h2>
+      <p>Use the Explorer when the goal is to identify CRBN-linked recruiters that balance tractable physicochemical properties with visible solvent exposure that may support linker design.</p>
+      <div class="case-columns">
+        <div class="case-box">
+          <h3>Research question</h3>
+          <p>Which CRBN recruiter records combine reasonable drug-likeness with exposed structural features worth inspecting for linker attachment?</p>
+        </div>
+        <div class="case-box">
+          <h3>Pages and tools used</h3>
+          <p>Explorer filters, individual recruiter pages, SASA views, and the API descriptor routes when batch export is needed.</p>
+        </div>
+        <div class="case-box">
+          <h3>Suggested workflow</h3>
+          <p>Filter the Explorer to CRBN, raise the QED threshold, open candidate recruiter pages, and compare atom-level SASA overlays before selecting follow-up structures.</p>
+        </div>
+        <div class="case-box">
+          <h3>Expected interpretation</h3>
+          <p>Prefer records that remain chemically plausible for your use case and expose atoms in regions that do not obviously destroy the recruiter-binding core.</p>
+        </div>
+      </div>
+      <div class="case-links">
+        <a class="case-link" href="/explorer">Explorer</a>
+        <a class="case-link" href="/docs#metrics">Metric glossary</a>
+        <a class="case-link" href="/schema#sasa-summary">SASA schema</a>
+      </div>
+      <div class="case-note">Caveat: exposed atoms are a screening clue, not a guarantee of productive linker growth or ternary-complex performance.</div>
+    </section>
+
+    <section class="case-card">
+      <div class="case-label">Case study 2</div>
+      <h2>VHL versus CRBN scaffold diversity comparison</h2>
+      <p>This workflow is useful when deciding whether a ligase space is dominated by one recurring chemotype or supported by a broader recruiter scaffold landscape.</p>
+      <div class="case-columns">
+        <div class="case-box">
+          <h3>Research question</h3>
+          <p>Does one ligase appear structurally concentrated while the other spans a broader scaffold family distribution?</p>
+        </div>
+        <div class="case-box">
+          <h3>Pages and tools used</h3>
+          <p>Scaffold dashboard, scaffold detail pages, scaffold network view, and scaffold summary API routes.</p>
+        </div>
+        <div class="case-box">
+          <h3>Suggested workflow</h3>
+          <p>Inspect scaffold summaries by ligase, review scaffold frequency views, and open representative scaffold pages to see which LR codes and ligases contribute to the dominant chemotypes.</p>
+        </div>
+        <div class="case-box">
+          <h3>Expected interpretation</h3>
+          <p>Broader scaffold spread suggests more chemotype diversity; a concentrated scaffold profile suggests stronger dependence on a smaller recruiter family.</p>
+        </div>
+      </div>
+      <div class="case-links">
+        <a class="case-link" href="/scaffolds">Scaffold dashboard</a>
+        <a class="case-link" href="/scaffold-network-full">Scaffold network</a>
+        <a class="case-link" href="/schema#scaffolds">Scaffold schema</a>
+      </div>
+      <div class="case-note">Caveat: scaffold totals and clustering should be interpreted alongside the release page, because formal archived release manifests are still being finalized.</div>
+    </section>
+
+    <section class="case-card">
+      <div class="case-label">Case study 3</div>
+      <h2>Identifying exposed atoms for linker attachment</h2>
+      <p>Recruiter pages are designed to support attachment-vector triage by combining 2D SASA overlays, 3D structure context, and atom-resolved exposure tables.</p>
+      <div class="case-columns">
+        <div class="case-box">
+          <h3>Research question</h3>
+          <p>Which atoms on a recruiter appear solvent-exposed enough to justify linker exploration without immediately disrupting the known binding core?</p>
+        </div>
+        <div class="case-box">
+          <h3>Pages and tools used</h3>
+          <p>Recruiter pages, SASA atom overlays, 3D viewer, and the full SASA API payload for export-driven workflows.</p>
+        </div>
+        <div class="case-box">
+          <h3>Suggested workflow</h3>
+          <p>Open one LR page, toggle the SASA views, inspect per-atom exposure, then compare multiple recruiter instances of the same underlying ligand when available.</p>
+        </div>
+        <div class="case-box">
+          <h3>Expected interpretation</h3>
+          <p>Look for recurring exposed regions across instances rather than relying on a single conformation when the same ligand is observed in multiple structures.</p>
+        </div>
+      </div>
+      <div class="case-links">
+        <a class="case-link" href="/docs#ligands">Ligand-page guide</a>
+        <a class="case-link" href="/schema#sasa-atoms">Atom-level SASA schema</a>
+        <a class="case-link" href="/methods#sasa">SASA methods</a>
+      </div>
+      <div class="case-note">Caveat: the current public schema exposes continuous atom-level SASA values, but not a formal public attachment score. Final attachment decisions still require medicinal-chemistry judgment.</div>
+    </section>
+
+    <section class="case-card">
+      <div class="case-label">Case study 4</div>
+      <h2>Exporting recruiter PDB and SDF assets into PROTAC Builder</h2>
+      <p>Once a recruiter has been shortlisted, the fastest next step is often to move its structural assets into a modeling environment rather than manually reconstructing them.</p>
+      <div class="case-columns">
+        <div class="case-box">
+          <h3>Research question</h3>
+          <p>How do I move from a recruiter page to a reproducible file bundle for modeling, docking, or PROTAC Builder transfer?</p>
+        </div>
+        <div class="case-box">
+          <h3>Pages and tools used</h3>
+          <p>Recruiter pages, API download manifest, ligase ZIP endpoints, recruiter ZIP endpoints, and PROTAC Builder handoff controls.</p>
+        </div>
+        <div class="case-box">
+          <h3>Suggested workflow</h3>
+          <p>Resolve a recruiter code, confirm its structure context, download PDB/SDF assets from the recruiter or ligase bundle endpoints, and preserve the manifest alongside the files used in modeling.</p>
+        </div>
+        <div class="case-box">
+          <h3>Expected interpretation</h3>
+          <p>The manifest and release page together provide the provenance needed to describe which exact public resource state supported a downstream design session.</p>
+        </div>
+      </div>
+      <div class="case-links">
+        <a class="case-link" href="/api-reference#download-api">Download API</a>
+        <a class="case-link" href="/release">Release notes</a>
+        <a class="case-link" href="/api/download/manifest">Manifest</a>
+      </div>
+      <div class="case-note">Caveat: for manuscript-quality reproducibility, keep the corresponding release note and manifest with the exported structures.</div>
+    </section>
+
+    <section class="case-card">
+      <div class="case-label">Case study 5</div>
+      <h2>Finding tissue-compatible E3 ligases with the ELiAH expression atlas</h2>
+      <p>The ligase page integrates structure-centric recruiter data with an expression-atlas workflow so users can connect chemistry and biological context.</p>
+      <div class="case-columns">
+        <div class="case-box">
+          <h3>Research question</h3>
+          <p>Which ligases in the curated resource also appear biologically relevant in tissues or expression contexts related to my project?</p>
+        </div>
+        <div class="case-box">
+          <h3>Pages and tools used</h3>
+          <p>Ligase index and ELiAH search panels, ligase detail summaries, and recruiter or scaffold views for shortlisted ligases.</p>
+        </div>
+        <div class="case-box">
+          <h3>Suggested workflow</h3>
+          <p>Start in the ligase page, query tissue or gene-expression context, shortlist biologically relevant ligases, then move back into recruiter and scaffold views to inspect available chemotypes.</p>
+        </div>
+        <div class="case-box">
+          <h3>Expected interpretation</h3>
+          <p>Expression support does not replace structural suitability, but it can help prioritize which ligase systems deserve deeper recruiter and linker design effort.</p>
+        </div>
+      </div>
+      <div class="case-links">
+        <a class="case-link" href="/ligases">Ligases and ELiAH</a>
+        <a class="case-link" href="/docs#workflow">Design workflow</a>
+        <a class="case-link" href="/schema#ligases">Ligase schema</a>
+      </div>
+      <div class="case-note">Caveat: expression context is complementary metadata. It should be interpreted alongside structure availability, recruiter chemistry, and project-specific biology.</div>
+    </section>
+  </div>
+</section>
+{% endblock %}
