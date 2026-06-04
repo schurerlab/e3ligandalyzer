@@ -187,7 +187,7 @@
             <div id="ngl" class="h-[340px] bg-slate-800 rounded-lg shadow-lg border border-slate-700"></div>
 
             <!-- ⭐ FINAL ACTION BAR -->
-            <div id="final-action-bar" class="flex flex-row gap-4 mt-4">
+            <div id="final-action-bar" class="flex flex-row flex-wrap gap-4 mt-4">
 
               <button id="download-pdb-btn"
                 class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-lg shadow-lg border border-slate-600 transition">
@@ -203,6 +203,12 @@
                 class="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white font-semibold rounded-lg shadow-lg border border-slate-600 transition">
                 🧩 Use as PROTAC Ligand
               </button>
+
+              <a id="report-issue-btn"
+                href="/report-issue"
+                class="px-4 py-2 bg-slate-800 hover:bg-rose-700 text-rose-200 rounded-lg shadow-lg border border-slate-600 transition text-center">
+                Report Issue
+              </a>
             </div>
           </div>
 
@@ -636,6 +642,27 @@ function applyLigandBootstrapGlobals(data, recruiterCode) {
   current3D.pdbPath = pdbPath;
 }
 
+function updateReportIssueLink({ recruiterCode = "", ligase = "", ligand = "", pdbId = "", source = "ligand-page" } = {}) {
+  const link = document.getElementById("report-issue-btn");
+  if (!link) return;
+
+  const params = new URLSearchParams();
+  params.set("source", source);
+
+  const code = recruiterCode || window.currentLigandCode || RECRUITER || "";
+  const ligaseValue = ligase || window.currentLigase || "";
+  const ligandValue = ligand || document.getElementById("ligand-badge")?.textContent?.trim() || "";
+  const pdbValue = pdbId || "";
+
+  if (code) params.set("recruiter_code", code);
+  if (ligaseValue && ligaseValue !== "—") params.set("ligase", ligaseValue);
+  if (ligandValue && ligandValue !== "—") params.set("ligand", ligandValue);
+  if (pdbValue) params.set("pdb", pdbValue);
+  params.set("page", window.location.href);
+
+  link.href = `/report-issue?${params.toString()}`;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   showLigandLoader();
   try {
@@ -661,6 +688,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("ligand-badge").textContent = ligand;
 
     applyLigandBootstrapGlobals(data, recruiterCode);
+    updateReportIssueLink({ recruiterCode, ligase, ligand, pdbId });
 
     console.log("🧬 DOWNLOAD METADATA SET:", window.currentLigase, window.currentPDB);
 

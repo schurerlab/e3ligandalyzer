@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% block title %}Report a Database Issue — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --report-border: rgba(56, 189, 248, 0.22);
+    --report-panel: rgba(15, 23, 42, 0.84);
+    --report-copy: #cbd5e1;
+    --report-muted: #94a3b8;
+  }
+  .report-shell {
+    max-width: 1220px;
+    margin: 0 auto;
+    color: var(--report-copy);
+  }
+  .report-hero,
+  .report-panel,
+  .report-card {
+    border: 1px solid var(--report-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.9));
+    box-shadow: 0 22px 60px rgba(2, 6, 23, 0.36);
+  }
+  .report-hero {
+    padding: clamp(1.6rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(45, 212, 191, 0.18), transparent 28%),
+      radial-gradient(circle at left bottom, rgba(250, 204, 21, 0.14), transparent 24%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.92));
+  }
+  .report-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(45, 212, 191, 0.34);
+    background: rgba(8, 47, 73, 0.3);
+    color: #ccfbf1;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .report-title {
+    margin-top: 1rem;
+    font-size: clamp(2.5rem, 5vw, 4.7rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .report-title span {
+    display: block;
+    color: transparent;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .report-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .report-actions,
+  .report-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .report-btn,
+  .report-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.78rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(15, 23, 42, 0.72);
+    color: #e2e8f0;
+    text-decoration: none;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  }
+  .report-btn:hover,
+  .report-link:hover {
+    transform: translateY(-1px);
+    border-color: rgba(45, 212, 191, 0.52);
+  }
+  .report-btn.primary {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.26), rgba(20, 184, 166, 0.22));
+    border-color: rgba(45, 212, 191, 0.48);
+  }
+  .report-btn.secondary {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(15, 23, 42, 0.8));
+    border-color: rgba(250, 204, 21, 0.35);
+  }
+  .report-layout {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .report-panel,
+  .report-card {
+    padding: 1.25rem;
+  }
+  .report-panel h2,
+  .report-card h3 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .report-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .report-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .report-field.full {
+    grid-column: 1 / -1;
+  }
+  .report-field label {
+    font-size: 0.92rem;
+    color: #cbd5e1;
+    font-weight: 600;
+  }
+  .report-field input,
+  .report-field select,
+  .report-field textarea {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(71, 85, 105, 0.95);
+    background: rgba(15, 23, 42, 0.78);
+    color: #e2e8f0;
+    padding: 0.82rem 0.92rem;
+  }
+  .report-field input::placeholder,
+  .report-field textarea::placeholder {
+    color: #64748b;
+  }
+  .report-field textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+  .report-help {
+    font-size: 0.82rem;
+    color: var(--report-muted);
+  }
+  .report-list {
+    margin-top: 0.9rem;
+    padding-left: 1.2rem;
+    color: #cbd5e1;
+    line-height: 1.7;
+  }
+  .report-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250, 204, 21, 0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245, 158, 11, 0.08);
+    color: #fef3c7;
+  }
+  .report-preview {
+    width: 100%;
+    min-height: 440px;
+    border-radius: 20px;
+    border: 1px solid rgba(56, 189, 248, 0.24);
+    background: rgba(2, 6, 23, 0.92);
+    padding: 1rem;
+    color: #dbeafe;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+  @media (max-width: 980px) {
+    .report-layout,
+    .report-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="report-shell">
+  <header class="report-hero">
+    <div class="report-kicker">Database and curation reporting</div>
+    <h1 class="report-title">Report a <span>database issue</span></h1>
+    <p class="report-copy">
+      This page helps generate a structured email to the E3 Ligase Ligandalyzer maintainers when you notice a curation, database, asset, visualization, or tooling problem. Please review the generated message in your email client before sending. Reports are not automatically submitted or stored by this page.
+    </p>
+    <div class="report-actions">
+      <button id="copyReportBtn" class="report-btn secondary" type="button">Copy Report</button>
+      <a id="emailReportBtn" class="report-btn primary" href="mailto:{{ SUPPORT_EMAIL }}">Email Report</a>
+      <a class="report-link" href="/contribute">Submit Data / Contribute</a>
+      <a class="report-link" href="/methods">Methods</a>
+      <a class="report-link" href="/schema">Schema</a>
+      <a class="report-link" href="/docs">Docs</a>
+    </div>
+  </header>
+
+  <div class="report-layout">
+    <section class="report-panel">
+      <h2>What to report</h2>
+      <p class="mt-3 leading-7 text-slate-300">
+        Useful reports include peptide-like fragments that slipped through filtering, BRD or BIRD-like molecules that appear incompletely represented, single-ligand assignments that look suspicious, partial ligand extraction, missing PDB or SDF files, missing SASA or visualization assets, incorrect recruiter codes, duplicate records, incorrect ligase or scaffold assignments, broken downloads, broken API links, or misleading external references.
+      </p>
+      <ul class="report-list list-disc">
+        <li>Peptide-like fragments or incompletely extracted molecules.</li>
+        <li>BRD/BIRD-like molecules that appear truncated or only partly represented.</li>
+        <li>Missing PDB, SDF, SASA, SVG, 2D, or 3D assets.</li>
+        <li>Incorrect recruiter code, ligase, scaffold, residue, chain, or PDB mapping.</li>
+        <li>Duplicate or suspicious recruiter records and broken download or API routes.</li>
+      </ul>
+      <div class="report-note">
+        The generated message is sent through your own email client to <a class="text-amber-200 underline" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>. The authors may follow up if additional evidence is needed, and confirmed corrections can be incorporated into future curated releases.
+      </div>
+
+      <form id="issueForm" class="report-grid" onsubmit="return false;">
+        <div class="report-field">
+          <label for="reporter_name">Reporter name</label>
+          <input id="reporter_name" name="reporter_name" type="text" placeholder="Optional">
+        </div>
+        <div class="report-field">
+          <label for="reporter_email">Reporter email</label>
+          <input id="reporter_email" name="reporter_email" type="email" placeholder="Optional">
+        </div>
+        <div class="report-field">
+          <label for="issue_type">Issue type</label>
+          <select id="issue_type" name="issue_type">
+            <option value="">Select an issue category</option>
+            <option>Peptide-like fragment / incomplete molecule</option>
+            <option>BRD/BIRD-like molecule not fully represented</option>
+            <option>Incorrect single-ligand extraction</option>
+            <option>Missing structure file</option>
+            <option>Missing or incorrect SASA data</option>
+            <option>Incorrect recruiter code</option>
+            <option>Duplicate recruiter record</option>
+            <option>Incorrect ligase assignment</option>
+            <option>Incorrect scaffold assignment</option>
+            <option>Broken visualization</option>
+            <option>Broken download/API endpoint</option>
+            <option>External-link issue</option>
+            <option>Other database/tool issue</option>
+          </select>
+        </div>
+        <div class="report-field">
+          <label for="recruiter_code">Recruiter code</label>
+          <input id="recruiter_code" name="recruiter_code" type="text" placeholder="LR00001">
+        </div>
+        <div class="report-field">
+          <label for="ligase">Ligase</label>
+          <input id="ligase" name="ligase" type="text" placeholder="CRBN">
+        </div>
+        <div class="report-field">
+          <label for="ligand">Ligand ID or name</label>
+          <input id="ligand" name="ligand" type="text" placeholder="Optional">
+        </div>
+        <div class="report-field">
+          <label for="pdb">PDB ID</label>
+          <input id="pdb" name="pdb" type="text" placeholder="1XYZ">
+        </div>
+        <div class="report-field">
+          <label for="source">Source</label>
+          <input id="source" name="source" type="text" placeholder="ligand-page">
+        </div>
+        <div class="report-field full">
+          <label for="page">Page URL</label>
+          <input id="page" name="page" type="text" placeholder="Current page or affected route">
+          <div class="report-help">This can be prefilled from the query string or from the current report page URL when no context is provided.</div>
+        </div>
+        <div class="report-field full">
+          <label for="expected_behavior">Expected behavior</label>
+          <textarea id="expected_behavior" name="expected_behavior" placeholder="What should be shown, linked, or assigned instead?"></textarea>
+        </div>
+        <div class="report-field full">
+          <label for="observed_issue">Observed issue</label>
+          <textarea id="observed_issue" name="observed_issue" placeholder="Describe the current problem as precisely as possible."></textarea>
+        </div>
+        <div class="report-field full">
+          <label for="suggested_correction">Suggested correction</label>
+          <textarea id="suggested_correction" name="suggested_correction" placeholder="Optional"></textarea>
+        </div>
+        <div class="report-field full">
+          <label for="evidence">Evidence, source, or citation</label>
+          <textarea id="evidence" name="evidence" placeholder="Optional DOI, paper, PDB note, screenshot description, or other supporting context"></textarea>
+        </div>
+        <div class="report-field full">
+          <label for="file_path">File, path, or API endpoint involved</label>
+          <input id="file_path" name="file_path" type="text" placeholder="Optional">
+        </div>
+      </form>
+    </section>
+
+    <aside class="report-card">
+      <h3>Generated report preview</h3>
+      <p class="mt-3 text-slate-300 leading-7">
+        The preview updates as you type. The email button uses this text as the message body and adds a subject line that includes the recruiter code when available.
+      </p>
+      <pre id="reportPreview" class="report-preview">Preparing report preview…</pre>
+      <div id="copyStatus" class="report-help mt-3">Copy Report places the plain-text message on your clipboard.</div>
+      <div class="report-links">
+        <a class="report-link" href="/missing">Missing data page</a>
+        <a class="report-link" href="/missing-recruiter">Missing recruiter page</a>
+        <a class="report-link" href="/release">Release notes</a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const supportEmail = {{ SUPPORT_EMAIL|tojson }};
+  const form = document.getElementById("issueForm");
+  const preview = document.getElementById("reportPreview");
+  const emailBtn = document.getElementById("emailReportBtn");
+  const copyBtn = document.getElementById("copyReportBtn");
+  const copyStatus = document.getElementById("copyStatus");
+  const params = new URLSearchParams(window.location.search);
+
+  const fields = [
+    "reporter_name",
+    "reporter_email",
+    "issue_type",
+    "recruiter_code",
+    "ligase",
+    "ligand",
+    "pdb",
+    "source",
+    "page",
+    "expected_behavior",
+    "observed_issue",
+    "suggested_correction",
+    "evidence",
+    "file_path"
+  ];
+
+  const prefillMap = {
+    recruiter_code: ["recruiter_code", "recruiter", "code"],
+    ligase: ["ligase"],
+    ligand: ["ligand", "ligand_name"],
+    pdb: ["pdb", "pdb_id"],
+    issue_type: ["issue_type"],
+    page: ["page"],
+    source: ["source"]
+  };
+
+  const absolutePageUrl = (value) => {
+    if (!value) return "";
+    try {
+      return new URL(value, window.location.origin).toString();
+    } catch (error) {
+      return value;
+    }
+  };
+
+  Object.entries(prefillMap).forEach(([fieldId, keys]) => {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    for (const key of keys) {
+      const value = params.get(key);
+      if (value) {
+        field.value = fieldId === "page" ? absolutePageUrl(value) : value;
+        break;
+      }
+    }
+  });
+
+  if (!document.getElementById("page").value) {
+    document.getElementById("page").value = window.location.href;
+  }
+
+  function getValue(id) {
+    return (document.getElementById(id)?.value || "").trim();
+  }
+
+  function buildReporterLine() {
+    const name = getValue("reporter_name");
+    const email = getValue("reporter_email");
+    if (name && email) return `${name} <${email}>`;
+    return name || email || "Not provided";
+  }
+
+  function buildCorrectionLine() {
+    const expected = getValue("expected_behavior");
+    const suggested = getValue("suggested_correction");
+    if (expected && suggested) return `${expected}\nSuggested correction: ${suggested}`;
+    return expected || suggested || "Not provided";
+  }
+
+  function buildReport() {
+    const lines = [
+      "E3 Ligase Ligandalyzer Database Issue Report",
+      "",
+      "Issue type:",
+      getValue("issue_type") || "Not provided",
+      "",
+      "Reporter:",
+      buildReporterLine(),
+      "",
+      "Page/source:",
+      [getValue("page") || "Not provided", getValue("source") || "Not provided"].join(" | source: "),
+      "",
+      "Recruiter code:",
+      getValue("recruiter_code") || "Not provided",
+      "",
+      "Ligase:",
+      getValue("ligase") || "Not provided",
+      "",
+      "Ligand:",
+      getValue("ligand") || "Not provided",
+      "",
+      "PDB:",
+      getValue("pdb") || "Not provided",
+      "",
+      "Observed issue:",
+      getValue("observed_issue") || "Not provided",
+      "",
+      "Expected behavior / suggested correction:",
+      buildCorrectionLine(),
+      "",
+      "Evidence / citation / source:",
+      getValue("evidence") || "Not provided",
+      "",
+      "Additional context:",
+      getValue("file_path") || "Not provided",
+      "",
+      "Browser:",
+      navigator.userAgent,
+      "",
+      "Generated:",
+      new Date().toISOString()
+    ];
+    return lines.join("\n");
+  }
+
+  function buildSubject() {
+    const recruiter = getValue("recruiter_code");
+    return recruiter
+      ? `E3 Ligandalyzer issue report: ${recruiter}`
+      : "E3 Ligandalyzer database issue report";
+  }
+
+  function refreshReport() {
+    const report = buildReport();
+    preview.textContent = report;
+    const href = `mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(buildSubject())}&body=${encodeURIComponent(report)}`;
+    emailBtn.href = href;
+  }
+
+  form.addEventListener("input", refreshReport);
+
+  copyBtn.addEventListener("click", async () => {
+    const report = buildReport();
+    try {
+      await navigator.clipboard.writeText(report);
+      copyStatus.textContent = "Report copied to clipboard. Review it in your email client before sending.";
+      copyBtn.textContent = "Copied";
+      window.setTimeout(() => {
+        copyBtn.textContent = "Copy Report";
+      }, 1600);
+    } catch (error) {
+      copyStatus.textContent = "Clipboard copy was blocked by the browser. You can still copy from the preview panel.";
+    }
+  });
+
+  refreshReport();
+});
+</script>
+{% endblock %}

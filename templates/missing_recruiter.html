@@ -101,14 +101,18 @@
 
   <!-- CONTACT -->
   <p class="text-gray-400 mb-6 max-w-xl">
-    If you believe this data should exist, please send the report to  
+    If you believe this data should exist, please copy the report or open the structured reporting page to prepare an email to
     <a href="mailto:{{ SUPPORT_EMAIL }}" class="text-amber-400 underline">
       {{ SUPPORT_EMAIL }}
-    </a>.  
-    We don’t bite — unlike some proteases.
+    </a>.
   </p>
 
   <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+    <a id="reportIssueLink"
+      href="/report-issue?source=missing-recruiter-page&issue_type=Missing%20structure%20file&recruiter_code={{ recruiter_code|urlencode }}&page=/missing-recruiter?code={{ recruiter_code|urlencode }}"
+      class="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded text-white shadow">
+      Report Database Issue
+    </a>
     <a href="/contribute" class="px-4 py-2 bg-sky-700 hover:bg-sky-600 rounded text-white shadow">
       🤝 Submit Data / Contribute
     </a>

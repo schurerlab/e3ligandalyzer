@@ -17,6 +17,10 @@ import random
 logger = logging.getLogger(__name__)
 
 
+def get_support_email() -> str:
+    return (os.environ.get("E3_SUPPORT_EMAIL", "jmschulz@med.miami.edu") or "jmschulz@med.miami.edu").strip()
+
+
 def get_public_site_url() -> str:
     return (os.environ.get("PUBLIC_SITE_URL", "https://e3ligandalyzer.com") or "https://e3ligandalyzer.com").rstrip("/")
 
@@ -145,6 +149,7 @@ def create_app():
     app.config["PUBLIC_SITE_URL"] = get_public_site_url()
     app.config["PUBLIC_API_BASE"] = get_public_api_base()
     app.config["PROTAC_BUILDER_BASE_URL"] = get_protac_builder_base_url()
+    app.config["SUPPORT_EMAIL"] = get_support_email()
 
     # Register your API blueprint normally (no prefix)
     app.register_blueprint(ligases_bp, url_prefix="/api")
@@ -157,6 +162,7 @@ def create_app():
             "PUBLIC_SITE_URL": app.config["PUBLIC_SITE_URL"],
             "PUBLIC_API_BASE": app.config["PUBLIC_API_BASE"],
             "PROTAC_BUILDER_BASE_URL": app.config["PROTAC_BUILDER_BASE_URL"],
+            "SUPPORT_EMAIL": app.config["SUPPORT_EMAIL"],
         }
 
 
@@ -230,7 +236,7 @@ def create_app():
 
     @app.route("/missing")
     def missing():
-        return render_template("missing_data.html", SUPPORT_EMAIL="jxs794@miami.edu")
+        return render_template("missing_data.html")
 
     @app.route("/about")
     def about():
@@ -272,6 +278,10 @@ def create_app():
     def contribute():
         return render_template("contribute.html")
 
+    @app.route("/report-issue")
+    def report_issue():
+        return render_template("report_issue.html")
+
     @app.route("/case-studies")
     def case_studies():
         return render_template("case_studies.html")
@@ -289,7 +299,7 @@ def create_app():
         """, [scaffold_id], one=True)
 
         if not row:
-            return render_template("missing_data.html", SUPPORT_EMAIL="jxs794@miami.edu")
+            return render_template("missing_data.html")
 
         recruiters = query_db("""
             SELECT RECRUITER_CODE, Ligase
@@ -310,12 +320,12 @@ def create_app():
         code = getattr(error, "description", None)
         if request.path.startswith("/api/"):
             return jsonify({"error": "Missing recruiter-linked data.", "recruiter_code": code}), 411
-        return render_template("missing_recruiter.html", recruiter_code=code, SUPPORT_EMAIL="jxs794@miami.edu"), 411
+        return render_template("missing_recruiter.html", recruiter_code=code), 411
     
     @app.route("/missing-recruiter")
     def missing_recruiter():
         code = request.args.get("code", "UNKNOWN")
-        return render_template("missing_recruiter.html", recruiter_code=code, SUPPORT_EMAIL="jxs794@miami.edu")
+        return render_template("missing_recruiter.html", recruiter_code=code)
     
     @app.errorhandler(404)
     def not_found_error(error):
@@ -333,8 +343,7 @@ def create_app():
         return render_template(
             "410.html",
             recruiter_code=getattr(error, "description", "Unknown"),
-            random_recruiter=random_code,
-            SUPPORT_EMAIL="jxs794@miami.edu"
+            random_recruiter=random_code
         ), 410
     
     @app.route("/ligand-retired/<code>")
@@ -343,8 +352,7 @@ def create_app():
         return render_template(
             "410.html",
             recruiter_code=code,
-            random_recruiter=random_code,
-            SUPPORT_EMAIL="jxs794@miami.edu"
+            random_recruiter=random_code
         ), 410
 
 

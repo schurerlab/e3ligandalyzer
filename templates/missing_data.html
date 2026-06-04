@@ -26,11 +26,14 @@
   </div>
 
   <p class="text-gray-400 mb-6">
-    If you think this data should exist, send this report to
+    If you think this data should exist, copy the report below or open the structured reporting page for a publication-friendly email draft to
     <a href="mailto:{{ SUPPORT_EMAIL }}" class="text-sky-400 underline">{{ SUPPORT_EMAIL }}</a>.
   </p>
 
   <div class="flex flex-wrap items-center justify-center gap-3">
+    <a id="reportIssueLink" href="/report-issue" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 rounded text-white">
+      Report Database Issue
+    </a>
     <a href="/contribute" class="px-4 py-2 bg-sky-700 hover:bg-sky-600 rounded text-white">
       🤝 Submit Data / Contribute
     </a>
@@ -74,6 +77,19 @@ Details: ${readable}
 User Agent: ${navigator.userAgent}`;
     reportText.textContent = report;
     copyBox.classList.remove("hidden");
+
+    const reportLink = document.getElementById("reportIssueLink");
+    if (reportLink) {
+      const issueParams = new URLSearchParams({
+        source: "missing-data-page",
+        issue_type: "Missing structure file",
+        ligand,
+        pdb,
+        page: window.location.href
+      });
+      if (variant) issueParams.set("file_path", `variant=${variant}`);
+      reportLink.href = `/report-issue?${issueParams.toString()}`;
+    }
 
     // 📋 Copy to clipboard
     document.getElementById("copyButton").onclick = () => {

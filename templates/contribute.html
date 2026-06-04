@@ -129,8 +129,9 @@
       E3 Ligase Ligandalyzer is designed as a curated database resource, so useful contributions are welcome when they improve structure coverage, recruiter annotation, scaffold interpretation, or missing-data resolution. Submissions are reviewed before inclusion so the public resource stays traceable, release-aware, and scientifically coherent.
     </p>
     <div class="con-actions">
-      <a class="con-btn primary" href="mailto:jxs794@miami.edu?subject=E3 Ligandalyzer data submission">Email the maintainers</a>
+      <a class="con-btn primary" href="mailto:{{ SUPPORT_EMAIL }}?subject=E3 Ligandalyzer data submission">Email the maintainers</a>
       <a class="con-btn" href="https://github.com/Joey305" target="_blank" rel="noopener noreferrer">GitHub profile</a>
+      <a class="con-btn" href="/report-issue">Report database issue</a>
       <a class="con-btn" href="/missing">Report missing structure context</a>
       <a class="con-btn" href="/methods">Read curation methods</a>
     </div>
@@ -171,6 +172,14 @@
     </section>
 
     <section class="con-card">
+      <h3>Report database or curation issues</h3>
+      <p>Use the dedicated reporting workflow when you notice peptide-like fragments, BRD or BIRD-like molecules that look incompletely represented, suspicious single-ligand extraction, duplicate recruiter codes, missing SASA assets, broken downloads, incorrect ligase or scaffold assignments, or broken visualizations.</p>
+      <div class="con-actions">
+        <a class="con-btn primary" href="/report-issue">Open report page</a>
+      </div>
+    </section>
+
+    <section class="con-card">
       <h3>Suggest new ligases</h3>
       <p>When proposing a new E3 ligase, include the preferred ligase or gene name, candidate structures, and why the system belongs in a recruiter-focused E3 resource. Structure-linked evidence is more useful than a name alone.</p>
     </section>
@@ -201,8 +210,9 @@
         The current public submission paths are the project contact email and the public GitHub pathway already linked from the site. If you open a GitHub issue or send email, include enough structural detail that the maintainers can connect your submission to the current curation pipeline.
       </p>
       <ul class="list-disc pl-5 mt-3 space-y-2">
-        <li>Email: <a class="text-sky-300 hover:text-sky-200" href="mailto:jxs794@miami.edu">jxs794@miami.edu</a></li>
+        <li>Email: <a class="text-sky-300 hover:text-sky-200" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a></li>
         <li>GitHub pathway: <a class="text-sky-300 hover:text-sky-200" href="https://github.com/Joey305" target="_blank" rel="noopener noreferrer">Joey305 on GitHub</a></li>
+        <li>Structured issue reporting: <a class="text-sky-300 hover:text-sky-200" href="/report-issue">/report-issue</a> for database, curation, and tool problems.</li>
         <li>Methods and schema context: link the relevant page or route if your submission affects a specific table, field, or workflow step.</li>
       </ul>
     </section>

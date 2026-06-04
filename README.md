@@ -113,4 +113,4 @@ If you use this work in research, please cite:
 ## 💬 Contact
 
 For questions, feedback, or collaboration:
-📧 **[jxs794@miami.edu](mailto:jxs794@miami.edu)**
+📧 **[jmschulz@med.miami.edu](mailto:jmschulz@med.miami.edu)**

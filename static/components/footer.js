@@ -244,10 +244,11 @@ class CustomFooter extends HTMLElement {
           <div>
             <h3><i data-feather="message-circle"></i>Connect</h3>
             <ul>
-              <li><a href="mailto:jxs794@miami.edu"><i data-feather="mail"></i>Contact</a></li>
-              <li><a href="mailto:jxs794@miami.edu?subject=Ligandalyzer Feedback">
+              <li><a href="mailto:jmschulz@med.miami.edu"><i data-feather="mail"></i>Contact</a></li>
+              <li><a href="mailto:jmschulz@med.miami.edu?subject=Ligandalyzer Feedback">
                 <i data-feather="send"></i>Feedback</a></li>
               <li><a href="/contribute"><i data-feather="upload-cloud"></i>Submit Data / Contribute</a></li>
+              <li><a href="/report-issue"><i data-feather="alert-circle"></i>Report Database Issue</a></li>
             </ul>
           </div>
         </div>
