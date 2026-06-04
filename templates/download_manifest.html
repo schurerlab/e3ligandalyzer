@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Download Manifest — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --man-border: rgba(56,189,248,0.22);
+    --man-copy: #cbd5e1;
+    --man-muted: #94a3b8;
+  }
+  .manifest-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    color: var(--man-copy);
+  }
+  .manifest-hero,
+  .manifest-panel,
+  .manifest-stat,
+  .manifest-card {
+    border: 1px solid var(--man-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.84));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .manifest-hero {
+    padding: clamp(1.5rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(45,212,191,0.18), transparent 28%),
+      radial-gradient(circle at left center, rgba(56,189,248,0.16), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.9));
+  }
+  .manifest-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(56,189,248,0.32);
+    background: rgba(8,47,73,0.3);
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .manifest-title {
+    margin-top: 1rem;
+    font-size: clamp(2.7rem, 5vw, 4.9rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .manifest-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .manifest-copy {
+    max-width: 900px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .manifest-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .manifest-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.72rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+  }
+  .manifest-btn.primary {
+    background: linear-gradient(135deg, rgba(14,165,233,0.24), rgba(20,184,166,0.2));
+    border-color: rgba(45,212,191,0.48);
+  }
+  .manifest-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .manifest-stat {
+    padding: 1rem;
+    background: rgba(15,23,42,0.76);
+  }
+  .manifest-stat-label {
+    color: var(--man-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .manifest-stat-value {
+    margin-top: 0.45rem;
+    color: #f8fafc;
+    font-size: clamp(1.55rem, 3.6vw, 2.3rem);
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    overflow-wrap: anywhere;
+  }
+  .manifest-main {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .manifest-panel {
+    padding: 1.2rem;
+  }
+  .manifest-panel h2,
+  .manifest-card h3 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .manifest-panel p,
+  .manifest-panel li,
+  .manifest-card p {
+    line-height: 1.75;
+  }
+  .manifest-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .manifest-card {
+    padding: 1rem;
+    background: rgba(15,23,42,0.76);
+  }
+  .manifest-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+  }
+  .manifest-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0.55rem 0.85rem;
+    border-radius: 12px;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2);
+    color: #bae6fd;
+  }
+  .manifest-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 18px;
+  }
+  .manifest-table th,
+  .manifest-table td {
+    padding: 0.85rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(56,189,248,0.14);
+  }
+  .manifest-table th {
+    background: rgba(8,47,73,0.4);
+    color: #e0f2fe;
+    font-weight: 800;
+  }
+  .manifest-table td {
+    background: rgba(15,23,42,0.72);
+  }
+  .manifest-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    color: #7dd3fc;
+  }
+  @media (max-width: 1100px) {
+    .manifest-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 860px) {
+    .manifest-card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 680px) {
+    .manifest-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="manifest-shell">
+  <header class="manifest-hero">
+    <div class="manifest-kicker">Version 1 download index</div>
+    <h1 class="manifest-title">Human-readable <span>download manifest</span></h1>
+    <p class="manifest-copy">
+      This page is the human-readable Version 1 download manifest for E3 Ligase Ligandalyzer. It summarizes the current public download surface for ligase bundles, table exports, and dataset-wide structure archives. For reproducible analysis, pair downloaded files with the <a class="text-sky-300 hover:text-sky-200" href="/release">Release Notes</a>, <a class="text-sky-300 hover:text-sky-200" href="/methods">Methods</a>, and <a class="text-sky-300 hover:text-sky-200" href="/schema">Database Schema</a> pages.
+    </p>
+    <div class="manifest-links">
+      <a class="manifest-btn primary" href="/api/download/manifest" target="_blank" rel="noopener noreferrer">Raw JSON manifest</a>
+      <a class="manifest-btn" href="/api-reference">API Reference</a>
+      <a class="manifest-btn" href="/release">V1 Release Notes</a>
+      <a class="manifest-btn" href="/methods">Methods</a>
+    </div>
+  </header>
+
+  <section class="manifest-grid" aria-label="Manifest overview">
+    <article class="manifest-stat"><div class="manifest-stat-label">Release label</div><div class="manifest-stat-value">Version 1.0</div></article>
+    <article class="manifest-stat"><div class="manifest-stat-label">Manifest scope</div><div class="manifest-stat-value">{{ manifest.ligase_count }}</div></article>
+    <article class="manifest-stat"><div class="manifest-stat-label">Table downloads</div><div class="manifest-stat-value">{{ manifest.tables|length }}</div></article>
+    <article class="manifest-stat"><div class="manifest-stat-label">Generated</div><div class="manifest-stat-value">{{ manifest.generated_at or "Live API timestamp" }}</div></article>
+  </section>
+
+  <main class="manifest-main">
+    <section class="manifest-panel">
+      <h2>Manifest metadata</h2>
+      <table class="manifest-table">
+        <thead>
+          <tr><th>Field</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Base URL</td><td><span class="mono">{{ manifest.base_url }}</span></td></tr>
+          <tr><td>Version</td><td>Version 1.0 public release manifest</td></tr>
+          <tr><td>Machine-readable endpoint</td><td><a class="text-sky-300 hover:text-sky-200" href="/api/download/manifest" target="_blank" rel="noopener noreferrer">/api/download/manifest</a></td></tr>
+          <tr><td>Recommended companion pages</td><td><a class="text-sky-300 hover:text-sky-200" href="/release">Release</a>, <a class="text-sky-300 hover:text-sky-200" href="/methods">Methods</a>, <a class="text-sky-300 hover:text-sky-200" href="/schema">Schema</a></td></tr>
+        </tbody>
+      </table>
+      <div class="manifest-note">
+        The raw JSON manifest remains intentionally unstyled because it is meant for scripts, `curl`, Python workflows, and other machine-readable use cases. This page is the browser-friendly companion for human users.
+      </div>
+    </section>
+
+    <section class="manifest-panel">
+      <h2>All-download archives</h2>
+      <div class="manifest-card-grid">
+        <article class="manifest-card">
+          <h3>All PDB files</h3>
+          <p>Download the Version 1 PDB archive across the currently exposed ligase folders.</p>
+          <div class="manifest-card-actions">
+            <a class="manifest-mini-btn" href="{{ manifest.all_downloads.all_pdbs_zip }}">Download PDB ZIP</a>
+          </div>
+        </article>
+        <article class="manifest-card">
+          <h3>All SDF files</h3>
+          <p>Download the Version 1 SDF archive for the public ligand asset set.</p>
+          <div class="manifest-card-actions">
+            <a class="manifest-mini-btn" href="{{ manifest.all_downloads.all_sdfs_zip }}">Download SDF ZIP</a>
+          </div>
+        </article>
+        <article class="manifest-card">
+          <h3>All structures</h3>
+          <p>Retrieve the combined public structure archive with the broadest current asset coverage.</p>
+          <div class="manifest-card-actions">
+            <a class="manifest-mini-btn" href="{{ manifest.all_downloads.all_structures_zip }}">Download Structure ZIP</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="manifest-panel">
+      <h2>Table downloads</h2>
+      <table class="manifest-table">
+        <thead>
+          <tr><th>Table</th><th>Purpose</th><th>Download</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="mono">Ligase_Chemical_Descriptors.csv</span></td><td>Recruiter descriptor table for filtering and chemical analysis.</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ manifest.tables.descriptor_csv }}">Download</a></td></tr>
+          <tr><td><span class="mono">Ligase_Recruiters_Scaffold.csv</span></td><td>Recruiter-to-scaffold mapping table.</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ manifest.tables.recruiter_scaffold_csv }}">Download</a></td></tr>
+          <tr><td><span class="mono">Ligase_Ligand_SASA_atoms.csv</span></td><td>Atom-level SASA table for recruiter exposure analysis.</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ manifest.tables.sasa_atoms_csv }}">Download</a></td></tr>
+          <tr><td><span class="mono">Ligase_Ligand_SASA_summary.csv</span></td><td>Ligand-level SASA summary table for exposure and burial context.</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ manifest.tables.sasa_summary_csv }}">Download</a></td></tr>
+          <tr><td><span class="mono">Ligase_Scaffold_Data.csv</span></td><td>Scaffold-level summary table used by the public scaffold dashboard.</td><td><a class="text-sky-300 hover:text-sky-200" href="{{ manifest.tables.scaffold_data_csv }}">Download</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="manifest-panel">
+      <h2>Per-ligase bundle index</h2>
+      <table class="manifest-table">
+        <thead>
+          <tr><th>Ligase</th><th>PDB files</th><th>SDF files</th><th>Bundle downloads</th></tr>
+        </thead>
+        <tbody>
+          {% for ligase in manifest.ligases %}
+          <tr>
+            <td><strong>{{ ligase.ligase }}</strong></td>
+            <td>{{ ligase.pdb_count }}</td>
+            <td>{{ ligase.sdf_count }}</td>
+            <td>
+              <a class="text-sky-300 hover:text-sky-200" href="{{ ligase.downloads.all_zip }}">all.zip</a>
+              ·
+              <a class="text-sky-300 hover:text-sky-200" href="{{ ligase.downloads.pdb_zip }}">pdbs.zip</a>
+              ·
+              <a class="text-sky-300 hover:text-sky-200" href="{{ ligase.downloads.sdf_zip }}">sdfs.zip</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="manifest-panel">
+      <h2>Developer access</h2>
+      <div class="manifest-card-grid">
+        <article class="manifest-card">
+          <h3>Raw JSON URL</h3>
+          <p><span class="mono">/api/download/manifest</span></p>
+          <div class="manifest-card-actions">
+            <a class="manifest-mini-btn" href="/api/download/manifest" target="_blank" rel="noopener noreferrer">Open raw API JSON</a>
+          </div>
+        </article>
+        <article class="manifest-card">
+          <h3>API examples</h3>
+          <p>Terminal-safe `curl`, Python, and bundle download examples remain on the API Reference page.</p>
+          <div class="manifest-card-actions">
+            <a class="manifest-mini-btn" href="/api-reference#download-api">Open API examples</a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+</section>
+{% endblock %}

@@ -236,6 +236,7 @@ class CustomFooter extends HTMLElement {
               <li><a href="/methods"><i data-feather="git-branch"></i>Methods</a></li>
               <li><a href="/schema"><i data-feather="layout"></i>Database Schema</a></li>
               <li><a href="/release"><i data-feather="archive"></i>Release Notes</a></li>
+              <li><a href="/download-manifest"><i data-feather="download"></i>Download Manifest</a></li>
               <li><a href="/case-studies"><i data-feather="clipboard"></i>Case Studies</a></li>
             </ul>
           </div>

@@ -409,6 +409,11 @@ class CustomNavbar extends HTMLElement {
                   <i data-feather="archive"></i> Release Notes
                 </span>
               </a>
+              <a href="/download-manifest" data-page="download-manifest">
+                <span class="module-label">
+                  <i data-feather="download"></i> Download Manifest
+                </span>
+              </a>
               <a href="/case-studies" data-page="case-studies">
                 <span class="module-label">
                   <i data-feather="clipboard"></i> Case Studies

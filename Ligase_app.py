@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from urllib.parse import urlencode
 from flask import Flask, render_template, send_from_directory, request, redirect
-from Ligases.routes import ligases_bp, query_db
+from Ligases.routes import ligases_bp, query_db, build_download_manifest
 from Ligases import randy_client
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Request
@@ -61,10 +61,15 @@ def build_release_context():
     }
 
     return {
-        "version_label": "Formal release annotation pending",
-        "release_date": "Reported in release manifest when available",
+        "version_label": "Version 1.0",
+        "short_label": "V1",
+        "release_state": "Public V1 database release",
+        "release_date": "Initial public V1 release",
+        "update_cadence": "Annual review and update cycle",
+        "update_policy": "New ligases, recruiter structures, scaffold annotations, and SASA-linked assets may be incorporated in future yearly releases after curation and validation.",
         "snapshot_date": snapshot_date,
         "stats": stats,
+        "download_table_count": 5,
     }
 
 
@@ -187,6 +192,11 @@ def create_app():
     @app.route("/schema")
     def schema():
         return render_template("schema.html")
+
+    @app.route("/download-manifest")
+    def download_manifest_page():
+        manifest = build_download_manifest()
+        return render_template("download_manifest.html", manifest=manifest)
 
     @app.route("/api-reference")
     def api_reference():

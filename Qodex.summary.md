@@ -1,150 +1,120 @@
 # Qodex.summary
 
 ## Task
-NAR Database Scholarly Page Upgrade
+Version 1 Release Notes and Download Manifest Polish
 
 ## Original Goal
-Upgrade/create the missing high-value scholarly/database pages so the E3 Recruiter Builder / E3 Ligase Ligandalyzer feels more like a competitive, citable NAR database resource.
+Polish the release/versioning experience so E3 Ligase Ligandalyzer reads as a confident Version 1 NAR-style database resource, and add a formatted human-readable manifest page instead of sending users directly to raw JSON.
 
 ## Assumptions
-- The project is a Flask app with direct page routes in `Ligase_app.py` and Jinja templates in `templates/`.
-- The existing design language should be preserved, even though the content pages use mostly page-local styling instead of one shared docs stylesheet.
-- The local SQLite database at `Ligases/Ligase_Recruiter.db` is the best source of truth for current public snapshot metrics shown on the new release page.
-- The repository information supplied for `E3-Ligandalyzer-Scripts` and `E3_UPDATE_TOOL` is valid source material for the Methods page because it aligns with local script names and local audit files.
-- Formal public release version labels and release dates are not yet exposed in the current app, so the release page should state that explicitly instead of inventing them.
-- Ligase gene-name / ELiAH identity fields are not represented in a clean single ligase object in the main app database, so the schema page treats ligase records as derived, researcher-facing objects rather than claiming one canonical ligase table with every field.
-- The visible public contact should remain `jxs794@miami.edu`, because that is the existing contact already present in the project.
-- Scaffold/supercluster counts are inconsistent between the live app snapshot and external manuscript-facing pipeline summaries, so the release page should use live app counts and call out the limitation.
+- The current release should be framed as the initial public database release, so `Version 1.0` / `V1` is appropriate even though the app did not previously expose a release label.
+- No precise release day/month was verified from the codebase or metadata, so the release identity is presented as `Initial public V1 release` rather than a fabricated exact date.
+- The current release cadence should be described as annual because that matches the requested update model and does not require inventing exact future dates.
+- The existing `/api/download/manifest` route is already the canonical manifest source of truth and should be reused rather than reimplemented.
+- The formatted browser manifest should live at `/download-manifest`, which fits the existing route style and clearly distinguishes the human-readable page from the raw API route.
+- Live app statistics on the release page should continue to come from the SQLite snapshot in `Ligases/Ligase_Recruiter.db`.
+- If a metric is not useful for polished V1 presentation, it is better to omit or replace it with a cleaner V1-facing metric than to show “Pending.”
 
 ## Files Inspected
-- `Ligase_app.py` — confirmed framework, page routing style, and shared context behavior.
-- `Ligases/routes.py` — confirmed API/data architecture, database paths, and table usage patterns.
-- `templates/base.html` — confirmed inheritance, global search modal, shared scripts, and layout blocks.
-- `templates/docs.html` — reviewed current human-facing docs structure and insertion points.
-- `templates/api-reference.html` — reviewed API layout and cross-link opportunities.
-- `templates/contribute.html` — reviewed existing contribution/contact copy.
-- `templates/about.html` — reviewed About-page actions and cross-link opportunities.
-- `templates/missing_data.html` — reviewed missing-data messaging for consistency improvements.
-- `templates/missing_recruiter.html` — reviewed recruiter-missing messaging for consistency improvements.
-- `templates/410.html` — reviewed retired-page messaging for consistency improvements.
-- `static/components/navbar.js` — reviewed primary navigation structure and dropdown behavior.
-- `static/components/footer.js` — reviewed footer resource/connect groups.
-- `static/script.js` — reviewed shared page behavior and nav assumptions.
-- `README.md` — reviewed project/framework context and existing citation/contact info.
-- `requirements.txt` — checked validation/runtime dependencies.
-- `environment.yml` — checked intended Conda environment dependencies.
-- `run_ligase_flask.sh` — checked existing local run conventions.
-- `E3_RANDY_HEROKU_DATABASE_GUIDE.md` — confirmed app architecture, route inventory, and deployment notes.
-- `Ligases/ligase_data_dictionary.md` — harvested field definitions for the schema page.
-- `Ligases/Ligase_DataDictionary.py` — cross-checked field meanings and SASA/scaffold definitions.
-- `Ligases/DATASET_AUDIT_COMPARISON.txt` — used validated selection/curation language for the Methods page.
-- `rebuild_e3_curated.py` — used validated curated-ligase and validation-protocol wording.
-- `Ligases/intelligence_summary.txt` — checked existing dataset summary phrasing.
-- `Ligases/Ligase_Recruiter.db` — queried live counts, table names, table columns, and sample rows for release/schema accuracy.
-- `Ligases/eliah.db` — inspected ELiAH table structure to avoid overstating clean ligase/gene object availability.
+- `Ligases/routes.py` — inspected the implementation of `/api/download/manifest` and confirmed it could be refactored into a shared helper.
+- `Ligase_app.py` — inspected and updated the release context builder and page routes.
+- `templates/release.html` — inspected all V1-undermining copy and placeholder language.
+- `templates/api-reference.html` — reviewed where human users versus developers should be sent for manifest access.
+- `templates/docs.html` — reviewed user-facing manifest links.
+- `templates/methods.html` — reviewed reproducibility and related-resource language.
+- `templates/schema.html` — reviewed manifest/documentation cross-links.
+- `static/components/navbar.js` — reviewed shared resource navigation.
+- `static/components/footer.js` — reviewed footer resource discoverability.
+- `Qodex.summary.md` — replaced with this task summary.
 
 ## Files Changed
-- `Ligase_app.py` — added `/methods`, `/schema`, `/release`, and `/case-studies` routes plus live release-context generation from the local SQLite snapshot.
-- `static/components/navbar.js` — added a Resources dropdown with links to Docs, API, Methods, Schema, Release, Case Studies, and Submit Data / Contribute; generalized dropdown behavior to support multiple dropdowns.
-- `static/components/footer.js` — expanded resource links and renamed the contribution link to “Submit Data / Contribute.”
-- `templates/about.html` — added cross-links to the new scholarly/resource pages.
-- `templates/api-reference.html` — added schema/release/methods context cards and sticky-nav access to that section.
-- `templates/docs.html` — added a “Database resource pages” section, extra nav entry, and updated contributor FAQ wording.
-- `templates/missing_data.html` — added links to Submit Data / Contribute and Methods.
-- `templates/missing_recruiter.html` — added links to Submit Data / Contribute and Methods.
-- `templates/410.html` — added links to Submit Data / Contribute and Release Notes.
-- `templates/contribute.html` — replaced the lightweight page with a structured Submit Data / Contribute page.
+- `Ligases/routes.py` — extracted manifest generation into `build_download_manifest(...)` and preserved `/api/download/manifest` as raw JSON by having the route return `jsonify(...)` from that shared helper.
+- `Ligase_app.py` — updated release metadata to Version 1 language and added the `/download-manifest` HTML route.
+- `templates/release.html` — rewrote the page to present a confident Version 1 release identity, removed pending wording, added annual update framing, and linked users to the formatted manifest first with a secondary raw JSON link.
+- `templates/api-reference.html` — updated human-facing manifest context links so browsers go to the formatted manifest while raw API examples remain unchanged.
+- `templates/docs.html` — updated the browsable manifest card to point to the new human-readable manifest page.
+- `templates/methods.html` — updated reproducibility language and related links to reference the human-readable manifest.
+- `templates/schema.html` — updated schema-page manifest guidance to point to the human-readable manifest first and the raw JSON manifest second.
+- `static/components/navbar.js` — added `Download Manifest` to the Resources dropdown.
+- `static/components/footer.js` — added `Download Manifest` to footer resources.
 - `Qodex.summary.md` — replaced with this task summary.
 
 ## Files Created
-- `templates/methods.html` — dedicated Methods / Curation Pipeline page with structure-selection, LR-code, scaffold, SASA, QC, reproducibility, and repository-link sections.
-- `templates/schema.html` — dedicated Database Schema page with recruiter, ligase, scaffold, SASA summary, atom-level SASA, and download-manifest sections.
-- `templates/release.html` — dedicated Release / Version / Changelog page driven by live snapshot metrics where available.
-- `templates/case_studies.html` — dedicated Case Studies page with workflow-oriented research examples.
-- `Qodex.summary.md` — recreated to document this upgrade.
+- `templates/download_manifest.html` — created a styled, human-readable Version 1 manifest page that reuses the existing manifest data source while preserving the raw JSON API.
+- `Qodex.summary.md` — recreated to document this task.
 
 ## Implementation Summary
-- Added four new publication-facing pages: Methods, Database Schema, Release Notes, and Case Studies.
-- Upgraded the existing contribution page into a stronger Submit Data / Contribute page with accepted contribution types, required metadata, validation expectations, and preserved contact/GitHub pathways.
-- Wired new scholarly/resource pages into shared navigation, footer resources, docs, API, and About-page cross-links.
-- Added light consistency improvements to missing-data and retired pages so they point users back into the curation/reporting workflow.
-- Kept the new copy grounded in verified local data, local pipeline files, and the repository descriptions provided for the companion update/build script repos.
+- The release page now presents the site as a Version 1 public database release instead of a mostly pending resource.
+- The release hero, version record, changelog, maintenance policy, archived-release text, and limitations were all rewritten to sound polished, scholarly, and V1-oriented without inventing an exact release date.
+- A new `/download-manifest` page was added as the browser-friendly Version 1 manifest, with cards and tables for base URL, generated timestamp, all-download ZIPs, table downloads, per-ligase bundles, related resources, and a clearly labeled raw JSON manifest link.
+- The raw `/api/download/manifest` endpoint was preserved unchanged in behavior from a client perspective; it still returns raw JSON and remains suitable for `curl`, Python, and automation workflows.
+- User-facing manifest links across release/docs/schema/API context were updated to prefer the formatted page, while developer-facing raw JSON links remain clearly available.
 
 ## Key Decisions
-- Chose a separate `schema.html` page instead of overloading `api-reference.html`, because the app already has a strong dedicated API page and the schema content is broader than endpoint documentation.
-- Chose `/methods`, `/schema`, `/release`, and `/case-studies` to match the requested route style and the app’s existing slug conventions.
-- Used live app database counts for the release page where queryable, rather than copying manuscript-facing totals from external repository text into the current web snapshot.
-- Explicitly left the release version label and formal release date as pending/public-manifest placeholders because the current app does not expose authoritative release metadata.
-- Preserved the top-level nav compactness by adding the new scholarly/resource links under a Resources dropdown rather than overcrowding the primary nav.
-- Treated ligase records on the schema page as derived objects, because the current app’s ligase-facing data is spread across scaffold/recruiter summaries and ELiAH integration rather than one obvious ligase master table.
+- Chose `/download-manifest` as the formatted manifest route because it is explicit, readable, and cleanly separated from the raw API namespace.
+- Represented release metadata with `Version 1.0`, `V1`, `Public V1 database release`, `Initial public V1 release`, and `Annual review and update cycle` rather than using any unverified exact date.
+- Reused the same manifest-generation logic for both the HTML page and the JSON API by extracting `build_download_manifest(...)`, which avoids divergence between human and machine views.
+- Replaced placeholder-heavy or “Pending” statistic cards with a tighter V1 set: version, ligases, recruiter records, unique ligands, PDB structures, scaffolds, complete SASA rows, and download-table count.
+- Reframed limitations as “Version 1 notes and limitations” so the page remains transparent without sounding unofficial or unfinished.
+- Kept raw manifest code examples in the API Reference unchanged because they are intentionally developer-facing examples.
 
 ## Commands Run
-- `pwd` — confirm workspace root.
-- `rg --files` — inspect project file inventory.
-- `find . -maxdepth 2 -type d | sort` — inspect directory structure.
-- `sed -n ... Ligase_app.py` — inspect Flask routes.
-- `sed -n ... Ligases/routes.py` — inspect API/data logic.
-- `sed -n ... templates/base.html` — inspect layout, footer mount, and shared scripts.
-- `sed -n ... templates/docs.html` — inspect docs structure.
-- `sed -n ... templates/api-reference.html` — inspect API page structure.
-- `sed -n ... templates/contribute.html` — inspect existing contribution copy.
-- `sed -n ... static/components/navbar.js` — inspect nav component.
-- `sed -n ... static/components/footer.js` — inspect footer component.
-- `sed -n ... static/script.js` — inspect shared frontend assumptions.
-- `sed -n ... templates/about.html` — inspect About page for cross-linking.
-- `sed -n ... templates/missing_data.html` — inspect missing-data page.
-- `sed -n ... templates/missing_recruiter.html` — inspect missing-recruiter page.
-- `sed -n ... templates/410.html` — inspect retired-page template.
-- `rg -n ...` across project files — locate nav/search/resource/contact/release references.
-- `python3 - <<'PY' ... sqlite3 ... PY` — query live table names, columns, counts, and sample rows from `Ligases/Ligase_Recruiter.db`.
-- `python3 -m py_compile Ligase_app.py Ligases/routes.py` — Python syntax validation.
-- `python3 - <<'PY' from Ligase_app import create_app ... PY` — failed under system Python because Flask is not installed there.
-- `conda env list` — find available project-like Conda environments.
-- `conda run -n viraldb python -c "import flask; print(flask.__version__)"` — confirm Flask is available in the `viraldb` environment.
-- `conda run -n viraldb python -c "from Ligase_app import create_app; ..."` — render existing and new routes with Flask test client.
-- `conda run -n viraldb python Ligase_app.py` — start the local app on port `5025` for HTTP smoke testing.
-- `curl -I -s http://127.0.0.1:5025/... | head -n 1` — confirm new and key existing routes return `200 OK` over HTTP.
+- `rg -n "download/manifest|def .*manifest|manifest" ...` — traced manifest implementation and user-facing links.
+- `sed -n '3080,3325p' Ligases/routes.py` — inspected the raw manifest route implementation.
+- `sed -n '1,260p' Ligase_app.py` — inspected release context and routes.
+- `sed -n '1,260p' templates/release.html` — inspected release copy needing V1 polish.
+- `python3 -m py_compile Ligase_app.py Ligases/routes.py` — Python syntax validation, passed.
+- `rg -n "Pending|pending|Formal release annotation|snapshot timestamp unavailable" templates/release.html Ligase_app.py` — checked that the release page and release metadata no longer contain the old placeholder language.
+- `conda run -n viraldb python -c "from Ligase_app import create_app; ..."` — rendered key routes with Flask test client and checked release/manifest behavior.
+- `conda run -n viraldb python Ligase_app.py` — started the local Flask app for live HTTP smoke testing.
+- `curl -I -s http://127.0.0.1:5025/release | head -n 1` — confirmed live `200 OK`.
+- `curl -I -s http://127.0.0.1:5025/download-manifest | head -n 1` — confirmed live `200 OK`.
+- `curl -s http://127.0.0.1:5025/api/download/manifest | python3 -c 'import sys, json; ...'` — confirmed live raw manifest still returns valid JSON.
 
 ## Validation Results
 - Passed:
   - Python syntax validation for `Ligase_app.py` and `Ligases/routes.py`.
-  - Flask test-client rendering in the `viraldb` Conda environment for:
-    - `/`
-    - `/docs`
+  - Flask test-client render checks for:
+    - `/release`
+    - `/download-manifest`
+    - `/api/download/manifest`
     - `/api-reference`
-    - `/explorer`
-    - `/scaffolds`
-    - `/ligases`
+    - `/docs`
     - `/methods`
     - `/schema`
-    - `/release`
-    - `/contribute`
-    - `/case-studies`
-    - `/about`
-    - `/missing`
-    - `/missing-recruiter?code=LR00001`
-    - `/ligand-retired/LR00001` (expected `410`)
-  - Internal cross-link presence checks for Methods, Schema, Release, Contribute, and Case Studies pages.
-  - Local HTTP smoke test on `127.0.0.1:5025` returning `200 OK` for `/methods`, `/schema`, `/release`, `/contribute`, `/case-studies`, `/docs`, and `/api-reference`.
-- Failed or not runnable:
-  - Flask test-client validation could not run under the bare system `python3` because Flask/Jinja2 are not installed in that interpreter.
-  - No in-app browser tool was callable in the current active tool list, so responsive/manual browser verification and console-error inspection were not performed through a browser session here.
+  - Raw JSON manifest parsed successfully and returned keys:
+    - `all_downloads`
+    - `base_url`
+    - `generated_at`
+    - `ligase_count`
+    - `ligases`
+    - `tables`
+  - Release page string checks confirmed:
+    - `Version 1` / `V1` language is present
+    - `Pending` / `pending` is not present
+  - Formatted manifest page checks confirmed:
+    - it contains a raw JSON manifest link
+    - it contains human-readable sections for all-download archives, table downloads, and per-ligase bundle index
+  - Live HTTP smoke test on `127.0.0.1:5025` confirmed:
+    - `/release` returns `200 OK`
+    - `/download-manifest` returns `200 OK`
+    - `/api/download/manifest` still returns valid JSON
+- Not fully tested:
+  - Browser-console inspection for frontend JavaScript errors was not performed in an interactive browser session in this turn.
 
 ## Known Issues
-- Formal public release metadata is still not available, so the release page intentionally uses “pending” language for the version label and formal release date.
-- The live app snapshot reports scaffold/supercluster totals that differ from external manuscript-facing pipeline summaries; the release page calls that out rather than reconciling them by guesswork.
-- The current app does not expose one clean ligase master object with every researcher-facing field, so the schema page documents ligase records as derived/assembled objects.
-- Browser-level responsive checks and console inspection remain a follow-up task once a callable browser tool or an interactive manual session is available.
+- No exact release date was verified from codebase metadata, so the site uses `Initial public V1 release` rather than a precise date.
+- The release page still relies on the live database snapshot for counts, so future yearly releases should ideally record frozen release-stat snapshots separately.
+- Some metrics that might be desirable for future release pages, such as a fully formal archived-release index or broader packaged release metadata, are not yet separately tracked in the current V1 app context.
 
 ## Manual Verification
-1. Visit `/methods` and confirm the curation workflow page renders and links to related resources.
-2. Visit `/schema` and confirm schema tables/sections render.
-3. Visit `/release` and confirm version/release/changelog content renders without fabricated stats.
-4. Visit `/contribute` and confirm the upgraded Submit Data / Contribute content preserves existing contact/GitHub links.
-5. Visit `/case-studies` and confirm examples link to existing tools/pages.
-6. Confirm existing pages such as `/`, `/docs`, `/api-reference`, `/explorer`, `/scaffolds`, and `/ligases` still render.
-7. Open the Resources dropdown in the navbar and confirm the new scholarly/resource links are visible.
-8. Check the footer resource list and missing-data pages for the new cross-links.
+1. Visit `/release` and confirm it presents Version 1 / V1 clearly.
+2. Confirm `/release` does not show `Pending`.
+3. Visit `/download-manifest` and confirm it is styled and human-readable.
+4. Visit `/api/download/manifest` and confirm it still returns raw valid JSON.
+5. Visit `/api-reference` and confirm API examples still use raw JSON routes.
+6. Confirm user-facing manifest buttons point to the formatted page.
+7. Confirm a `Raw JSON manifest` link remains available for developers.
 
 ## Suggested Next Prompt
-Please add a machine-readable release manifest and version file that the release page, API manifest, and download bundles can all read from, then expose that metadata through a small `/api/release` endpoint.
+Please add a small machine-readable release metadata object and `/api/release` endpoint, then use it to drive the release page, download manifest, and future archived yearly release pages from one shared release record.

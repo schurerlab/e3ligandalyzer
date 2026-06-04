@@ -3107,19 +3107,8 @@ def _mapping_rows_for_recruiter_codes(codes):
 # ---------------------------------------------------------------------------
 # Public download manifest and discovery endpoints
 # ---------------------------------------------------------------------------
-@ligases_bp.route("/download/manifest", methods=["GET"])
-def download_manifest():
-    """
-    Discover downloadable data.
-
-    Optional filters:
-      /api/download/manifest
-      /api/download/manifest?ligase=CRBN
-      /api/download/manifest?recruiter_code=LR00001
-    """
-    ligase_filter = request.args.get("ligase")
-    recruiter_code = request.args.get("recruiter_code")
-
+def build_download_manifest(ligase_filter=None, recruiter_code=None):
+    """Build the machine-readable download manifest used by both API and HTML views."""
     if recruiter_code:
         recruiter_code = _clean_recruiter_code(recruiter_code)
         rows = _mapping_rows_for_recruiter_codes([recruiter_code])
@@ -3135,13 +3124,13 @@ def download_manifest():
                 "sdf_download": _api_url(f"/download/sdf/{row['Ligase']}/{sdf_file.name}") if sdf_file else None,
             })
 
-        return jsonify({
+        return {
             "base_url": _api_url(""),
             "filter": {"recruiter_code": recruiter_code},
             "count": len(entries),
             "bundle_download": _api_url(f"/download/recruiter/{recruiter_code}.zip"),
             "entries": entries,
-        })
+        }
 
     ligase_dirs = [_resolve_ligase_dir(ligase_filter)] if ligase_filter else _list_download_ligase_dirs()
     ligases = []
@@ -3164,7 +3153,7 @@ def download_manifest():
             }
         })
 
-    return jsonify({
+    return {
         "base_url": _api_url(""),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "ligase_count": len(ligases),
@@ -3181,7 +3170,22 @@ def download_manifest():
             "descriptor_csv": _api_url("/download/table/Ligase_Chemical_Descriptors.csv"),
         },
         "ligases": ligases,
-    })
+    }
+
+
+@ligases_bp.route("/download/manifest", methods=["GET"])
+def download_manifest():
+    """
+    Discover downloadable data.
+
+    Optional filters:
+      /api/download/manifest
+      /api/download/manifest?ligase=CRBN
+      /api/download/manifest?recruiter_code=LR00001
+    """
+    ligase_filter = request.args.get("ligase")
+    recruiter_code = request.args.get("recruiter_code")
+    return jsonify(build_download_manifest(ligase_filter=ligase_filter, recruiter_code=recruiter_code))
 
 
 @ligases_bp.route("/download/ligases", methods=["GET"])
