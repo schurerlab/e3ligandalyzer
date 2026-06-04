@@ -15,6 +15,14 @@ from flask import Response, stream_with_context
 DEFAULT_TIMEOUT_SECONDS = 30
 
 
+class RemoteServiceError(RuntimeError):
+    """Sanitized upstream error surfaced to the public API layer."""
+
+    def __init__(self, message: str, *, status_code: int = 502):
+        super().__init__(message)
+        self.status_code = status_code
+
+
 def _env_flag(name: str, default: bool = False) -> bool:
     raw = str(os.environ.get(name, "") or "").strip().lower()
     if not raw:
@@ -127,6 +135,16 @@ def _url(path: str) -> str:
     return f"{root}/{path.lstrip('/')}"
 
 
+def _error_message(resp: requests.Response, default: str) -> str:
+    try:
+        payload = resp.json()
+        if isinstance(payload, dict):
+            return str(payload.get("error") or payload.get("message") or default)
+    except Exception:
+        pass
+    return default
+
+
 def _shipment_url(path: str) -> str:
     root = shipment_base_url()
     if not root:
@@ -154,16 +172,22 @@ def query(database: str, sql: str, params: Iterable[Any] = (), one: bool = False
         "params": list(params or []),
         "one": bool(one),
     }
-    resp = requests.post(
-        _url("query"),
-        json=payload,
-        headers=headers({"Accept": "application/json"}),
-        timeout=timeout_seconds(),
-    )
-    resp.raise_for_status()
+    try:
+        resp = requests.post(
+            _url("query"),
+            json=payload,
+            headers=headers({"Accept": "application/json"}),
+            timeout=timeout_seconds(),
+        )
+    except requests.RequestException as exc:
+        raise RemoteServiceError("Remote E3 data query failed.") from exc
+
+    if resp.status_code >= 400:
+        raise RemoteServiceError(_error_message(resp, "Remote E3 data query failed."), status_code=502)
+
     data = resp.json()
     if not data.get("ok", False):
-        raise RuntimeError(data.get("error") or "RANDY E3 query failed")
+        raise RemoteServiceError(data.get("error") or "Remote E3 data query failed.", status_code=502)
 
     rows = data.get("rows", [])
     if one:
@@ -172,11 +196,15 @@ def query(database: str, sql: str, params: Iterable[Any] = (), one: bool = False
 
 
 def get_json(path: str, params: Optional[Dict[str, Any]] = None) -> Any:
-    resp = requests.get(_url(path), params=params or {}, headers=headers(), timeout=timeout_seconds())
-    resp.raise_for_status()
+    try:
+        resp = requests.get(_url(path), params=params or {}, headers=headers(), timeout=timeout_seconds())
+    except requests.RequestException as exc:
+        raise RemoteServiceError("Remote E3 data request failed.") from exc
+    if resp.status_code >= 400:
+        raise RemoteServiceError(_error_message(resp, "Remote E3 data request failed."), status_code=resp.status_code)
     payload = resp.json()
     if isinstance(payload, dict) and payload.get("ok") is False:
-        raise RuntimeError(payload.get("error") or f"RANDY E3 request failed: {path}")
+        raise RemoteServiceError(payload.get("error") or "Remote E3 data request failed.", status_code=502)
     return payload
 
 
@@ -213,13 +241,17 @@ def get_shipment_count() -> Dict[str, Any]:
 
 def proxy_file(path: str, *, download_name: Optional[str] = None, mimetype: Optional[str] = None) -> Response:
     """Stream a file endpoint from RANDY back to the browser."""
-    resp = requests.get(
-        _url(path),
-        headers=headers(),
-        timeout=timeout_seconds(),
-        stream=True,
-    )
-    resp.raise_for_status()
+    try:
+        resp = requests.get(
+            _url(path),
+            headers=headers(),
+            timeout=timeout_seconds(),
+            stream=True,
+        )
+    except requests.RequestException as exc:
+        raise RemoteServiceError("Remote file download failed.") from exc
+    if resp.status_code >= 400:
+        raise RemoteServiceError(_error_message(resp, "Remote file download failed."), status_code=resp.status_code)
 
     response_headers = {}
     content_type = mimetype or resp.headers.get("Content-Type") or "application/octet-stream"
@@ -236,6 +268,46 @@ def proxy_file(path: str, *, download_name: Optional[str] = None, mimetype: Opti
         headers=response_headers,
         direct_passthrough=True,
     )
+
+
+def file_exists(path: str) -> bool:
+    """Check if a remote RANDY file endpoint resolves successfully."""
+    try:
+        resp = requests.head(
+            _url(path),
+            headers=headers(),
+            timeout=timeout_seconds(),
+            allow_redirects=True,
+        )
+        if resp.status_code == 405:
+            resp = requests.get(
+                _url(path),
+                headers=headers(),
+                timeout=timeout_seconds(),
+                stream=True,
+            )
+        if resp.status_code == 404:
+            return False
+        if resp.status_code >= 400:
+            raise RemoteServiceError(_error_message(resp, "Remote file lookup failed."), status_code=resp.status_code)
+        return True
+    except requests.RequestException as exc:
+        raise RemoteServiceError("Remote file lookup failed.") from exc
+
+
+def download_bytes(path: str) -> tuple[bytes, str]:
+    """Fetch a remote file body for local ZIP assembly."""
+    try:
+        resp = requests.get(
+            _url(path),
+            headers=headers(),
+            timeout=timeout_seconds(),
+        )
+    except requests.RequestException as exc:
+        raise RemoteServiceError("Remote file download failed.") from exc
+    if resp.status_code >= 400:
+        raise RemoteServiceError(_error_message(resp, "Remote file download failed."), status_code=resp.status_code)
+    return resp.content, resp.headers.get("Content-Type") or "application/octet-stream"
 
 
 def quote_part(value: Any) -> str:

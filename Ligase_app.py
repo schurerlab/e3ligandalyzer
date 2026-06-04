@@ -5,7 +5,7 @@ import os
 import logging
 from datetime import datetime
 from urllib.parse import urlencode
-from flask import Flask, render_template, send_from_directory, request, redirect
+from flask import Flask, render_template, send_from_directory, request, redirect, jsonify
 from Ligases.routes import ligases_bp, query_db, build_download_manifest
 from Ligases import randy_client
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -308,6 +308,8 @@ def create_app():
     @app.errorhandler(411)
     def missing_recruiter_error(error):
         code = getattr(error, "description", None)
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Missing recruiter-linked data.", "recruiter_code": code}), 411
         return render_template("missing_recruiter.html", recruiter_code=code, SUPPORT_EMAIL="jxs794@miami.edu"), 411
     
     @app.route("/missing-recruiter")
@@ -317,6 +319,9 @@ def create_app():
     
     @app.errorhandler(404)
     def not_found_error(error):
+        if request.path.startswith("/api/"):
+            description = getattr(error, "description", None) or "Not found."
+            return jsonify({"error": description}), 404
         return render_template("404.html"), 404
     
 

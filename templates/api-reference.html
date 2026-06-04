@@ -64,12 +64,12 @@
   <!-- API BASE -->
   <section id="base" class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-section">
     <div class="lg:col-span-2 rounded-3xl border border-sky-500/20 bg-slate-900/75 p-8 shadow-xl">
-      <h2 class="section-title">Base URL</h2>
+      <h2 class="section-title">Run This First</h2>
       <p class="text-slate-400 mt-3">
         All public examples on this page use the canonical E3 Ligandalyzer API host, so copy-paste commands stay aligned with the public application domain.
       </p>
       <pre class="code-block mt-5"><button class="copy-code" data-copy-target="baseExport">Copy</button><code id="baseExport">export BASE="{{ api_base }}"</code></pre>
-      <p class="text-xs text-slate-500 mt-3">Tip: after copying this once, every terminal block that starts with <code>$BASE</code> will work in the same shell session.</p>
+      <p class="text-xs text-slate-500 mt-3">Run this once before using any command that starts with <code>$BASE</code>. If <code>curl</code> says <code>No host part in the URL</code>, your <code>BASE</code> variable is empty, so re-run the export command first.</p>
     </div>
 
     <div class="rounded-3xl border border-amber-300/25 bg-gradient-to-br from-slate-900 to-amber-950/30 p-8 shadow-xl">
@@ -114,6 +114,13 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <article class="big-code-card">
+        <div class="card-kicker">Run this first</div>
+        <h3>Set the public API base URL</h3>
+        <p>Every <code>$BASE</code> command below depends on this environment variable.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdBaseExport">Copy Bash</button><code id="cmdBaseExport">export BASE="{{ api_base }}"</code></pre>
+      </article>
+
+      <article class="big-code-card">
         <div class="card-kicker">JSON sanity check</div>
         <h3>View the full download manifest</h3>
         <p>Confirms the API is reachable and prints pretty JSON.</p>
@@ -137,9 +144,9 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
 
       <article class="big-code-card">
         <div class="card-kicker">Selected recruiters</div>
-        <h3>Download multiple LR recruiter bundles</h3>
-        <p>Uses canonical LR IDs and saves the ZIP locally.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiters">Copy Bash</button><code id="cmdRecruiters">curl -L "$BASE/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
+        <h3>Download multiple verified CRBN recruiter bundles</h3>
+        <p>Uses LR codes returned by the CRBN discovery example above.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="cmdRecruiters">Copy Bash</button><code id="cmdRecruiters">curl -L "$BASE/download/recruiters.zip?codes=LR00006,LR00007,LR00008" -o selected_recruiters.zip</code></pre>
       </article>
     </div>
   </section>
@@ -210,15 +217,21 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
       </article>
 
       <article class="endpoint-card">
-        <div class="endpoint-head"><div><p>Multiple recruiter bundle</p><h3>GET /api/download/recruiters.zip?codes=LR00001,LR00002</h3></div><a class="open-link" href="{{ api_base }}/download/recruiters.zip?codes=LR00001,LR00002,LR00003" target="_blank" rel="noopener noreferrer">Open</a></div>
-        <p>Download all mapped PDB/SDF files for selected LR recruiter codes.</p>
-        <pre class="code-block"><button class="copy-code" data-copy-target="dlManyRecruiters">Copy Bash</button><code id="dlManyRecruiters">curl -L "{{ api_base }}/download/recruiters.zip?codes=LR00001,LR00002,LR00003" -o selected_recruiters.zip</code></pre>
+        <div class="endpoint-head"><div><p>Multiple recruiter bundle</p><h3>GET /api/download/recruiters.zip?codes=LR00006,LR00007</h3></div><a class="open-link" href="{{ api_base }}/download/recruiters.zip?codes=LR00006,LR00007,LR00008" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all mapped PDB/SDF files for selected verified CRBN recruiter codes.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlManyRecruiters">Copy Bash</button><code id="dlManyRecruiters">curl -L "{{ api_base }}/download/recruiters.zip?codes=LR00006,LR00007,LR00008" -o selected_recruiters.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
         <div class="endpoint-head"><div><p>All PDBs</p><h3>GET /api/download/all/pdbs.zip</h3></div><a class="open-link" href="{{ api_base }}/download/all/pdbs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Download all PDB files across every ligase folder.</p>
         <pre class="code-block"><button class="copy-code" data-copy-target="dlAllPDBs">Copy Bash</button><code id="dlAllPDBs">curl -L "{{ api_base }}/download/all/pdbs.zip" -o E3Ligandalyzer_ALL_pdbs.zip</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>All SDFs</p><h3>GET /api/download/all/sdfs.zip</h3></div><a class="open-link" href="{{ api_base }}/download/all/sdfs.zip" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Download all public SDF assets across the full dataset.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="dlAllSDFs">Copy Bash</button><code id="dlAllSDFs">curl -L "{{ api_base }}/download/all/sdfs.zip" -o E3Ligandalyzer_ALL_sdfs.zip</code></pre>
       </article>
 
       <article class="endpoint-card">
@@ -345,9 +358,21 @@ unzip -q CRBN_ligandalyzer_bundle.zip -d E3Ligandalyzer_CRBN</code></pre>
       </article>
 
       <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>SASA atoms CSV</p><h3>GET /api/download/table/Ligase_Ligand_SASA_atoms.csv</h3></div><a class="open-link" href="{{ api_base }}/download/table/Ligase_Ligand_SASA_atoms.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Export atom-level SASA data for recruiter exposure mapping.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvSasaAtoms">Copy Bash</button><code id="csvSasaAtoms">curl -L "{{ api_base }}/download/table/Ligase_Ligand_SASA_atoms.csv" -o Ligase_Ligand_SASA_atoms.csv</code></pre>
+      </article>
+
+      <article class="endpoint-card">
         <div class="endpoint-head"><div><p>Descriptors CSV</p><h3>GET /api/download/table/Ligase_Chemical_Descriptors.csv</h3></div><a class="open-link" href="{{ api_base }}/download/table/Ligase_Chemical_Descriptors.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
         <p>Export recruiter chemical descriptors for local filtering.</p>
         <pre class="code-block"><button class="copy-code" data-copy-target="csvDescriptors">Copy Bash</button><code id="csvDescriptors">curl -L "{{ api_base }}/download/table/Ligase_Chemical_Descriptors.csv" -o Ligase_Chemical_Descriptors.csv</code></pre>
+      </article>
+
+      <article class="endpoint-card">
+        <div class="endpoint-head"><div><p>Recruiter scaffold CSV</p><h3>GET /api/download/table/Ligase_Recruiters_Scaffold.csv</h3></div><a class="open-link" href="{{ api_base }}/download/table/Ligase_Recruiters_Scaffold.csv" target="_blank" rel="noopener noreferrer">Open</a></div>
+        <p>Export recruiter-to-scaffold mappings for scaffold-level analysis.</p>
+        <pre class="code-block"><button class="copy-code" data-copy-target="csvRecruiterScaffold">Copy Bash</button><code id="csvRecruiterScaffold">curl -L "{{ api_base }}/download/table/Ligase_Recruiters_Scaffold.csv" -o Ligase_Recruiters_Scaffold.csv</code></pre>
       </article>
     </div>
   </section>
@@ -381,11 +406,11 @@ print("Downloaded CRBN PDB/SDF bundle")</code></pre>
 
       <article class="big-code-card">
         <div class="card-kicker">Python recruiter bundle</div>
-        <h3>Download selected LR recruiter bundles</h3>
+        <h3>Download selected verified CRBN recruiter bundles</h3>
         <pre class="code-block"><button class="copy-code" data-copy-target="pyRecruitersZip">Copy Python</button><code id="pyRecruitersZip">import requests
 
 BASE = "{{ api_base }}"
-codes = "LR00001,LR00002,LR00003"
+codes = "LR00006,LR00007,LR00008"
 
 url = f"{BASE}/download/recruiters.zip?codes={codes}"
 r = requests.get(url, timeout=120)

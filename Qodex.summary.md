@@ -1,129 +1,214 @@
 # Qodex.summary
 
 ## Task
-Fix Canonical Public API Domain
+Audit and Fix API Reference Commands
 
 ## Original Goal
-Ensure all public E3 Ligase Ligandalyzer API paths, examples, manifest links, and generated download URLs use `https://e3ligandalyzer.com` / `https://e3ligandalyzer.com/api` instead of the Heroku app hostname.
+Test every command added to the E3 Ligase Ligandalyzer API Reference page and fix any broken backend routes, examples, manifests, or downloads so the documented commands work against `https://e3ligandalyzer.com/api`.
 
 ## Assumptions
-- The canonical public application domain is `https://e3ligandalyzer.com`.
 - The canonical public API base is `https://e3ligandalyzer.com/api`.
-- Deployment may still run behind Randy/Heroku internally, so public docs and generated URLs should not rely on request hostnames.
-- `PUBLIC_SITE_URL` can safely be used as an override when needed, but should default to `https://e3ligandalyzer.com`.
-- The raw `/api/download/manifest` endpoint must remain machine-readable JSON with the same overall structure.
-- This task should not alter release-stat logic, V1 release wording, or database-count behavior.
+- The deployed public app may run in remote Randy-backed mode even when local development runs against the checked-in SQLite/filesystem snapshot.
+- The public API Reference should only show commands that were validated locally after the code changes, and public production should be re-smoke-tested after deployment.
+- `LR00001` is a verified recruiter-centric example for descriptors, SMILES, ligand-visual, SASA, and SVG rendering in the local dataset.
+- `CRBN` is a verified ligase example for download discovery and ligase bundle examples.
+- `LR00006,LR00007,LR00008` are verified CRBN recruiter bundle examples in the local dataset and align with recruiter-code discovery output.
 
 ## Files Inspected
-- `Ligase_app.py` — inspected app config/context injection and looked for an existing public URL helper pattern.
-- `Ligases/routes.py` — inspected `/api/download/manifest` support code and absolute URL generation for manifest/download links.
-- `templates/api-reference.html` — inspected how `api_base` was constructed and where public copy-paste examples were rendered.
-- `templates/download_manifest.html` — inspected visible manifest metadata, raw JSON links, and download buttons.
-- `E3_RANDY_HEROKU_DATABASE_GUIDE.md` — checked remaining Heroku references to confirm they are private maintainer/deployment documentation rather than public app output.
+- `templates/api-reference.html` — inventoried every documented Bash, Python, CSV, ZIP, and browser-JS example and checked which endpoints were missing or misleading.
+- `templates/download_manifest.html` — verified how human-readable manifest links depend on raw manifest content.
+- `Ligase_app.py` — inspected API/public error handling and found the app-level 404 handler overriding API JSON behavior.
+- `Ligases/routes.py` — inspected download manifest generation, recruiter bundle routes, recruiter-code discovery, SASA routes, ligand-visual, descriptor lookup, CSV exports, and SVG rendering.
+- `Ligases/randy_client.py` — inspected Randy query/proxy behavior and found it could surface upstream request URLs in raised exceptions.
+- `RANDY/e3_data_routes.py` — inspected available remote backup endpoints to understand what the public app can already proxy or query.
 - `Qodex.summary.md` — replaced with this task summary.
 
 ## Files Changed
-- `Ligase_app.py` — added canonical `PUBLIC_SITE_URL` / `PUBLIC_API_BASE` helpers and injected them into template context.
-- `Ligases/routes.py` — added canonical public URL helpers and updated manifest absolute-URL generation to use the public API base instead of `request.host_url`.
-- `templates/api-reference.html` — switched all visible examples and “Open” links to the injected canonical `PUBLIC_API_BASE`.
-- `templates/download_manifest.html` — updated visible raw-manifest links and endpoint text to use the canonical API base.
-- `Qodex.summary.md` — replaced with this task summary.
+- `Ligase_app.py`
+  - Added JSON behavior for API-path 404 and 411 responses so bad API calls do not render HTML site pages.
+- `Ligases/routes.py`
+  - Added API JSON error handlers.
+  - Fixed manifest/download ligase discovery to stop depending only on local asset folders.
+  - Added remote-aware asset resolution helpers.
+  - Fixed `/api/download/ligases` to return real ligase entries and bundle URLs.
+  - Fixed `/api/download/recruiter-codes` to report working downloadable recruiter examples.
+  - Added remote-mode support for `/api/download/recruiter/<code>.zip` and `/api/download/recruiters.zip`.
+  - Fixed `/api/sasa-full/<code>` to query real columns and return clean JSON.
+  - Fixed `/api/sasa-atoms/<code>` JSON serialization.
+  - Fixed `/api/render-smiles-by-code/<code>` so valid SVG renders succeed and errors return JSON.
+  - Changed `/api/descriptors/<code>` to return a clean 404 JSON error for unknown recruiter codes.
+- `Ligases/randy_client.py`
+  - Added sanitized remote-service error handling.
+  - Added remote file existence checks and byte-download helpers.
+  - Prevented upstream Randy URLs from leaking through raw `requests` exception strings.
+- `templates/api-reference.html`
+  - Added a clearer “Run this first” BASE setup block.
+  - Added troubleshooting for empty `$BASE`.
+  - Added the missing `all/sdfs.zip` example.
+  - Added the missing `Ligase_Ligand_SASA_atoms.csv` and `Ligase_Recruiters_Scaffold.csv` CSV examples.
+  - Swapped multi-recruiter examples to verified CRBN recruiter codes.
+- `Qodex.summary.md`
+  - Replaced with this task summary.
 
 ## Files Created
-- No new project code files were created in this task.
-- `Qodex.summary.md` was recreated for this task summary.
+- `scripts/smoke_test_api_reference.py`
+  - Stdlib-only smoke test for the documented JSON, CSV, ZIP, and SVG API Reference examples.
+- `Qodex.summary.md`
+  - Recreated for this task.
 
 ## Implementation Summary
-- A single canonical public URL source now defines the public site root and API base:
-  - `https://e3ligandalyzer.com`
-  - `https://e3ligandalyzer.com/api`
-- The API Reference page no longer derives its base URL from `request.host_url`; it now uses the canonical public API base for Bash, Python, browser-JS, CSV, ZIP, and raw-manifest examples.
-- The raw download manifest generator no longer emits absolute URLs based on the active request host. It now generates public-facing URLs using the canonical public API base for:
-  - `base_url`
-  - dataset-wide ZIP downloads
-  - table download URLs
-  - per-ligase bundle URLs
-  - other manifest-generated download links
-- The human-readable Download Manifest page now displays and links to the canonical public API domain as well.
-- Raw API behavior was preserved: `/api/download/manifest` still returns raw JSON and remains suitable for `curl`, Python, and workflow automation.
+- I first built an endpoint inventory from `templates/api-reference.html`.
+- Documented command groups found:
+  - Setup and manifest:
+    - `export BASE="https://e3ligandalyzer.com/api"`
+    - manifest JSON examples
+  - Download API:
+    - manifest
+    - filtered manifest
+    - ligase index
+    - recruiter-code discovery
+    - ligase ZIP bundles
+    - recruiter ZIP bundles
+    - dataset-wide ZIP bundles
+  - JSON API:
+    - ligase list
+    - featured recruiters
+    - scaffold routes
+    - descriptors
+    - recruiter SMILES
+    - ligand visual
+    - SASA full
+    - SVG render
+    - ELiAH expression
+  - CSV API:
+    - table index
+    - scaffold CSV
+    - SASA summary CSV
+    - SASA atoms CSV
+    - descriptors CSV
+    - recruiter scaffold CSV
+  - Python snippets:
+    - ligase ZIP download
+    - recruiter ZIP download
+    - featured recruiter pandas load
+    - descriptors CSV load
+  - Browser JS:
+    - ligases fetch
+    - featured recruiters fetch
+- I then ran a live public smoke pass against `https://e3ligandalyzer.com/api` and found 7 broken areas before patching:
+  - `/api/download/manifest` returned `ligase_count: 0` and `ligases: []`
+  - `/api/download/ligases` returned `[]`
+  - `/api/download/recruiter-codes?ligase=CRBN&limit=25` returned no working example codes because all `has_pdb` / `has_sdf` flags were false
+  - `/api/download/recruiter/LR00001.zip` returned 404
+  - `/api/download/recruiters.zip?codes=LR00001,LR00002,LR00003` returned 404
+  - `/api/sasa-full/LR00001` returned 500 and exposed the Randy URL
+  - `/api/render-smiles-by-code/LR00001` returned 500 because of an RDKit drawing option mismatch
+- Root causes found:
+  - Manifest, ligase index, and recruiter-code discovery were still using local-only asset discovery helpers in remote mode.
+  - Recruiter bundle routes had no remote-mode implementation at all.
+  - `/api/sasa-full/<code>` queried a non-existent `atom_index` column.
+  - `/api/render-smiles-by-code/<code>` used `MolDrawOptions.atomPalette`, which is not available in this runtime.
+  - App-level 404 handling returned HTML for bad API calls.
+  - Randy client exceptions surfaced raw upstream request text.
+- After patching, local smoke verification passed all documented examples.
 
 ## Key Decisions
-- Canonical public site URL:
-  - `https://e3ligandalyzer.com`
-- Canonical public API base:
-  - `https://e3ligandalyzer.com/api`
-- `PUBLIC_SITE_URL` support:
-  - added as an environment-driven helper with default `https://e3ligandalyzer.com`
-  - `PUBLIC_API_BASE` is derived from it
-- Manifest generation:
-  - updated `_api_url(...)` in `Ligases/routes.py` to use the canonical public API base instead of `request.host_url`
-- API examples:
-  - kept absolute because they are meant to be copied into terminals and scripts
-- Remaining Heroku references:
-  - only remain in `E3_RANDY_HEROKU_DATABASE_GUIDE.md`
-  - they are maintainer/deployment documentation, not public templates or generated app output
+- Verified example ligases and recruiter codes:
+  - `CRBN` for ligase/download discovery
+  - `LR00001` for descriptors, recruiter SMILES, ligand visual, SASA, and SVG
+  - `LR00006,LR00007,LR00008` for verified CRBN multi-recruiter bundle examples
+- Manifest ligase discovery:
+  - local mode still uses real local asset directories
+  - remote mode now builds ligase entries from the recruiter mapping table plus remote asset resolution instead of empty local-folder scans
+- Recruiter-code discovery:
+  - local mode uses exact local filenames
+  - remote mode resolves downloadable assets through Randy-backed file checks so `has_pdb`, `has_sdf`, and `example_codes` are meaningful
+- Recruiter ZIP bundles:
+  - local mode still zips local files directly
+  - remote mode now downloads the mapped Randy-backed files and assembles the ZIP in the public app
+- SASA full payload:
+  - now uses `atom_id` ordering and returns JSON-safe dict rows
+  - unknown recruiter codes return a structured 404 JSON error
+- SVG validation:
+  - success requires SVG/XML-like output
+  - failures return JSON errors instead of tiny text payloads
+- Error sanitization:
+  - API 404/411 now stay JSON
+  - Randy client failures are sanitized before they reach public routes
+- Endpoints removed or marked experimental:
+  - none removed
+  - all visible API Reference examples are kept, but the multi-recruiter examples were updated to verified CRBN codes
 
 ## Commands Run
-- `sed -n '1,220p' Ligase_app.py` — inspected app config and context setup.
-- `sed -n '2960,3095p' Ligases/routes.py` — inspected manifest URL helper logic.
-- `sed -n '1,260p' templates/api-reference.html` — inspected API base generation and examples.
-- `sed -n '1,260p' templates/download_manifest.html` — inspected manifest-page links and metadata.
-- `rg -n "request\\.host_url|request\\.url_root|request\\.host|_external=True|herokuapp\\.com|e3ligandalyzer-adb8adfde220|api_base|base_url|PUBLIC_SITE_URL|https://e3ligandalyzer\\.com" -g '!node_modules/**' .` — found request-host and hostname exposure points.
-- `python3 -m py_compile Ligase_app.py Ligases/routes.py` — syntax validation.
-- `rg -n "e3ligandalyzer-adb8adfde220|herokuapp\\.com" .` — checked for remaining Heroku references.
-- `conda run -n viraldb python Ligase_app.py` — started the local app for route and content validation.
-- `curl -s http://127.0.0.1:5025/api-reference | grep -i "https://e3ligandalyzer.com/api"` — confirmed canonical API base appears in API Reference.
-- `curl -s http://127.0.0.1:5025/api-reference | grep -i "herokuapp"` — confirmed public API Reference output does not expose Heroku.
-- `curl -s http://127.0.0.1:5025/api/download/manifest | python3 -m json.tool >/dev/null` — confirmed raw manifest remains valid JSON.
-- `curl -s http://127.0.0.1:5025/api/download/manifest | grep -i "https://e3ligandalyzer.com"` — confirmed canonical domain appears in raw generated URLs.
-- `curl -s http://127.0.0.1:5025/api/download/manifest | grep -i "herokuapp"` — confirmed raw manifest output does not expose Heroku.
-- `curl -s http://127.0.0.1:5025/download-manifest | grep -i "https://e3ligandalyzer.com/api"` — confirmed human-readable manifest shows canonical API base.
-- `curl -s http://127.0.0.1:5025/download-manifest | grep -i "herokuapp"` — confirmed human-readable manifest does not expose Heroku.
-- `for route in /api-reference /download-manifest /api/download/manifest /docs /methods /schema /release /explorer /scaffolds; do ...; done` — route smoke tests.
+- Inventory and route inspection:
+  - `sed -n ... templates/api-reference.html`
+  - `sed -n ... Ligases/routes.py`
+  - `sed -n ... Ligases/randy_client.py`
+  - `sed -n ... RANDY/e3_data_routes.py`
+  - `rg -n ...`
+- Live public API checks before patching:
+  - `curl -sS "https://e3ligandalyzer.com/api/download/manifest" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/download/recruiter-codes?ligase=CRBN&limit=25" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/download/ligases" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/descriptors/LR00001" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/recruiter-smiles/LR00001" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/ligand-visual/LR00001" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/sasa-full/LR00001" | python3 -m json.tool`
+  - `curl -sS "https://e3ligandalyzer.com/api/render-smiles-by-code/LR00001" | head -c 240`
+  - ZIP spot checks with `curl -L` and `zipfile`
+- Syntax validation:
+  - `python3 -m py_compile Ligase_app.py Ligases/routes.py Ligases/randy_client.py scripts/smoke_test_api_reference.py`
+- Local app validation:
+  - `conda run -n viraldb python Ligase_app.py`
+  - `python3 scripts/smoke_test_api_reference.py --base-url http://127.0.0.1:5025/api`
+  - targeted invalid-call checks for unknown recruiter codes and ligases
 
 ## Validation Results
-- Syntax validation:
-  - `Ligase_app.py` compiled successfully
-  - `Ligases/routes.py` compiled successfully
-- `/api-reference`:
-  - renders `https://e3ligandalyzer.com/api`
-  - does not expose `herokuapp`
-- `/download-manifest`:
-  - renders `https://e3ligandalyzer.com/api`
-  - download buttons and raw-manifest links point at the canonical public API base
-  - does not expose `herokuapp`
-- `/api/download/manifest`:
-  - still returns valid raw JSON
-  - generated URLs now use `https://e3ligandalyzer.com`
-  - does not expose `herokuapp`
-- Public-hostname exposure search:
-  - no Heroku matches remain in public templates or generated public output
-  - remaining matches are private deployment-guide examples only
-- Route smoke tests:
-  - `/api-reference` → `200`
-  - `/download-manifest` → `200`
-  - `/api/download/manifest` → `200`
-  - `/docs` → `200`
-  - `/methods` → `200`
-  - `/schema` → `200`
-  - `/release` → `200`
-  - `/explorer` → `200`
-  - `/scaffolds` → `200`
+- Public pre-fix failure matrix:
+  - Failed:
+    - `GET /api/download/manifest`
+    - `GET /api/download/ligases`
+    - `GET /api/download/recruiter-codes?ligase=CRBN&limit=25`
+    - `GET /api/download/recruiter/LR00001.zip`
+    - `GET /api/download/recruiters.zip?codes=LR00001,LR00002,LR00003`
+    - `GET /api/sasa-full/LR00001`
+    - `GET /api/render-smiles-by-code/LR00001`
+  - Passed:
+    - the remaining documented JSON, CSV, and large ligase/all ZIP routes
+- Local post-fix smoke result:
+  - `python3 scripts/smoke_test_api_reference.py --base-url http://127.0.0.1:5025/api`
+  - Result: all 31 checks passed
+- Confirmed locally after patching:
+  - `/api/download/manifest` returns valid JSON with `ligase_count: 21`
+  - `/api/download/manifest` includes ligase entries such as `CRBN`
+  - `/api/download/ligases` returns a populated ligase list with bundle URLs
+  - `/api/download/recruiter-codes?ligase=CRBN&limit=25` returns working example codes including `LR00006`, `LR00007`, `LR00008`
+  - `/api/sasa-full/LR00001` returns structured JSON with `ok`, `summary`, and `atoms`
+  - `/api/render-smiles-by-code/LR00001` returns SVG/XML output
+  - documented ZIP endpoints return valid non-empty ZIPs locally
+  - documented CSV endpoints return parseable CSV locally
+  - invalid API calls now return JSON errors locally
+- No local API error now exposed:
+  - `randy.rove-vernier.ts.net`
+  - Heroku hostnames
+  - Python stack traces
+  - private filesystem paths
 
 ## Known Issues
-- The app should still be smoke-checked after deployment through the real public domain to confirm the environment override behavior is correct in production.
-- Heroku-hostname examples remain in `E3_RANDY_HEROKU_DATABASE_GUIDE.md` because that file is maintainer-facing deployment documentation rather than a public app page or generated API output.
-- This task intentionally did not change release-stat logic or release-page metric behavior.
+- The remote Randy-backed branches were fixed in code, but the public production domain still needs a post-deploy smoke run to confirm the live site now matches the local passing state.
+- The public pre-fix smoke script still fails against the currently deployed production instance until these code changes are deployed.
+- Local ZIP counts include `manifest.json` because locally assembled ZIP responses now carry metadata; remote proxy ZIPs on the currently deployed public site may not yet include that file until deployment.
+- This task intentionally did not change Release Notes statistics or release-page metric logic.
 
 ## Manual Verification
 1. Visit `/api-reference`.
-2. Confirm the Base URL says `https://e3ligandalyzer.com/api`.
-3. Confirm Bash, Python, CSV, and browser JS examples use `https://e3ligandalyzer.com/api`.
-4. Visit `/download-manifest`.
-5. Confirm the Base URL and download buttons use `https://e3ligandalyzer.com/api`.
-6. Visit `/api/download/manifest`.
-7. Confirm raw JSON still works and generated URLs use `https://e3ligandalyzer.com`.
-8. Confirm no public page displays `herokuapp.com`.
+2. Copy the `export BASE="https://e3ligandalyzer.com/api"` command.
+3. Run the manifest command.
+4. Run recruiter-code discovery for CRBN.
+5. Run descriptor, SMILES, ligand-visual, SASA, SVG, CSV, and ZIP examples.
+6. Confirm each documented example works or has clearly documented behavior.
+7. Confirm no command uses the Heroku hostname.
+8. Confirm invalid examples return clean JSON errors without internal URLs.
 
 ## Suggested Next Prompt
-Please add a small `/api/release` endpoint and a frozen machine-readable V1 release metadata file so future yearly releases can expose stable historical release records alongside the canonical public API domain.
+Please add `scripts/smoke_test_api_reference.py` to deployment verification or CI so every documented API Reference command must pass before future API Reference or backend changes can ship.

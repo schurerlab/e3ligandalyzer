@@ -21,12 +21,33 @@ from flask import Blueprint, jsonify, request, send_from_directory, current_app
 import pandas as pd
 from Ligases import randy_client
 from Ligases import shipment_store
+from werkzeug.exceptions import HTTPException
 
 
 # ---------------------------------------------------------------------------
 # 🔹 Blueprint Definition
 # ---------------------------------------------------------------------------
 ligases_bp = Blueprint("ligases_bp", __name__)
+
+
+@ligases_bp.errorhandler(HTTPException)
+def _json_http_error(error: HTTPException):
+    response = error.get_response()
+    response.data = jsonify({"error": error.description or error.name}).get_data()
+    response.content_type = "application/json"
+    return response
+
+
+@ligases_bp.errorhandler(randy_client.RemoteServiceError)
+def _json_remote_error(error: randy_client.RemoteServiceError):
+    current_app.logger.warning("Remote E3 API error: %s", error)
+    return jsonify({"error": str(error)}), getattr(error, "status_code", 502)
+
+
+@ligases_bp.errorhandler(Exception)
+def _json_unhandled_error(error: Exception):
+    current_app.logger.exception("Unhandled E3 API route error")
+    return jsonify({"error": "Internal API error."}), 500
 
 # ---------------------------------------------------------------------------
 # 🔹 Database Paths
@@ -416,9 +437,12 @@ def get_recruiter_scaffolds():
 @ligases_bp.route("/descriptors/<recruiter_code>", methods=["GET"])
 def get_descriptors(recruiter_code):
     """Return chemical descriptors for a given recruiter."""
+    recruiter_code = str(recruiter_code or "").strip().upper()
     query = "SELECT * FROM Ligase_Chemical_Descriptors WHERE RECRUITER_CODE = ?;"
-    rows = query_db(query, [recruiter_code])
-    return jsonify([dict(r) for r in rows])
+    rows = [dict(r) for r in query_db(query, [recruiter_code])]
+    if not rows:
+        return jsonify({"error": f"Descriptor data is not available for recruiter code {recruiter_code}.", "recruiter_code": recruiter_code}), 404
+    return jsonify(rows)
 
 
 @ligases_bp.route("/metadata/<recruiter_code>", methods=["GET"])
@@ -787,45 +811,53 @@ def render_smiles_by_code(recruiter_code):
     from rdkit.Chem.Draw import rdMolDraw2D
     from flask import Response
 
+    recruiter_code = str(recruiter_code or "").strip().upper()
     smiles = _get_smiles_for_code(recruiter_code)
     if not smiles:
-        return Response("Unknown recruiter code", status=404, mimetype="text/plain")
+        return jsonify({
+            "error": f"SMILES data is not available for recruiter code {recruiter_code}.",
+            "recruiter_code": recruiter_code,
+        }), 404
 
     try:
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
-            return Response("Invalid SMILES", status=400, mimetype="text/plain")
+            return jsonify({
+                "error": f"Stored SMILES could not be rendered for recruiter code {recruiter_code}.",
+                "recruiter_code": recruiter_code,
+            }), 422
 
-        # ✅ Prepare molecule for clean drawing
         rdMolDraw2D.PrepareMolForDrawing(mol)
-
-        # ✅ Create SVG drawer (transparent bg)
         drawer = rdMolDraw2D.MolDraw2DSVG(300, 300)
         opts = drawer.drawOptions()
-        opts.addAtomIndices = True          # 👈 adds <text class="atom-#">
-        opts.includeAtomTags = True         # 👈 keeps explicit per-atom IDs
-        opts.explicitMethyl = True          # shows CH3 groups
-        opts.addStereoAnnotation = False    # optional: cleaner look
-        opts.setBackgroundColour((0, 0, 0, 0))  # transparent background
+        opts.addAtomIndices = True
+        opts.includeAtomTags = True
+        opts.explicitMethyl = True
+        opts.addStereoAnnotation = False
+        if hasattr(opts, "setBackgroundColour"):
+            opts.setBackgroundColour((0, 0, 0, 0))
+        if hasattr(opts, "useBWAtomPalette"):
+            opts.useBWAtomPalette()
 
-        # ✅ Optional: make carbons & hydrogens white, keep others standard
-        white = (1.0, 1.0, 1.0)
-        opts.atomPalette[6] = white  # carbon
-        opts.atomPalette[1] = white  # hydrogen
-
-        # ✅ Draw & export
         drawer.DrawMolecule(mol)
         drawer.FinishDrawing()
         svg = drawer.GetDrawingText()
 
-        # ✅ Clean up RDKit’s fill/stroke for your dark theme
-        svg = svg.replace('fill:#FFFFFF;fill-rule:evenodd;', 'fill:none;')
-        svg = svg.replace('stroke:#000000', 'stroke:#FFFFFF')
+        if not svg.lstrip().startswith("<?xml") and "<svg" not in svg:
+            return jsonify({
+                "error": f"SVG rendering failed for recruiter code {recruiter_code}.",
+                "recruiter_code": recruiter_code,
+            }), 500
 
         return Response(svg, mimetype="image/svg+xml")
 
     except Exception as e:
-        return Response(f"Error rendering: {e}", status=500, mimetype="text/plain")
+        current_app.logger.exception("SVG rendering failed for recruiter %s", recruiter_code)
+        return jsonify({
+            "error": f"SVG rendering failed for recruiter code {recruiter_code}.",
+            "recruiter_code": recruiter_code,
+            "exception_type": type(e).__name__,
+        }), 500
 
 
 
@@ -1530,6 +1562,7 @@ def render_2d_sasa(recruiter_code):
 @ligases_bp.route("/sasa-atoms/<recruiter_code>", methods=["GET"])
 def sasa_atoms(recruiter_code):
     try:
+        recruiter_code = str(recruiter_code or "").strip().upper()
         # Step 1: Get ligand mapping (Ligase, pdb, Ligand, Variant)
         key = query_db("""
             SELECT Ligase, pdb_id, Ligand, Variant
@@ -1553,20 +1586,18 @@ def sasa_atoms(recruiter_code):
             WHERE Ligase=? AND pdb_id=? AND Ligand=? AND Variant=?;
         """, [ligase, pdb, ligand, variant])
 
-        return jsonify({"atoms": atoms})
+        return jsonify({"recruiter_code": recruiter_code, "atoms": [dict(r) for r in atoms]})
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("SASA atom lookup failed for %s", recruiter_code)
+        return jsonify({"error": f"SASA atom data is not available for recruiter code {recruiter_code}.", "recruiter_code": recruiter_code}), 500
 
 
 
 @ligases_bp.route("/sasa-full/<recruiter_code>", methods=["GET"])
 def sasa_full(recruiter_code):
-    print("\n\n==============================")
-    print("📥 [SASA-FULL] Request:", recruiter_code)
-    print("==============================\n")
-
     try:
+        recruiter_code = str(recruiter_code or "").strip().upper()
         # ----------------------------------------------
         # STEP 1 — Get full composite key from 3DMapped
         # ----------------------------------------------
@@ -1578,7 +1609,7 @@ def sasa_full(recruiter_code):
         """, [recruiter_code], one=True)
 
         if not key:
-            return jsonify({"error": "No mapping found"}), 404
+            return jsonify({"error": f"SASA data is not available for recruiter code {recruiter_code}.", "recruiter_code": recruiter_code}), 404
 
         ligase  = key["Ligase"]
         pdb_id  = key["pdb_id"]
@@ -1605,7 +1636,7 @@ def sasa_full(recruiter_code):
         # STEP 3 — Full SASA atom table
         # ----------------------------------------------
         atoms = query_db("""
-            SELECT atom_index, atom_id, atom_type,
+            SELECT atom_id, atom_type,
                    x, y, z,
                    Exposure_A2, Residue_ID
             FROM Ligase_Ligand_SASA_atoms
@@ -1613,28 +1644,30 @@ def sasa_full(recruiter_code):
               AND pdb_id = ?
               AND Ligand = ?
               AND Variant = ?
-            ORDER BY atom_index ASC;
+            ORDER BY atom_id ASC;
         """, [ligase, pdb_id, ligand, variant])
-
-        print(f"🧬 SASA atoms fetched: {len(atoms)}")
 
         # ----------------------------------------------
         # STEP 4 — Return unified payload
         # ----------------------------------------------
         return jsonify({
+            "ok": True,
             "recruiter_code": recruiter_code,
             "Ligase": ligase,
             "pdb_id": pdb_id,
             "Ligand": ligand,
             "Variant": variant,
-            "summary": {k: summary[k] for k in summary.keys()} if summary else {},
-            "atoms": atoms
+            "summary": dict(summary) if summary else {},
+            "atoms": [dict(r) for r in atoms],
         })
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.exception("SASA full lookup failed for %s", recruiter_code)
+        return jsonify({
+            "error": f"SASA data could not be retrieved for recruiter code {recruiter_code}.",
+            "recruiter_code": recruiter_code,
+            "exception_type": type(e).__name__,
+        }), 500
 
 
 
@@ -2993,12 +3026,146 @@ def _zip_response(files, download_name: str, metadata: dict | None = None):
     )
 
 
+def _zip_bytes_response(files, download_name: str, metadata: dict | None = None):
+    """Build an in-memory ZIP response from a list of (archive_path, file_bytes)."""
+    if not files:
+        abort(404, description="No matching downloadable files were found.")
+
+    buffer = BytesIO()
+    with ZipFile(buffer, "w", ZIP_DEFLATED) as zf:
+        if metadata:
+            zf.writestr("manifest.json", json.dumps(metadata, indent=2, sort_keys=True))
+
+        added = set()
+        for arcname, file_bytes in files:
+            arcname = str(arcname).replace("\\", "/")
+            if arcname in added:
+                stem = Path(arcname).stem
+                suffix = Path(arcname).suffix
+                parent = str(Path(arcname).parent).replace("\\", "/")
+                arcname = f"{parent}/{stem}_{len(added)}{suffix}"
+            added.add(arcname)
+            zf.writestr(arcname, file_bytes)
+
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=download_name,
+        max_age=0,
+    )
+
+
 def _api_url(path: str) -> str:
     """Create an absolute public API URL for manifests and browser-facing docs."""
     normalized = str(path or "")
     if normalized and not normalized.startswith("/"):
         normalized = f"/{normalized}"
     return f"{public_api_base()}{normalized}"
+
+
+def _asset_filename_candidates(pdb_id, ligand, variant, ext):
+    return [f"{stem}{ext}" for stem in _variant_stems(pdb_id, ligand, variant)]
+
+
+def _row_value(row, key, default=None):
+    if row is None:
+        return default
+    try:
+        if isinstance(row, dict):
+            return row.get(key, default)
+        return row[key]
+    except Exception:
+        return default
+
+
+def _remote_file_endpoint(ligase: str, filename: str, ext: str) -> str:
+    asset_kind = "pdb" if ext.lower() == ".pdb" else "sdf"
+    return f"file/{asset_kind}/{randy_client.quote_part(ligase)}/{randy_client.quote_path(filename)}"
+
+
+def _remote_asset_name_for_mapping(ligase, pdb_id, ligand, variant, ext):
+    """Resolve a remote asset to a public-safe filename token that the remote file route accepts."""
+    for filename in _asset_filename_candidates(pdb_id, ligand, variant, ext):
+        if randy_client.file_exists(_remote_file_endpoint(ligase, filename, ext)):
+            return filename
+    return None
+
+
+def _asset_name_for_mapping(ligase, pdb_id, ligand, variant, ext):
+    if randy_client.remote_enabled():
+        return _remote_asset_name_for_mapping(ligase, pdb_id, ligand, variant, ext)
+
+    asset = _find_asset_for_mapping(ligase, pdb_id, ligand, variant, ext)
+    return asset.name if asset else None
+
+
+def _asset_counts_for_ligase(ligase: str):
+    """Count downloadable PDB/SDF assets for one ligase in local or remote mode."""
+    if not randy_client.remote_enabled():
+        ligase_dir = _resolve_ligase_dir(ligase)
+        pdb_files = _files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "pdbs"))
+        sdf_files = _files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "sdfs"))
+        return {
+            "ligase": ligase_dir.name,
+            "pdb_count": len(pdb_files),
+            "sdf_count": len(sdf_files),
+        }
+
+    rows = query_db(
+        """
+        SELECT DISTINCT PDB_ID AS pdb_id, Ligand, Variant
+        FROM Ligase_Ligands_Smiles_3DMapped
+        WHERE Ligase = ?
+        ORDER BY PDB_ID, Ligand, Variant
+        """,
+        [ligase],
+    )
+    pdb_names = set()
+    sdf_names = set()
+    for row in rows:
+        pdb_name = _asset_name_for_mapping(ligase, _row_value(row, "pdb_id"), _row_value(row, "Ligand"), _row_value(row, "Variant"), ".pdb")
+        sdf_name = _asset_name_for_mapping(ligase, _row_value(row, "pdb_id"), _row_value(row, "Ligand"), _row_value(row, "Variant"), ".sdf")
+        if pdb_name:
+            pdb_names.add(pdb_name)
+        if sdf_name:
+            sdf_names.add(sdf_name)
+    return {
+        "ligase": ligase,
+        "pdb_count": len(pdb_names),
+        "sdf_count": len(sdf_names),
+    }
+
+
+def _download_manifest_ligase_names(ligase_filter=None):
+    if ligase_filter:
+        if randy_client.remote_enabled():
+            rows = query_db(
+                """
+                SELECT DISTINCT Ligase
+                FROM Ligase_Ligands_Smiles_3DMapped
+                WHERE LOWER(Ligase) = LOWER(?)
+                LIMIT 1
+                """,
+                [ligase_filter],
+            )
+            if rows:
+                return [rows[0]["Ligase"]]
+        return [_resolve_ligase_dir(ligase_filter).name]
+
+    if not randy_client.remote_enabled():
+        return [p.name for p in _list_download_ligase_dirs()]
+
+    rows = query_db(
+        """
+        SELECT DISTINCT Ligase
+        FROM Ligase_Ligands_Smiles_3DMapped
+        WHERE Ligase IS NOT NULL AND TRIM(Ligase) != ''
+        ORDER BY Ligase
+        """
+    )
+    return [row["Ligase"] for row in rows]
 
 
 def _variant_stems(pdb_id, ligand, variant=None):
@@ -3116,6 +3283,28 @@ def _mapping_rows_for_recruiter_codes(codes):
     return [dict(r) for r in rows]
 
 
+def _remote_bundle_payload(rows):
+    """Resolve remote recruiter assets into in-memory ZIP-ready payloads."""
+    files = []
+    resolved = []
+    missing = []
+
+    for row in rows:
+        row_key = f"{row['RECRUITER_CODE']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
+        for ext, label in [(".pdb", "PDB"), (".sdf", "SDF")]:
+            filename = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ext)
+            if not filename:
+                missing.append({**row, "missing": label})
+                continue
+
+            remote_path = _remote_file_endpoint(row["Ligase"], filename, ext)
+            content, _ = randy_client.download_bytes(remote_path)
+            files.append((f"{row_key}/{label}/{filename}", content))
+            resolved.append({**row, "asset_type": label, "file": filename})
+
+    return files, resolved, missing
+
+
 # ---------------------------------------------------------------------------
 # Public download manifest and discovery endpoints
 # ---------------------------------------------------------------------------
@@ -3126,14 +3315,14 @@ def build_download_manifest(ligase_filter=None, recruiter_code=None):
         rows = _mapping_rows_for_recruiter_codes([recruiter_code])
         entries = []
         for row in rows:
-            pdb_file = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
-            sdf_file = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
+            pdb_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
+            sdf_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
             entries.append({
                 **row,
-                "pdb_file": pdb_file.name if pdb_file else None,
-                "sdf_file": sdf_file.name if sdf_file else None,
-                "pdb_download": _api_url(f"/download/pdb/{row['Ligase']}/{pdb_file.name}") if pdb_file else None,
-                "sdf_download": _api_url(f"/download/sdf/{row['Ligase']}/{sdf_file.name}") if sdf_file else None,
+                "pdb_file": pdb_file,
+                "sdf_file": sdf_file,
+                "pdb_download": _api_url(f"/download/pdb/{row['Ligase']}/{pdb_file}") if pdb_file else None,
+                "sdf_download": _api_url(f"/download/sdf/{row['Ligase']}/{sdf_file}") if sdf_file else None,
             })
 
         return {
@@ -3144,24 +3333,19 @@ def build_download_manifest(ligase_filter=None, recruiter_code=None):
             "entries": entries,
         }
 
-    ligase_dirs = [_resolve_ligase_dir(ligase_filter)] if ligase_filter else _list_download_ligase_dirs()
+    ligase_names = _download_manifest_ligase_names(ligase_filter)
     ligases = []
 
-    for ligase_dir in ligase_dirs:
-        pdb_files = _files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "pdbs"))
-        sdf_files = _files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "sdfs"))
+    for ligase_name in ligase_names:
+        counts = _asset_counts_for_ligase(ligase_name)
         ligases.append({
-            "ligase": ligase_dir.name,
-            "pdb_count": len(pdb_files),
-            "sdf_count": len(sdf_files),
+            "ligase": counts["ligase"],
+            "pdb_count": counts["pdb_count"],
+            "sdf_count": counts["sdf_count"],
             "downloads": {
-                "pdb_zip": _api_url(f"/download/ligase/{ligase_dir.name}/pdbs.zip"),
-                "sdf_zip": _api_url(f"/download/ligase/{ligase_dir.name}/sdfs.zip"),
-                "all_zip": _api_url(f"/download/ligase/{ligase_dir.name}/all.zip"),
-            },
-            "files": {
-                "pdb": [p.name for _, p in pdb_files],
-                "sdf": [p.name for _, p in sdf_files],
+                "pdb_zip": _api_url(f"/download/ligase/{counts['ligase']}/pdbs.zip"),
+                "sdf_zip": _api_url(f"/download/ligase/{counts['ligase']}/sdfs.zip"),
+                "all_zip": _api_url(f"/download/ligase/{counts['ligase']}/all.zip"),
             }
         })
 
@@ -3204,14 +3388,15 @@ def download_manifest():
 def download_ligase_index():
     """Compact JSON index of ligases and downloadable file counts."""
     rows = []
-    for ligase_dir in _list_download_ligase_dirs():
-        pdb_count = len(_files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "pdbs")))
-        sdf_count = len(_files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "sdfs")))
+    for ligase_name in _download_manifest_ligase_names():
+        counts = _asset_counts_for_ligase(ligase_name)
         rows.append({
-            "ligase": ligase_dir.name,
-            "pdb_count": pdb_count,
-            "sdf_count": sdf_count,
-            "all_zip": _api_url(f"/download/ligase/{ligase_dir.name}/all.zip"),
+            "ligase": counts["ligase"],
+            "pdb_count": counts["pdb_count"],
+            "sdf_count": counts["sdf_count"],
+            "all_zip": _api_url(f"/download/ligase/{counts['ligase']}/all.zip"),
+            "pdb_zip": _api_url(f"/download/ligase/{counts['ligase']}/pdbs.zip"),
+            "sdf_zip": _api_url(f"/download/ligase/{counts['ligase']}/sdfs.zip"),
         })
     return jsonify(rows)
 
@@ -3255,8 +3440,8 @@ def download_recruiter_code_index():
     rows = [dict(r) for r in query_db(query, params)]
     results = []
     for row in rows:
-        pdb_file = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
-        sdf_file = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
+        pdb_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
+        sdf_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
         results.append({
             "recruiter_code": row["RECRUITER_CODE"],
             "ligase": row["Ligase"],
@@ -3265,8 +3450,8 @@ def download_recruiter_code_index():
             "variant": row.get("Variant"),
             "has_pdb": bool(pdb_file),
             "has_sdf": bool(sdf_file),
-            "pdb_file": pdb_file.name if pdb_file else None,
-            "sdf_file": sdf_file.name if sdf_file else None,
+            "pdb_file": pdb_file,
+            "sdf_file": sdf_file,
         })
 
     example_codes = []
@@ -3421,6 +3606,19 @@ def download_recruiter_bundle(recruiter_code):
     if not rows:
         abort(404, description=f"No database mappings found for recruiter {recruiter_code}.")
 
+    if randy_client.remote_enabled():
+        files, resolved, missing = _remote_bundle_payload(rows)
+        metadata = {
+            "scope": "recruiter",
+            "recruiter_code": recruiter_code.upper(),
+            "mapping_count": len(rows),
+            "file_count": len(files),
+            "resolved": resolved,
+            "missing": missing,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        return _zip_bytes_response(files, f"E3Ligandalyzer_{recruiter_code.upper()}_bundle.zip", metadata)
+
     files = []
     resolved = []
     missing = []
@@ -3470,6 +3668,21 @@ def download_multiple_recruiter_bundle():
     rows = _mapping_rows_for_recruiter_codes(codes)
     if not rows:
         abort(404, description="No database mappings found for the supplied recruiter codes.")
+
+    if randy_client.remote_enabled():
+        files, resolved, missing = _remote_bundle_payload(rows)
+        metadata = {
+            "scope": "recruiters",
+            "requested_codes": [c.upper() for c in codes],
+            "mapping_count": len(rows),
+            "file_count": len(files),
+            "resolved": resolved,
+            "missing": missing,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        joined = "_".join([c.upper() for c in codes[:6]])
+        suffix = "_plus" if len(codes) > 6 else ""
+        return _zip_bytes_response(files, f"E3Ligandalyzer_recruiters_{joined}{suffix}.zip", metadata)
 
     files = []
     resolved = []
