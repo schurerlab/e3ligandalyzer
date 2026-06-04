@@ -232,6 +232,7 @@ class CustomFooter extends HTMLElement {
                 <i data-feather="github"></i>GitHub Repository</a>
               </li>
               <li><a href="/docs"><i data-feather="file-text"></i>Documentation</a></li>
+              <li><a href="/faq"><i data-feather="help-circle"></i>FAQ</a></li>
               <li><a href="/api-reference"><i data-feather="code"></i>API Reference</a></li>
               <li><a href="/methods"><i data-feather="git-branch"></i>Methods</a></li>
               <li><a href="/schema"><i data-feather="layout"></i>Database Schema</a></li>
@@ -244,8 +245,8 @@ class CustomFooter extends HTMLElement {
           <div>
             <h3><i data-feather="message-circle"></i>Connect</h3>
             <ul>
-              <li><a href="mailto:jmschulz@med.miami.edu"><i data-feather="mail"></i>Contact</a></li>
-              <li><a href="mailto:jmschulz@med.miami.edu?subject=Ligandalyzer Feedback">
+              <li><a href="/contact"><i data-feather="mail"></i>Contact</a></li>
+              <li><a href="/feedback">
                 <i data-feather="send"></i>Feedback</a></li>
               <li><a href="/contribute"><i data-feather="upload-cloud"></i>Submit Data / Contribute</a></li>
               <li><a href="/report-issue"><i data-feather="alert-circle"></i>Report Database Issue</a></li>

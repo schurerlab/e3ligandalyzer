@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Contact — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --contact-border: rgba(56, 189, 248, 0.22);
+    --contact-copy: #cbd5e1;
+  }
+  .contact-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    color: var(--contact-copy);
+  }
+  .contact-hero,
+  .contact-panel,
+  .contact-card {
+    border: 1px solid var(--contact-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.86));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .contact-hero {
+    padding: clamp(1.6rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 28%),
+      radial-gradient(circle at left bottom, rgba(45,212,191,0.18), transparent 26%),
+      linear-gradient(180deg, rgba(15,23,42,0.96), rgba(2,6,23,0.92));
+  }
+  .contact-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56,189,248,0.32);
+    background: rgba(8,47,73,0.3);
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .contact-title {
+    margin-top: 1rem;
+    font-size: clamp(2.8rem, 5vw, 4.9rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .contact-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .contact-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .contact-actions,
+  .contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .contact-btn,
+  .contact-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.78rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+    text-decoration: none;
+  }
+  .contact-btn.primary {
+    background: linear-gradient(135deg, rgba(14,165,233,0.26), rgba(20,184,166,0.22));
+    border-color: rgba(45,212,191,0.48);
+  }
+  .contact-btn.secondary {
+    background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(15,23,42,0.8));
+    border-color: rgba(250,204,21,0.35);
+  }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .contact-panel,
+  .contact-card {
+    padding: 1.25rem;
+  }
+  .contact-panel h2,
+  .contact-card h3 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .contact-panel p,
+  .contact-panel li,
+  .contact-card p,
+  .contact-card li {
+    line-height: 1.75;
+  }
+  .contact-card {
+    background: rgba(15,23,42,0.76);
+  }
+  .contact-template {
+    width: 100%;
+    min-height: 260px;
+    border-radius: 20px;
+    border: 1px solid rgba(56,189,248,0.24);
+    background: rgba(2,6,23,0.92);
+    padding: 1rem;
+    color: #dbeafe;
+    white-space: pre-wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    line-height: 1.65;
+  }
+  .contact-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  @media (max-width: 900px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="contact-shell">
+  <header class="contact-hero">
+    <div class="contact-kicker">General contact and collaboration</div>
+    <h1 class="contact-title">Contact <span>the authors</span></h1>
+    <p class="contact-copy">
+      Use this page for broad project communication about the E3 Ligase Ligandalyzer resource, including interpretation questions, collaboration ideas, resource-development discussions, and researcher-facing feedback that goes beyond a single database or tooling bug.
+    </p>
+    <div class="contact-actions">
+      <a id="contactEmailBtn" class="contact-btn primary" href="mailto:{{ SUPPORT_EMAIL }}?subject=E3%20Ligase%20Ligandalyzer%20contact">Email the authors</a>
+      <button id="copyContactTemplateBtn" class="contact-btn secondary" type="button">Copy email template</button>
+      <a class="contact-btn" href="/report-issue">Report Database Issue</a>
+      <a class="contact-btn" href="/contribute">Submit Data / Contribute</a>
+    </div>
+  </header>
+
+  <div class="contact-grid">
+    <section class="contact-panel">
+      <h2>General contact</h2>
+      <p class="mt-3 text-slate-300">
+        Questions about the resource, interpretation, access, or general project communication are welcome at <a class="text-sky-300 hover:text-sky-200" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>. This is the best path when you want to reach the authors directly rather than file a structured issue report.
+      </p>
+      <div class="contact-note">
+        For suspected database or curation problems, use <a class="text-amber-200 underline" href="/report-issue">Report Issue</a>. For new records, additions, or corrections intended for future release review, use <a class="text-amber-200 underline" href="/contribute">Submit Data / Contribute</a>.
+      </div>
+    </section>
+
+    <section class="contact-panel">
+      <h2>Ideas and insights</h2>
+      <ul class="list-disc pl-5 mt-3 space-y-2">
+        <li>Ideas for improving the database structure or researcher workflow.</li>
+        <li>Insights gained from using the tool in degrader design or E3 biology work.</li>
+        <li>Unexpected analyses or use cases worth highlighting in future resource development.</li>
+        <li>Suggestions for new visualizations, summaries, or route-level documentation.</li>
+        <li>Feedback from PROTAC design, degrader modeling, structural biology, or cheminformatics settings.</li>
+      </ul>
+    </section>
+
+    <section class="contact-card">
+      <h3>Collaborations</h3>
+      <p class="mt-3 text-slate-300">
+        Collaboration discussions are welcome around E3 ligase biology, PROTAC and degrader design, structure curation, scaffold analysis, SASA or exposure-aware linker design, expression-atlas integration, database expansion, and manuscript or resource development.
+      </p>
+    </section>
+
+    <section class="contact-card">
+      <h3>Data and curation questions</h3>
+      <p class="mt-3 text-slate-300">
+        If you are trying to interpret how the resource was curated or how a field should be read, the most relevant public references are linked below.
+      </p>
+      <div class="contact-links">
+        <a class="contact-link" href="/methods">Methods</a>
+        <a class="contact-link" href="/schema">Schema</a>
+        <a class="contact-link" href="/docs">Docs</a>
+        <a class="contact-link" href="/faq">FAQ</a>
+      </div>
+    </section>
+
+    <section class="contact-panel">
+      <h2>Suggested email template</h2>
+      <p class="mt-3 text-slate-300">
+        The template below is meant to make general contact easier and more structured. It is not automatically submitted by the site.
+      </p>
+      <pre id="contactTemplate" class="contact-template">Subject: E3 Ligase Ligandalyzer contact
+
+Name:
+Affiliation:
+Reason for contact:
+Relevant page or recruiter code:
+Question / idea / collaboration topic:
+Supporting context:</pre>
+    </section>
+
+    <section class="contact-panel">
+      <h2>Related support paths</h2>
+      <div class="contact-links">
+        <a class="contact-link" href="/feedback">Feedback</a>
+        <a class="contact-link" href="/report-issue">Report Issue</a>
+        <a class="contact-link" href="/contribute">Contribute</a>
+        <a class="contact-link" href="/api-reference">API Reference</a>
+      </div>
+      <p id="contactCopyStatus" class="mt-4 text-sm text-slate-400">
+        Copy email template places the plain-text message on your clipboard for use in your own email client.
+      </p>
+    </section>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const copyBtn = document.getElementById("copyContactTemplateBtn");
+  const template = document.getElementById("contactTemplate");
+  const status = document.getElementById("contactCopyStatus");
+
+  copyBtn?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(template.textContent);
+      copyBtn.textContent = "Copied";
+      status.textContent = "Template copied to clipboard. Please review and send it from your email client.";
+      window.setTimeout(() => {
+        copyBtn.textContent = "Copy email template";
+      }, 1600);
+    } catch (error) {
+      status.textContent = "Clipboard copy was blocked by the browser. You can still copy the template manually from the page.";
+    }
+  });
+});
+</script>
+{% endblock %}

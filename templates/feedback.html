@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}Feedback — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --feedback-border: rgba(45, 212, 191, 0.24);
+    --feedback-copy: #cbd5e1;
+  }
+  .feedback-shell {
+    max-width: 1220px;
+    margin: 0 auto;
+    color: var(--feedback-copy);
+  }
+  .feedback-hero,
+  .feedback-panel,
+  .feedback-card {
+    border: 1px solid var(--feedback-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.88));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .feedback-hero {
+    padding: clamp(1.6rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(45,212,191,0.2), transparent 28%),
+      radial-gradient(circle at left bottom, rgba(56,189,248,0.16), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.96), rgba(2,6,23,0.92));
+  }
+  .feedback-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(45,212,191,0.34);
+    background: rgba(8,47,73,0.3);
+    color: #ccfbf1;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .feedback-title {
+    margin-top: 1rem;
+    font-size: clamp(2.7rem, 5vw, 4.8rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .feedback-title span {
+    display: block;
+    background: linear-gradient(90deg, #2dd4bf, #38bdf8, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .feedback-copy {
+    max-width: 860px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .feedback-layout {
+    display: grid;
+    grid-template-columns: 1.18fr 0.82fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .feedback-panel,
+  .feedback-card {
+    padding: 1.25rem;
+  }
+  .feedback-panel h2,
+  .feedback-card h3 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .feedback-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .feedback-field.full {
+    grid-column: 1 / -1;
+  }
+  .feedback-field label {
+    font-size: 0.92rem;
+    color: #cbd5e1;
+    font-weight: 600;
+  }
+  .feedback-field input,
+  .feedback-field select,
+  .feedback-field textarea {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid rgba(71,85,105,0.95);
+    background: rgba(15,23,42,0.78);
+    color: #e2e8f0;
+    padding: 0.82rem 0.92rem;
+  }
+  .feedback-field textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+  .feedback-actions,
+  .feedback-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .feedback-btn,
+  .feedback-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.78rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(45,212,191,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+    text-decoration: none;
+  }
+  .feedback-btn.primary {
+    background: linear-gradient(135deg, rgba(20,184,166,0.24), rgba(14,165,233,0.22));
+    border-color: rgba(45,212,191,0.48);
+  }
+  .feedback-btn.secondary {
+    background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(15,23,42,0.8));
+    border-color: rgba(250,204,21,0.35);
+  }
+  .feedback-preview {
+    width: 100%;
+    min-height: 440px;
+    border-radius: 20px;
+    border: 1px solid rgba(45,212,191,0.24);
+    background: rgba(2,6,23,0.92);
+    padding: 1rem;
+    color: #d1fae5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+  .feedback-note {
+    margin-top: 1rem;
+    border-left: 3px solid rgba(250,204,21,0.62);
+    padding: 0.85rem 1rem;
+    border-radius: 0 16px 16px 0;
+    background: rgba(245,158,11,0.08);
+    color: #fef3c7;
+  }
+  @media (max-width: 980px) {
+    .feedback-layout,
+    .feedback-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="feedback-shell">
+  <header class="feedback-hero">
+    <div class="feedback-kicker">Researcher experience feedback</div>
+    <h1 class="feedback-title">Share <span>feedback</span></h1>
+    <p class="feedback-copy">
+      Use this page for product, usability, and documentation feedback about the site experience itself. This complements the database issue workflow by focusing on what is helpful, confusing, difficult to use, or worth improving for researchers and reviewers.
+    </p>
+    <div class="feedback-note">
+      This page generates a structured email draft for your own email client. It does not automatically submit or store feedback on the server.
+    </div>
+  </header>
+
+  <div class="feedback-layout">
+    <section class="feedback-panel">
+      <h2>Structured feedback builder</h2>
+      <form id="feedbackForm" class="feedback-grid" onsubmit="return false;">
+        <div class="feedback-field">
+          <label for="feedback_name">Name</label>
+          <input id="feedback_name" type="text" placeholder="Optional">
+        </div>
+        <div class="feedback-field">
+          <label for="feedback_email">Email</label>
+          <input id="feedback_email" type="email" placeholder="Optional">
+        </div>
+        <div class="feedback-field">
+          <label for="feedback_category">Feedback category</label>
+          <select id="feedback_category">
+            <option value="">Select a category</option>
+            <option>Website usability</option>
+            <option>Search/filter experience</option>
+            <option>Ligand page clarity</option>
+            <option>2D/3D/SASA visualization</option>
+            <option>API/download experience</option>
+            <option>Documentation clarity</option>
+            <option>Suggested FAQ topic</option>
+            <option>Feature request</option>
+            <option>Performance/loading issue</option>
+            <option>Accessibility/readability</option>
+            <option>General feedback</option>
+          </select>
+        </div>
+        <div class="feedback-field">
+          <label for="feedback_page">Page or feature involved</label>
+          <input id="feedback_page" type="text" placeholder="/ligand/LR00001, search panel, docs section, etc.">
+        </div>
+        <div class="feedback-field full">
+          <label for="feedback_worked">What worked well</label>
+          <textarea id="feedback_worked" placeholder="Optional positive feedback is welcome too."></textarea>
+        </div>
+        <div class="feedback-field full">
+          <label for="feedback_confusing">What was confusing or difficult</label>
+          <textarea id="feedback_confusing" placeholder="Describe friction, ambiguity, or workflow pain points."></textarea>
+        </div>
+        <div class="feedback-field full">
+          <label for="feedback_improvement">Suggested improvement</label>
+          <textarea id="feedback_improvement" placeholder="What would make the resource easier or more useful to use?"></textarea>
+        </div>
+        <div class="feedback-field">
+          <label for="feedback_impact">Urgency or impact level</label>
+          <input id="feedback_impact" type="text" placeholder="Optional">
+        </div>
+        <div class="feedback-field">
+          <label for="feedback_browser">Browser or device</label>
+          <input id="feedback_browser" type="text" placeholder="Optional">
+        </div>
+      </form>
+
+      <div class="feedback-actions">
+        <button id="copyFeedbackBtn" class="feedback-btn secondary" type="button">Copy Feedback</button>
+        <a id="emailFeedbackBtn" class="feedback-btn primary" href="mailto:{{ SUPPORT_EMAIL }}">Email Feedback</a>
+        <a class="feedback-btn" href="/report-issue">Report Issue</a>
+        <a class="feedback-btn" href="/contact">Contact</a>
+      </div>
+    </section>
+
+    <aside class="feedback-card">
+      <h3>Feedback preview</h3>
+      <p class="mt-3 text-slate-300">
+        The preview updates as you type and is used to build the email draft for <a class="text-teal-300 hover:text-teal-200" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
+      </p>
+      <pre id="feedbackPreview" class="feedback-preview">Preparing feedback preview…</pre>
+      <p id="feedbackCopyStatus" class="mt-3 text-sm text-slate-400">
+        Copy Feedback places the plain-text feedback message on your clipboard.
+      </p>
+      <div class="feedback-links">
+        <a class="feedback-link" href="/faq">FAQ</a>
+        <a class="feedback-link" href="/docs">Docs</a>
+        <a class="feedback-link" href="/contribute">Contribute</a>
+        <a class="feedback-link" href="/report-issue">Report Issue</a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const supportEmail = {{ SUPPORT_EMAIL|tojson }};
+  const preview = document.getElementById("feedbackPreview");
+  const emailBtn = document.getElementById("emailFeedbackBtn");
+  const copyBtn = document.getElementById("copyFeedbackBtn");
+  const copyStatus = document.getElementById("feedbackCopyStatus");
+  const form = document.getElementById("feedbackForm");
+  const browserField = document.getElementById("feedback_browser");
+
+  if (browserField && !browserField.value) {
+    browserField.value = navigator.userAgent;
+  }
+
+  const ids = [
+    "feedback_name",
+    "feedback_email",
+    "feedback_category",
+    "feedback_page",
+    "feedback_worked",
+    "feedback_confusing",
+    "feedback_improvement",
+    "feedback_impact",
+    "feedback_browser"
+  ];
+
+  function value(id) {
+    return (document.getElementById(id)?.value || "").trim();
+  }
+
+  function reporterLine() {
+    const name = value("feedback_name");
+    const email = value("feedback_email");
+    if (name && email) return `${name} <${email}>`;
+    return name || email || "Not provided";
+  }
+
+  function buildFeedback() {
+    return [
+      "E3 Ligase Ligandalyzer Feedback",
+      "",
+      "Category:",
+      value("feedback_category") || "Not provided",
+      "",
+      "Reporter:",
+      reporterLine(),
+      "",
+      "Page or feature involved:",
+      value("feedback_page") || window.location.href,
+      "",
+      "What worked well:",
+      value("feedback_worked") || "Not provided",
+      "",
+      "What was confusing or difficult:",
+      value("feedback_confusing") || "Not provided",
+      "",
+      "Suggested improvement:",
+      value("feedback_improvement") || "Not provided",
+      "",
+      "Urgency or impact level:",
+      value("feedback_impact") || "Not provided",
+      "",
+      "Browser or device:",
+      value("feedback_browser") || navigator.userAgent,
+      "",
+      "Generated:",
+      new Date().toISOString()
+    ].join("\n");
+  }
+
+  function buildSubject() {
+    const category = value("feedback_category");
+    return category
+      ? `E3 Ligase Ligandalyzer feedback: ${category}`
+      : "E3 Ligase Ligandalyzer feedback";
+  }
+
+  function refresh() {
+    const body = buildFeedback();
+    preview.textContent = body;
+    emailBtn.href = `mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(buildSubject())}&body=${encodeURIComponent(body)}`;
+  }
+
+  form.addEventListener("input", refresh);
+
+  copyBtn.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(buildFeedback());
+      copyBtn.textContent = "Copied";
+      copyStatus.textContent = "Feedback copied to clipboard. Please review it in your own email client before sending.";
+      window.setTimeout(() => {
+        copyBtn.textContent = "Copy Feedback";
+      }, 1600);
+    } catch (error) {
+      copyStatus.textContent = "Clipboard copy was blocked by the browser. You can still copy the preview manually.";
+    }
+  });
+
+  refresh();
+});
+</script>
+{% endblock %}

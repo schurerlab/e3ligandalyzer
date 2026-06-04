@@ -522,13 +522,25 @@
         <details class="doc-detail" open><summary>Why do some recruiters have missing data?</summary><div class="doc-detail-body">Some recruiter codes may have descriptor or SMILES data but lack complete structure, SASA, or file-level context. Missing pages are routed to a support page so they can be curated or reported.</div></details>
         <details class="doc-detail"><summary>Why can one ligand appear more than once?</summary><div class="doc-detail-body">The same chemical ligand can appear in different ligases, PDB entries, variants, poses, or structural contexts. LR records preserve this structure-level context instead of collapsing everything into one chemical-only entry.</div></details>
         <details class="doc-detail"><summary>Where is the API documentation?</summary><div class="doc-detail-body">The complete API documentation now lives on <a class="text-sky-300 hover:text-sky-200" href="/api-reference">the API Reference page</a>. This Docs page is focused on how to use the Ligandalyzer as a researcher.</div></details>
-        <details class="doc-detail"><summary>How can collaborators contribute?</summary><div class="doc-detail-body">Use the <a class="text-sky-300 hover:text-sky-200" href="/contribute">Submit Data / Contribute page</a>, the <a class="text-sky-300 hover:text-sky-200" href="/report-issue">database issue reporting page</a>, or contact the team directly at <a class="text-sky-300 hover:text-sky-200" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a> with structures, ligase systems, recruiter data, scaffold notes, or feature ideas.</div></details>
+        <details class="doc-detail"><summary>How can collaborators contribute?</summary><div class="doc-detail-body">Use the <a class="text-sky-300 hover:text-sky-200" href="/contribute">Submit Data / Contribute page</a>, the <a class="text-sky-300 hover:text-sky-200" href="/report-issue">database issue reporting page</a>, the <a class="text-sky-300 hover:text-sky-200" href="/feedback">Feedback page</a>, or contact the team directly through <a class="text-sky-300 hover:text-sky-200" href="/contact">Contact</a> or <a class="text-sky-300 hover:text-sky-200" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a> with structures, ligase systems, recruiter data, scaffold notes, or feature ideas.</div></details>
       </section>
     </main>
   </div>
 
   <footer class="doc-footer">E3 Ligase Ligandalyzer Docs — built for structure-guided degrader discovery.</footer>
 </section>
+
+<div class="max-w-7xl mx-auto mt-6 px-2">
+  <div class="rounded-3xl border border-cyan-500/20 bg-slate-900/70 p-6 text-slate-300 shadow-xl">
+    <p class="text-sm uppercase tracking-[0.28em] text-cyan-300">More support</p>
+    <div class="mt-3 flex flex-wrap gap-3">
+      <a class="doc-btn" href="/faq">Open detailed FAQ</a>
+      <a class="doc-btn" href="/feedback">Share feedback</a>
+      <a class="doc-btn" href="/contact">Contact the authors</a>
+      <a class="doc-btn" href="/report-issue">Report database issue</a>
+    </div>
+  </div>
+</div>
 
 <button id="docBackTop" class="doc-back-top" aria-label="Back to top">⬆️</button>
 

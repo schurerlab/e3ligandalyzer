@@ -278,6 +278,18 @@ def create_app():
     def contribute():
         return render_template("contribute.html")
 
+    @app.route("/contact")
+    def contact():
+        return render_template("contact.html")
+
+    @app.route("/feedback")
+    def feedback():
+        return render_template("feedback.html")
+
+    @app.route("/faq")
+    def faq():
+        return render_template("faq.html")
+
     @app.route("/report-issue")
     def report_issue():
         return render_template("report_issue.html")

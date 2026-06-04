@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}FAQ — E3 Ligase Ligandalyzer{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --faq-border: rgba(56,189,248,0.22);
+    --faq-copy: #cbd5e1;
+    --faq-muted: #94a3b8;
+  }
+  .faq-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    color: var(--faq-copy);
+  }
+  .faq-hero,
+  .faq-panel {
+    border: 1px solid var(--faq-border);
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.88));
+    box-shadow: 0 22px 60px rgba(2,6,23,0.36);
+  }
+  .faq-hero {
+    padding: clamp(1.6rem, 4vw, 3rem);
+    background:
+      radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 28%),
+      radial-gradient(circle at left bottom, rgba(250,204,21,0.14), transparent 24%),
+      linear-gradient(180deg, rgba(15,23,42,0.96), rgba(2,6,23,0.92));
+  }
+  .faq-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56,189,248,0.32);
+    background: rgba(8,47,73,0.3);
+    color: #bae6fd;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .faq-title {
+    margin-top: 1rem;
+    font-size: clamp(2.8rem, 5vw, 4.8rem);
+    line-height: 0.95;
+    font-weight: 950;
+    letter-spacing: -0.055em;
+    color: white;
+  }
+  .faq-title span {
+    display: block;
+    background: linear-gradient(90deg, #38bdf8, #2dd4bf, #facc15);
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .faq-copy {
+    max-width: 900px;
+    margin-top: 1rem;
+    line-height: 1.8;
+  }
+  .faq-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.2rem;
+  }
+  .faq-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.78rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(56,189,248,0.3);
+    background: rgba(15,23,42,0.72);
+    color: #e2e8f0;
+    text-decoration: none;
+  }
+  .faq-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .faq-sidebar,
+  .faq-main {
+    display: grid;
+    gap: 1rem;
+  }
+  .faq-panel {
+    padding: 1.2rem;
+  }
+  .faq-panel h2 {
+    color: #f8fafc;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+  .faq-nav a {
+    display: block;
+    padding: 0.7rem 0.8rem;
+    margin: 0.2rem 0;
+    border-radius: 14px;
+    color: var(--faq-muted);
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .faq-nav a:hover {
+    color: #e0f2fe;
+    background: rgba(56,189,248,0.1);
+    border-color: rgba(56,189,248,0.22);
+  }
+  .faq-intro {
+    color: var(--faq-muted);
+    line-height: 1.7;
+  }
+  .faq-group {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 0.9rem;
+  }
+  .faq-item {
+    border-radius: 18px;
+    border: 1px solid rgba(56,189,248,0.16);
+    background: rgba(15,23,42,0.7);
+    overflow: hidden;
+  }
+  .faq-item summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1rem 1rem 0.95rem;
+    color: #f8fafc;
+    font-weight: 700;
+  }
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq-body {
+    padding: 0 1rem 1rem;
+    color: #cbd5e1;
+    line-height: 1.75;
+  }
+  .faq-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .faq-link {
+    color: #7dd3fc;
+    text-decoration: none;
+  }
+  @media (max-width: 980px) {
+    .faq-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="faq-shell">
+  <header class="faq-hero">
+    <div class="faq-kicker">Researcher-facing help</div>
+    <h1 class="faq-title">Frequently asked <span>questions</span></h1>
+    <p class="faq-copy">
+      This FAQ is intended as a practical companion to the curated Version 1 snapshot of E3 Ligase Ligandalyzer. It is designed for researchers, reviewers, and collaborators who want a quick answer before diving into the longer Methods, Schema, Release, and API pages.
+    </p>
+    <div class="faq-actions">
+      <a class="faq-btn" href="/docs">Docs</a>
+      <a class="faq-btn" href="/report-issue">Report Issue</a>
+      <a class="faq-btn" href="/feedback">Feedback</a>
+      <a class="faq-btn" href="/contact">Contact</a>
+      <a class="faq-btn" href="/contribute">Contribute</a>
+    </div>
+  </header>
+
+  <div class="faq-layout">
+    <aside class="faq-sidebar">
+      <section class="faq-panel">
+        <h2>Categories</h2>
+        <nav class="faq-nav mt-3">
+          <a href="#about-resource">About the resource</a>
+          <a href="#data-curation">Data and curation</a>
+          <a href="#ligand-pages">Ligand and recruiter pages</a>
+          <a href="#api-downloads">API and downloads</a>
+          <a href="#protac-workflow">PROTAC and design workflow</a>
+          <a href="#support-reporting">Reporting and support</a>
+        </nav>
+      </section>
+
+      <section class="faq-panel">
+        <h2>Key references</h2>
+        <div class="faq-links">
+          <a class="faq-link" href="/methods">Methods</a>
+          <a class="faq-link" href="/schema">Schema</a>
+          <a class="faq-link" href="/release">Release</a>
+          <a class="faq-link" href="/download-manifest">Manifest</a>
+          <a class="faq-link" href="/api-reference">API Reference</a>
+        </div>
+      </section>
+    </aside>
+
+    <main class="faq-main">
+      <section id="about-resource" class="faq-panel">
+        <h2>About the resource</h2>
+        <p class="faq-intro mt-2">These questions explain what the resource is, what Version 1 means, and how to frame its intended scope.</p>
+        <div class="faq-group">
+          <details class="faq-item" open><summary>What is E3 Ligase Ligandalyzer?</summary><div class="faq-body">E3 Ligase Ligandalyzer is a structure-first, recruiter-focused database resource for exploring curated E3 ligase recruiter records, ligand views, scaffold context, SASA-linked exposure information, and release-aware downloads.</div></details>
+          <details class="faq-item"><summary>What is a recruiter?</summary><div class="faq-body">In this resource, a recruiter is the ligand component used to engage an E3 ligase in a degrader or related targeted-protein-degradation context. The site keeps structural context visible rather than collapsing everything into one purely chemical record.</div></details>
+          <details class="faq-item"><summary>What does “structure-first” mean?</summary><div class="faq-body">It means the public resource is organized around curated structure-linked recruiter instances, associated structural files, SASA context, and release-aware provenance, not just a flat list of names or SMILES strings.</div></details>
+          <details class="faq-item"><summary>Is this intended to be exhaustive?</summary><div class="faq-body">No. Version 1 should be interpreted as a curated snapshot, not an exhaustive claim covering every literature report or every possible E3 ligase recruiter context. Future releases may expand coverage.</div></details>
+          <details class="faq-item"><summary>What is Version 1?</summary><div class="faq-body">Version 1 is the first public database release for this resource. It should be treated as the curated Version 1 snapshot described on the <a class="faq-link" href="/release">Release</a> page and paired with the public manifest, schema, and methods pages when documenting reproducible use.</div></details>
+        </div>
+      </section>
+
+      <section id="data-curation" class="faq-panel">
+        <h2>Data and curation</h2>
+        <div class="faq-group">
+          <details class="faq-item" open><summary>How are E3 ligase and recruiter structures selected?</summary><div class="faq-body">The public site sits on top of a curated structural workflow described in the <a class="faq-link" href="/methods">Methods</a> page. Structure-linked evidence, recruiter interpretation, SASA context, scaffold mapping, and release-aware provenance are all part of that curation process.</div></details>
+          <details class="faq-item"><summary>Why might some molecules look peptide-like or incomplete?</summary><div class="faq-body">Some records may need follow-up curation when a recruiter appears fragment-like, peptide-like, or only partially extracted from a larger biological or medicinal-chemistry context. If you suspect that, use <a class="faq-link" href="/report-issue">Report Issue</a>.</div></details>
+          <details class="faq-item"><summary>Why might BRD or BIRD-like molecules appear?</summary><div class="faq-body">A curated structure-first workflow can surface molecules that need further interpretation or future filtering. The presence of a BRD or BIRD-like record does not automatically mean it is final or complete; it may reflect the current state of a structure-linked curation pass.</div></details>
+          <details class="faq-item"><summary>What should I do if a ligand looks like a fragment of a larger molecule?</summary><div class="faq-body">Use <a class="faq-link" href="/report-issue">/report-issue</a> and include the recruiter code, ligase, PDB context, page URL, and your rationale or supporting citation. That is the preferred workflow for suspected incomplete extraction.</div></details>
+          <details class="faq-item"><summary>How are duplicate recruiters handled?</summary><div class="faq-body">Duplicate-looking records are not always simple errors. Some are preserved because they represent distinct structural contexts, variants, poses, or curated instance mappings. When a duplicate looks suspicious rather than intentionally distinct, report it for review.</div></details>
+          <details class="faq-item"><summary>How are scaffold assignments interpreted?</summary><div class="faq-body">Scaffold assignments are intended as a useful structural organization layer, not an immutable truth statement. They may evolve in future releases as curation and clustering improve. See the <a class="faq-link" href="/schema">Schema</a> page and scaffold dashboards for context.</div></details>
+          <details class="faq-item"><summary>How often will the database be updated?</summary><div class="faq-body">The public release language currently describes an annual review and update cadence. Future releases may expand ligase coverage, recruiter mappings, scaffold annotations, and SASA-linked assets after review and curation.</div></details>
+        </div>
+      </section>
+
+      <section id="ligand-pages" class="faq-panel">
+        <h2>Ligand and recruiter pages</h2>
+        <div class="faq-group">
+          <details class="faq-item" open><summary>What does an LR code mean?</summary><div class="faq-body">An LR code is a curated recruiter-instance identifier used to preserve structure-level context. It helps distinguish recruiter occurrences across ligases, PDB entries, variants, and related structural settings.</div></details>
+          <details class="faq-item"><summary>What do the 2D and 3D views show?</summary><div class="faq-body">The ligand page combines a 2D depiction, a 3D structure view, and SASA-linked overlays to help interpret recruiter geometry, structure context, and exposure. These visualizations are aids for interpretation rather than guarantees of downstream design success.</div></details>
+          <details class="faq-item"><summary>What does the SASA map mean?</summary><div class="faq-body">The SASA map highlights solvent exposure for atoms or regions in the current recruiter context. It is intended as a screening aid for interpretation and design triage, especially when thinking about accessible attachment regions.</div></details>
+          <details class="faq-item"><summary>How should I interpret exposed atoms?</summary><div class="faq-body">Exposed atoms can suggest candidate attachment regions, but SASA alone does not guarantee a good linker attachment site. Medicinal chemistry judgment, geometry, permeability, and downstream ternary-complex considerations still matter.</div></details>
+          <details class="faq-item"><summary>Why might a structure, SVG, SDF, or SASA view be missing?</summary><div class="faq-body">Some recruiter records may have incomplete linked assets in the current snapshot. The site surfaces those cases through missing-data pages rather than silently hiding them. Those gaps can be reported for future curation.</div></details>
+          <details class="faq-item"><summary>How do I report a ligand-page issue?</summary><div class="faq-body">Use the `Report Issue` button on the ligand page or go directly to <a class="faq-link" href="/report-issue">/report-issue</a>. That workflow is designed specifically for structured database and ligand-page problem reports.</div></details>
+        </div>
+      </section>
+
+      <section id="api-downloads" class="faq-panel">
+        <h2>API and downloads</h2>
+        <div class="faq-group">
+          <details class="faq-item" open><summary>What is the API base URL?</summary><div class="faq-body">The public API base URL is <span class="text-sky-300">https://e3ligandalyzer.com/api</span>. The full route guidance and examples live on the <a class="faq-link" href="/api-reference">API Reference</a> page.</div></details>
+          <details class="faq-item"><summary>How do I use <code>export BASE="https://e3ligandalyzer.com/api"</code>?</summary><div class="faq-body">Run that command in your terminal first, then use the documented `curl` or Python examples that refer to <code>$BASE</code>. This keeps copy-paste commands aligned with the canonical public API host.</div></details>
+          <details class="faq-item"><summary>Why did <code>curl</code> say “No host part in the URL”?</summary><div class="faq-body">That usually means your <code>BASE</code> variable is empty or was not exported in the current shell. Re-run the export command from the API page before trying the example again.</div></details>
+          <details class="faq-item"><summary>What is the difference between the human-readable manifest and the raw JSON manifest?</summary><div class="faq-body">The human-readable manifest is intended for researcher review and citation-friendly browsing, while the raw JSON manifest is designed for scripted or programmatic workflows.</div></details>
+          <details class="faq-item"><summary>How do I download all structures for a ligase?</summary><div class="faq-body">Use the documented download endpoints on the <a class="faq-link" href="/api-reference">API Reference</a> page and pair the output with the <a class="faq-link" href="/download-manifest">Download Manifest</a> and <a class="faq-link" href="/release">Release</a> page for reproducibility context.</div></details>
+          <details class="faq-item"><summary>How should I cite or record downloaded data?</summary><div class="faq-body">Record the Version 1 release context, the matching manifest, and the relevant methods/schema references used at the time of download. The site should be treated as a curated release-aware resource rather than a context-free file dump.</div></details>
+        </div>
+      </section>
+
+      <section id="protac-workflow" class="faq-panel">
+        <h2>PROTAC and design workflow</h2>
+        <div class="faq-group">
+          <details class="faq-item" open><summary>How does the PROTAC Builder handoff work?</summary><div class="faq-body">The ligand page can hand recruiter context into the linked PROTAC Builder workflow so you can continue into design-oriented steps. It is meant as a convenience bridge between resource exploration and downstream design tooling.</div></details>
+          <details class="faq-item"><summary>Does exposed SASA guarantee a good linker attachment site?</summary><div class="faq-body">No. SASA is a screening aid, not a guarantee. Attachment quality still depends on chemistry, geometry, ternary-complex behavior, linker trajectory, and broader design constraints.</div></details>
+          <details class="faq-item"><summary>Can I use this directly for ternary-complex prediction?</summary><div class="faq-body">Not by itself. The resource supports recruiter selection and context inspection, but ternary-complex prediction still requires additional modeling, scoring, and design workflows.</div></details>
+          <details class="faq-item"><summary>How should I combine this with Warhead Hunter or other modules?</summary><div class="faq-body">A common pattern is to use Ligandalyzer to inspect recruiter context, identify exposure-aware design hypotheses, and then move into Warhead Hunter, PROTAC Builder, or other modeling tools for target-side ligand discovery and degrader assembly.</div></details>
+        </div>
+      </section>
+
+      <section id="support-reporting" class="faq-panel">
+        <h2>Reporting and support</h2>
+        <div class="faq-group">
+          <details class="faq-item" open><summary>When should I use Report Issue?</summary><div class="faq-body">Use <a class="faq-link" href="/report-issue">Report Issue</a> for suspected database, curation, asset, ligand-page, visualization, or download problems such as incomplete molecules, missing SASA, wrong recruiter codes, duplicates, or broken routes.</div></details>
+          <details class="faq-item"><summary>When should I use Feedback?</summary><div class="faq-body">Use <a class="faq-link" href="/feedback">Feedback</a> for usability, documentation, product experience, readability, workflow, or feature-request comments that are not primarily about database correctness.</div></details>
+          <details class="faq-item"><summary>When should I use Contact?</summary><div class="faq-body">Use <a class="faq-link" href="/contact">Contact</a> for broader author-facing communication, including interpretation questions, collaboration ideas, manuscript or resource-development discussions, and general project communication.</div></details>
+          <details class="faq-item"><summary>How can I submit new data?</summary><div class="faq-body">Use <a class="faq-link" href="/contribute">Submit Data / Contribute</a> for additions, future release candidates, and structured correction submissions that should be reviewed for inclusion.</div></details>
+          <details class="faq-item"><summary>Who do I email?</summary><div class="faq-body">The public contact email for support and author communication is <a class="faq-link" href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.</div></details>
+        </div>
+      </section>
+    </main>
+  </div>
+</section>
+{% endblock %}

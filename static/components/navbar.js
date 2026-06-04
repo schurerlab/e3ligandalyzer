@@ -389,6 +389,11 @@ class CustomNavbar extends HTMLElement {
                   <i data-feather="file-text"></i> Documentation
                 </span>
               </a>
+              <a href="/faq" data-page="faq">
+                <span class="module-label">
+                  <i data-feather="help-circle"></i> FAQ
+                </span>
+              </a>
               <a href="/api-reference" data-page="api-reference">
                 <span class="module-label">
                   <i data-feather="code"></i> API Reference
