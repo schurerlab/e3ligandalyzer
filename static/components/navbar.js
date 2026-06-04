@@ -1,376 +1,28 @@
 class CustomNavbar extends HTMLElement {
   connectedCallback() {
+    if (this.shadowRoot) return;
+
     this.attachShadow({ mode: "open" });
     this.shadowRoot.innerHTML = `
       <style>
         :host {
           --primary: #38bdf8;
+          --primary-soft: rgba(56, 189, 248, 0.14);
           --accent: #facc15;
+          --text: #f8fafc;
           --text-muted: #cbd5e1;
-          --bg-glass: rgba(15, 23, 42, 0.75);
-          --border-glow: rgba(56, 189, 248, 0.25);
-          font-family: 'Inter', sans-serif;
+          --text-soft: #94a3b8;
+          --bg-glass: rgba(15, 23, 42, 0.78);
+          --bg-panel: rgba(2, 6, 23, 0.98);
+          --border-glow: rgba(56, 189, 248, 0.26);
+          --shadow-glow: 0 24px 80px rgba(0, 0, 0, 0.46), 0 0 30px rgba(56, 189, 248, 0.12);
+          font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        /* =====================================================
-           NAV CONTAINER
-        ===================================================== */
-        nav {
-          background: var(--bg-glass);
-          border-bottom: 1px solid var(--border-glow);
-          backdrop-filter: blur(10px);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.8rem 1.5rem;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-        }
-
-        /* Electric frame */
-        nav::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: 8px;
-          border: 2px solid transparent;
-          background: linear-gradient(
-            135deg,
-            rgba(56,189,248,0.9),
-            rgba(250,204,21,0.9),
-            rgba(56,189,248,0.9)
-          ) border-box;
-          -webkit-mask:
-            linear-gradient(#000 0 0) padding-box,
-            linear-gradient(#000 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
-        }
-
-        /* =====================================================
-           BRAND
-        ===================================================== */
-        .brand {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: var(--primary);
-          text-decoration: none;
-          font-weight: 600;
-          font-size: 1.2rem;
-          min-width: 0;
-          z-index: 2;
-        }
-
-        .brand span {
-          min-width: 0;
-        }
-
-        /* =====================================================
-           DESKTOP MENU
-        ===================================================== */
-        .menu {
-          display: flex;
-          gap: 1.2rem;
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          align-items: center;
-          z-index: 2;
-        }
-
-        .menu a,
-        .menu button {
-          color: var(--text-muted);
-          background: none;
-          border: none;
-          font-weight: 500;
-          padding: 0.4rem 0.8rem;
-          border-radius: 4px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          transition: background 0.2s ease, color 0.2s ease;
-        }
-
-        .menu a:hover,
-        .menu button:hover {
-          background: rgba(56,189,248,0.12);
-          color: var(--primary);
-        }
-
-        .menu a.active {
-          color: var(--accent);
-          border-bottom: 2px solid var(--accent);
-        }
-
-        /* =====================================================
-           DESKTOP DROPDOWN
-        ===================================================== */
-        .dropdown {
-          position: relative;
-        }
-
-        .dropdown-content {
-          position: absolute;
-          top: 2.4rem;
-          right: 0;
-          min-width: 275px;
-          background: rgba(15,23,42,0.97);
-          border: 1px solid var(--border-glow);
-          border-radius: 8px;
-          padding: 0.4rem 0;
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.2s ease;
-          z-index: 200;
-        }
-
-        .dropdown.open .dropdown-content {
-          opacity: 1;
-          pointer-events: auto;
-        }
-
-        .dropdown-content a {
-          padding: 0.6rem 1rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 0.9rem;
-          font-size: 0.9rem;
-        }
-
-        .module-label {
-          display: flex;
-          align-items: center;
-          gap: 0.45rem;
-          min-width: 0;
-          white-space: nowrap;
-        }
-
-        .module-badges {
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          margin-left: auto;
-          flex-shrink: 0;
-        }
-
-        .badge,
-        .badge-soon,
-        .badge-preprint,
-        .badge-github {
-          font-size: 0.68rem;
-          font-weight: 700;
-          line-height: 1;
-          padding: 0.22rem 0.42rem;
-          border-radius: 999px;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          white-space: nowrap;
-        }
-
-        .badge {
-          background: rgba(34, 197, 94, 0.18);
-          color: #bbf7d0;
-          border: 1px solid rgba(74, 222, 128, 0.65);
-          box-shadow: 0 0 8px rgba(34, 197, 94, 0.25);
-        }
-
-        .badge-soon {
-          background: rgba(250, 204, 21, 0.15);
-          color: #fef08a;
-          border: 1px solid rgba(250, 204, 21, 0.65);
-          box-shadow: 0 0 8px rgba(250, 204, 21, 0.25);
-        }
-
-        .badge-preprint {
-          background: rgba(239, 68, 68, 0.18);
-          color: #fecaca;
-          border: 1px solid rgba(248, 113, 113, 0.75);
-          box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
-        }
-
-        .badge-github {
-          background: rgba(148, 163, 184, 0.16);
-          color: #e2e8f0;
-          border: 1px solid rgba(203, 213, 225, 0.5);
-          box-shadow: 0 0 8px rgba(148, 163, 184, 0.22);
-        }
-
-        /* =====================================================
-           LUCKY BUTTON
-        ===================================================== */
-        .lucky-btn {
-          background: var(--accent);
-          color: #1e293b;
-          font-weight: 600;
-          padding: 0.45rem 0.9rem;
-          border-radius: 6px;
-          border: none;
-        }
-
-        /* =====================================================
-           HAMBURGER BUTTON
-        ===================================================== */
-        .menu-toggle {
-          display: none;
-          width: 32px;
-          height: 26px;
-          flex-direction: column;
-          justify-content: space-between;
-          background: none;
-          border: none;
-          cursor: pointer;
-        }
-
-        .bar {
-          height: 3px;
-          background: var(--text-muted);
-          border-radius: 3px;
-        }
-
-        .menu-backdrop {
-          display: none;
-        }
-
-        /* =====================================================
-           MOBILE OVERRIDES
-        ===================================================== */
-        @media (max-width: 768px) {
-          nav {
-            gap: 0.75rem;
-            padding: 0.8rem 1rem;
-          }
-
-          .brand {
-            flex: 1;
-            font-size: 1rem;
-          }
-
-          .brand img {
-            flex-shrink: 0;
-          }
-
-          .brand span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .menu-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            padding: 0;
-            border-radius: 10px;
-            border: 1px solid rgba(56, 189, 248, 0.22);
-            background: rgba(15, 23, 42, 0.8);
-            z-index: 3;
-          }
-
-          .menu-backdrop {
-            position: fixed;
-            inset: 0;
-            display: block;
-            background: rgba(2, 6, 23, 0.72);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s ease;
-            z-index: 98;
-          }
-
-          .menu-backdrop.show {
-            opacity: 1;
-            pointer-events: auto;
-          }
-
-          .menu {
-            position: fixed;
-            top: calc(100% + 0.35rem);
-            left: 0.75rem;
-            right: 0.75rem;
-            max-height: calc(100vh - 5.75rem);
-            overflow-y: auto;
-            background: rgba(2, 6, 23, 0.98);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 18px;
-            flex-direction: column;
-            align-items: stretch;
-            padding: 0.35rem 0;
-            gap: 0;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-6px);
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            z-index: 99;
-          }
-
-          .menu.show {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0);
-          }
-
-          .menu li {
-            width: 100%;
-          }
-
-          .menu a,
-          .menu button {
-            width: 100%;
-            min-height: 44px;
-            padding: 0.9rem 1rem;
-            border-radius: 0;
-            background: transparent;
-            text-align: left;
-          }
-
-          .menu li:not(:last-child) {
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-          }
-
-          .dropdown-content {
-            position: static;
-            opacity: 0;
-            pointer-events: none;
-            background: rgba(15, 23, 42, 0.55);
-            border: 1px solid rgba(56, 189, 248, 0.14);
-            border-radius: 12px;
-            padding: 0;
-            min-width: 100%;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.25s ease, opacity 0.2s ease;
-            margin: 0 0.75rem 0.5rem;
-          }
-
-          .dropdown.open .dropdown-content {
-            opacity: 1;
-            pointer-events: auto;
-            max-height: 60vh;
-          }
-
-          .dropdown-content a {
-            padding-left: 1.35rem;
-          }
-
-          .dropdown > button {
-            font-size: 0.92rem;
-            letter-spacing: normal;
-            text-transform: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            justify-content: space-between;
-          }
-
-          .module-badges {
-            margin-left: auto;
-          }
+        *,
+        *::before,
+        *::after {
+          box-sizing: border-box;
         }
 
         a,
@@ -381,46 +33,653 @@ class CustomNavbar extends HTMLElement {
           text-decoration: none !important;
         }
 
-        @media (max-width: 768px) {
-          #mobile-filter-block.collapsed {
-            display: none;
+        nav {
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          min-height: 64px;
+          padding: 0.8rem 1.5rem;
+          background: var(--bg-glass);
+          border-bottom: 1px solid var(--border-glow);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          transition: min-height 0.22s ease, padding 0.22s ease, background 0.22s ease;
+        }
+
+        nav.is-scrolled {
+          min-height: 56px;
+          padding-block: 0.55rem;
+          background: rgba(15, 23, 42, 0.92);
+        }
+
+        nav::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-bottom: 1px solid transparent;
+          background: linear-gradient(90deg, rgba(56, 189, 248, 0.65), rgba(250, 204, 21, 0.55), rgba(56, 189, 248, 0.65)) border-box;
+          -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+
+        .brand {
+          position: relative;
+          z-index: 2;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.6rem;
+          min-width: 0;
+          color: var(--primary);
+          font-size: 1.08rem;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          white-space: nowrap;
+        }
+
+        .brand img {
+          width: 28px;
+          height: 28px;
+          flex: 0 0 auto;
+          border-radius: 7px;
+          box-shadow: 0 0 16px rgba(56, 189, 248, 0.28);
+        }
+
+        .brand span {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .menu {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+
+        .menu li {
+          position: relative;
+        }
+
+        .menu a,
+        .menu button {
+          appearance: none;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.42rem;
+          min-height: 40px;
+          padding: 0.5rem 0.72rem;
+          border: 1px solid transparent;
+          border-radius: 10px;
+          background: transparent;
+          color: var(--text-muted);
+          font: inherit;
+          font-size: 0.92rem;
+          font-weight: 600;
+          line-height: 1;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .menu a:hover,
+        .menu button:hover,
+        .menu a:focus-visible,
+        .menu button:focus-visible {
+          outline: none;
+          color: var(--primary);
+          background: var(--primary-soft);
+          border-color: rgba(56, 189, 248, 0.2);
+        }
+
+        .menu a.active {
+          color: var(--accent);
+          background: rgba(250, 204, 21, 0.1);
+          border-color: rgba(250, 204, 21, 0.34);
+        }
+
+        .menu svg {
+          width: 16px;
+          height: 16px;
+          flex: 0 0 auto;
+        }
+
+        .mobile-menu-header {
+          display: none;
+        }
+
+        .dropdown-content {
+          position: absolute;
+          top: calc(100% + 0.55rem);
+          right: 0;
+          min-width: 302px;
+          padding: 0.45rem;
+          border: 1px solid var(--border-glow);
+          border-radius: 14px;
+          background: rgba(15, 23, 42, 0.98);
+          box-shadow: var(--shadow-glow);
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transform: translateY(-4px) scale(0.985);
+          transform-origin: top right;
+          transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+          z-index: 1100;
+        }
+
+        .dropdown.open .dropdown-content {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+          transform: translateY(0) scale(1);
+        }
+
+        .dropdown-content a {
+          width: 100%;
+          justify-content: space-between;
+          min-height: 42px;
+          padding: 0.64rem 0.72rem;
+          border-radius: 10px;
+          font-size: 0.9rem;
+        }
+
+        .module-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.48rem;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .module-badges {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          flex: 0 0 auto;
+          margin-left: 0.75rem;
+        }
+
+        .badge,
+        .badge-soon,
+        .badge-preprint,
+        .badge-github {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.24rem 0.44rem;
+          border-radius: 999px;
+          font-size: 0.65rem;
+          font-weight: 800;
+          line-height: 1;
+          letter-spacing: 0.045em;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .badge {
+          color: #bbf7d0;
+          background: rgba(34, 197, 94, 0.18);
+          border: 1px solid rgba(74, 222, 128, 0.64);
+          box-shadow: 0 0 8px rgba(34, 197, 94, 0.22);
+        }
+
+        .badge-soon {
+          color: #fef08a;
+          background: rgba(250, 204, 21, 0.15);
+          border: 1px solid rgba(250, 204, 21, 0.64);
+          box-shadow: 0 0 8px rgba(250, 204, 21, 0.22);
+        }
+
+        .badge-preprint {
+          color: #fecaca;
+          background: rgba(239, 68, 68, 0.18);
+          border: 1px solid rgba(248, 113, 113, 0.74);
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.28);
+        }
+
+        .badge-github {
+          color: #e2e8f0;
+          background: rgba(148, 163, 184, 0.16);
+          border: 1px solid rgba(203, 213, 225, 0.5);
+          box-shadow: 0 0 8px rgba(148, 163, 184, 0.18);
+        }
+
+        .lucky-btn {
+          color: #172033 !important;
+          background: linear-gradient(135deg, var(--accent), #fde68a) !important;
+          border-color: rgba(250, 204, 21, 0.55) !important;
+          box-shadow: 0 0 20px rgba(250, 204, 21, 0.16);
+        }
+
+        .lucky-btn:hover,
+        .lucky-btn:focus-visible {
+          color: #0f172a !important;
+          transform: translateY(-1px);
+        }
+
+        .lucky-btn:disabled {
+          cursor: wait;
+          opacity: 0.75;
+          transform: none;
+        }
+
+        .menu-toggle {
+          position: relative;
+          z-index: 1200;
+          display: none;
+          width: 44px;
+          height: 44px;
+          flex: 0 0 auto;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          border: 1px solid rgba(56, 189, 248, 0.28);
+          border-radius: 12px;
+          background: rgba(15, 23, 42, 0.82);
+          color: var(--text);
+          cursor: pointer;
+          box-shadow: 0 0 18px rgba(56, 189, 248, 0.12);
+        }
+
+        .menu-toggle:hover,
+        .menu-toggle:focus-visible {
+          outline: none;
+          background: rgba(56, 189, 248, 0.12);
+          border-color: rgba(56, 189, 248, 0.44);
+        }
+
+        .hamburger {
+          position: relative;
+          width: 22px;
+          height: 16px;
+          display: inline-block;
+        }
+
+        .bar {
+          position: absolute;
+          left: 0;
+          width: 22px;
+          height: 2px;
+          border-radius: 999px;
+          background: var(--text-muted);
+          transition: transform 0.2s ease, opacity 0.2s ease, top 0.2s ease, background 0.2s ease;
+        }
+
+        .bar1 { top: 0; }
+        .bar2 { top: 7px; }
+        .bar3 { top: 14px; }
+
+        .menu-toggle.active .bar {
+          background: var(--primary);
+        }
+
+        .menu-toggle.active .bar1 {
+          top: 7px;
+          transform: rotate(45deg);
+        }
+
+        .menu-toggle.active .bar2 {
+          opacity: 0;
+        }
+
+        .menu-toggle.active .bar3 {
+          top: 7px;
+          transform: rotate(-45deg);
+        }
+
+        .menu-backdrop {
+          position: fixed;
+          inset: 0;
+          display: block;
+          background: rgba(2, 6, 23, 0.68);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+          z-index: 1001;
+        }
+
+        .menu-backdrop.show {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .menu-close {
+          display: none;
+        }
+
+        @media (max-width: 1120px) and (min-width: 769px) {
+          .brand span {
+            max-width: 220px;
+          }
+
+          .menu {
+            gap: 0.25rem;
+          }
+
+          .menu a,
+          .menu button {
+            padding-inline: 0.55rem;
+            font-size: 0.86rem;
           }
         }
 
         @media (max-width: 768px) {
+          nav,
+          nav.is-scrolled {
+            min-height: 60px;
+            padding: 0.62rem max(0.9rem, env(safe-area-inset-left)) 0.62rem max(0.9rem, env(safe-area-inset-left));
+          }
+
+          .brand {
+            flex: 1 1 auto;
+            font-size: 0.98rem;
+            gap: 0.5rem;
+          }
+
+          .brand img {
+            width: 26px;
+            height: 26px;
+          }
+
+          .brand span {
+            max-width: min(62vw, 270px);
+          }
+
+          .menu-toggle {
+            display: inline-flex;
+          }
+
+          .menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: auto;
+            z-index: 1002;
+            width: min(88vw, 390px);
+            max-width: 390px;
+            height: 100dvh;
+            max-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            padding: max(0.85rem, env(safe-area-inset-top)) 0.85rem max(1.05rem, env(safe-area-inset-bottom));
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background:
+              radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 34%),
+              linear-gradient(180deg, rgba(15, 23, 42, 0.99), var(--bg-panel));
+            border-left: 1px solid rgba(56, 189, 248, 0.26);
+            box-shadow: var(--shadow-glow);
+            opacity: 1;
+            pointer-events: none;
+            transform: translateX(104%);
+            transition: transform 0.24s ease;
+          }
+
+          .menu.show {
+            pointer-events: auto;
+            transform: translateX(0);
+          }
+
+          .menu::-webkit-scrollbar {
+            width: 8px;
+          }
+
+          .menu::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.35);
+            border-radius: 999px;
+          }
+
+          .mobile-menu-header {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.2rem 0.2rem 0.8rem;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+          }
+
+          .mobile-menu-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.16rem;
+            min-width: 0;
+          }
+
+          .mobile-menu-title strong {
+            color: var(--text);
+            font-size: 0.98rem;
+            letter-spacing: -0.01em;
+          }
+
+          .mobile-menu-title span {
+            color: var(--text-soft);
+            font-size: 0.76rem;
+            line-height: 1.25;
+          }
+
+          .menu-close {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.72);
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            line-height: 1;
+            cursor: pointer;
+          }
+
+          .menu-close:hover,
+          .menu-close:focus-visible {
+            outline: none;
+            color: var(--primary);
+            border-color: rgba(56, 189, 248, 0.42);
+            background: rgba(56, 189, 248, 0.12);
+          }
+
+          .menu li {
+            width: 100%;
+          }
+
+          .menu li + li {
+            margin-top: 0.3rem;
+          }
+
+          .menu a,
+          .menu button {
+            width: 100%;
+            justify-content: flex-start;
+            min-height: 48px;
+            padding: 0.88rem 0.9rem;
+            border-radius: 13px;
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.38);
+            border-color: rgba(148, 163, 184, 0.12);
+            font-size: 0.95rem;
+            line-height: 1.15;
+          }
+
+          .menu a:hover,
+          .menu button:hover,
+          .menu a:focus-visible,
+          .menu button:focus-visible {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: rgba(56, 189, 248, 0.26);
+          }
+
+          .menu a.active {
+            color: var(--accent);
+            background: rgba(250, 204, 21, 0.12);
+            border-color: rgba(250, 204, 21, 0.32);
+          }
+
+          .lucky-btn {
+            justify-content: center !important;
+            min-height: 50px !important;
+            margin: 0.1rem 0 0.25rem;
+            border-radius: 15px !important;
+            font-size: 0.96rem !important;
+          }
+
+          .dropdown > button {
+            justify-content: space-between;
+          }
+
+          .dropdown > button::after {
+            content: "";
+            width: 8px;
+            height: 8px;
+            margin-left: auto;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: rotate(45deg) translateY(-2px);
+            transition: transform 0.18s ease;
+            opacity: 0.8;
+          }
+
+          .dropdown.open > button::after {
+            transform: rotate(225deg) translateY(-1px);
+          }
+
+          .dropdown-content {
+            position: static;
+            min-width: 0;
+            width: 100%;
+            max-height: 0;
+            margin: 0;
+            padding: 0 0.35rem;
+            overflow: hidden;
+            border: 0;
+            border-radius: 14px;
+            background: transparent;
+            box-shadow: none;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: none;
+            transform: none;
+            transition: max-height 0.24s ease, padding 0.24s ease;
+          }
+
+          .dropdown.open .dropdown-content {
+            max-height: 720px;
+            padding-top: 0.35rem;
+            padding-bottom: 0.35rem;
+            pointer-events: auto;
+          }
+
+          .dropdown-content a {
+            min-height: 44px;
+            padding: 0.72rem 0.78rem 0.72rem 1rem;
+            border-radius: 12px;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.28);
+            border-color: rgba(148, 163, 184, 0.08);
+            font-size: 0.88rem;
+          }
+
+          .dropdown-content a + a {
+            margin-top: 0.24rem;
+          }
+
+          .module-label {
+            flex: 1 1 auto;
+            white-space: normal;
+          }
+
+          .module-badges {
+            margin-left: 0.55rem;
+          }
+
+          .badge,
+          .badge-soon,
+          .badge-preprint,
+          .badge-github {
+            font-size: 0.6rem;
+            padding: 0.22rem 0.36rem;
+          }
+
+          #mobile-filter-block.collapsed {
+            display: none;
+          }
+
           #search-results {
             max-height: calc(100vh - 160px);
           }
         }
 
-        .adv-toggle {
-          cursor: pointer;
+        @media (max-width: 420px) {
+          .brand span {
+            max-width: 55vw;
+          }
+
+          .menu {
+            width: min(92vw, 390px);
+          }
         }
 
-        .adv-toggle:hover {
-          color: var(--primary);
+        @media (prefers-reduced-motion: reduce) {
+          *,
+          *::before,
+          *::after {
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+          }
         }
       </style>
 
-      <nav>
-        <a href="/" class="brand">
-          <img src="/static/images/favicon2.png" alt="logo" width="26" height="26" style="border-radius:6px;">
+      <nav aria-label="Primary navigation">
+        <a href="/" class="brand" aria-label="Ligase Recruiter Ligandalyzer home">
+          <img src="/static/images/favicon2.png" alt="" width="28" height="28">
           <span>Ligase Recruiter Ligandalyzer</span>
         </a>
 
-        <!-- HAMBURGER -->
-        <button class="menu-toggle" aria-label="Toggle navigation">
-          <div class="bar bar1"></div>
-          <div class="bar bar2"></div>
-          <div class="bar bar3"></div>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="primary-navigation">
+          <span class="hamburger" aria-hidden="true">
+            <span class="bar bar1"></span>
+            <span class="bar bar2"></span>
+            <span class="bar bar3"></span>
+          </span>
         </button>
 
         <div class="menu-backdrop" hidden></div>
 
-        <!-- MENU -->
-        <ul class="menu">
+        <ul class="menu" id="primary-navigation">
+          <li class="mobile-menu-header">
+            <span class="mobile-menu-title">
+              <strong>Navigation</strong>
+              <span>E3 ligase recruitment tools and resources</span>
+            </span>
+            <button class="menu-close" type="button" aria-label="Close navigation">&times;</button>
+          </li>
+
           <li>
-            <button id="luckyBtn" class="lucky-btn">
+            <button id="luckyBtn" class="lucky-btn" type="button">
               🎲 I'm Feeling Lucky
             </button>
           </li>
@@ -457,7 +716,7 @@ class CustomNavbar extends HTMLElement {
 
           <li class="dropdown" id="resourcesDropdown">
             <button type="button">
-              <i data-feather="book-open"></i>Resources ▾
+              <span><i data-feather="book-open"></i>Resources</span>
             </button>
 
             <div class="dropdown-content">
@@ -511,18 +770,16 @@ class CustomNavbar extends HTMLElement {
 
           <li>
             <a href="#" id="globalSearchBtn">
-              <span><i data-feather="search"></i>🔍 Search</span>
+              <i data-feather="search"></i>Search
             </a>
           </li>
 
-          <!-- 🧩 Modules Dropdown -->
           <li class="dropdown" id="modulesDropdown">
             <button type="button">
-              <i data-feather="box"></i>Modules ▾
+              <span><i data-feather="box"></i>Modules</span>
             </button>
 
             <div class="dropdown-content">
-
               <a href="#" id="protacLink">
                 <span class="module-label">
                   <i data-feather="tool"></i> PROTAC Builder
@@ -576,32 +833,66 @@ class CustomNavbar extends HTMLElement {
                   <span class="badge-github">GitHub</span>
                 </span>
               </a>
-
             </div>
           </li>
         </ul>
       </nav>
     `;
 
-    /* ELEMENT REFERENCES */
     const shadow = this.shadowRoot;
+    const nav = shadow.querySelector("nav");
     const menuBtn = shadow.querySelector(".menu-toggle");
+    const closeBtn = shadow.querySelector(".menu-close");
     const menuBackdrop = shadow.querySelector(".menu-backdrop");
     const menu = shadow.querySelector(".menu");
-    const nav = shadow.querySelector("nav");
     const dropdowns = Array.from(shadow.querySelectorAll(".dropdown"));
     const protacLink = shadow.querySelector("#protacLink");
     const searchBtn = shadow.querySelector("#globalSearchBtn");
+    const luckyBtn = shadow.querySelector("#luckyBtn");
 
-    searchBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      document.dispatchEvent(new Event("open-global-search"));
-    });
+    const mobileQuery = window.matchMedia("(max-width: 768px)");
+    let previousBodyOverflow = "";
+
+    const isMobile = () => mobileQuery.matches;
+
+    const setDropdown = (dropdown, open) => {
+      const button = dropdown.querySelector("button");
+      dropdown.classList.toggle("open", open);
+      if (button) button.setAttribute("aria-expanded", String(open));
+    };
+
+    const closeDropdowns = (except = null) => {
+      dropdowns.forEach((dropdown) => {
+        if (dropdown !== except) setDropdown(dropdown, false);
+      });
+    };
+
+    const setMenuState = (open) => {
+      menu.classList.toggle("show", open);
+      menuBtn.classList.toggle("active", open);
+      menuBtn.setAttribute("aria-expanded", String(open));
+      menuBtn.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+      menuBackdrop.hidden = !open;
+      menuBackdrop.classList.toggle("show", open);
+
+      if (open) {
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        setTimeout(() => closeBtn?.focus(), 0);
+      } else {
+        document.body.style.overflow = previousBodyOverflow || "";
+        closeDropdowns();
+      }
+    };
+
+    const closeMenu = () => setMenuState(false);
+    const toggleMenu = () => setMenuState(!menu.classList.contains("show"));
 
     dropdowns.forEach((dropdown) => {
       const button = dropdown.querySelector("button");
       const content = dropdown.querySelector(".dropdown-content");
       const dropdownId = dropdown.id || `dropdown-${Math.random().toString(36).slice(2, 8)}`;
+
       dropdown.id = dropdownId;
       content.id = `${dropdownId}-content`;
       button.setAttribute("aria-haspopup", "true");
@@ -609,146 +900,124 @@ class CustomNavbar extends HTMLElement {
       button.setAttribute("aria-controls", content.id);
     });
 
-    function closeDropdowns() {
-      dropdowns.forEach((dropdown) => {
-        dropdown.classList.remove("open");
-        const button = dropdown.querySelector("button");
-        if (button) button.setAttribute("aria-expanded", "false");
-      });
-    }
-
-    function closeMenu() {
-      menu.classList.remove("show");
-      menuBtn.classList.remove("active");
-      menuBtn.setAttribute("aria-expanded", "false");
-      menuBackdrop.classList.remove("show");
-      menuBackdrop.hidden = true;
-      document.body.style.overflow = "";
-      closeDropdowns();
-    }
-
-    function openMenu() {
-      menu.classList.add("show");
-      menuBtn.classList.add("active");
-      menuBtn.setAttribute("aria-expanded", "true");
-      menuBackdrop.hidden = false;
-      menuBackdrop.classList.add("show");
-      document.body.style.overflow = "hidden";
-    }
-
-    menuBtn.setAttribute("aria-expanded", "false");
-    menuBtn.setAttribute("aria-controls", "primary-navigation");
-    menu.id = "primary-navigation";
-
-    /* ✅ Dynamic PROTAC Builder link */
-    protacLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      const base = window.PROTACSUITE || "https://protacbuilder.com/";
-      window.open(base, "_blank");
-    });
-
-    /* 📱 Mobile menu toggle */
-    menuBtn.addEventListener("click", () => {
-      if (menu.classList.contains("show")) {
-        closeMenu();
-      } else {
-        openMenu();
-      }
-    });
-
+    menuBtn.addEventListener("click", toggleMenu);
+    closeBtn?.addEventListener("click", closeMenu);
     menuBackdrop.addEventListener("click", closeMenu);
+
+    searchBtn?.addEventListener("click", (event) => {
+      event.preventDefault();
+      document.dispatchEvent(new Event("open-global-search"));
+      if (isMobile()) closeMenu();
+    });
+
+    protacLink?.addEventListener("click", (event) => {
+      event.preventDefault();
+      const base = window.PROTACSUITE || "https://protacbuilder.com/";
+      window.open(base, "_blank", "noopener,noreferrer");
+      if (isMobile()) closeMenu();
+    });
+
     menu.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => {
-        if (window.innerWidth <= 768) closeMenu();
+        if (isMobile() && link.id !== "protacLink" && link.id !== "globalSearchBtn") closeMenu();
       });
     });
 
-    /* 🧭 Highlight active route */
-    const currentPath = window.location.pathname.split("/")[1] || "home";
-    shadow.querySelectorAll(".menu a").forEach((link) => {
+    const currentPath = window.location.pathname.split("/").filter(Boolean)[0] || "home";
+    shadow.querySelectorAll(".menu a[data-page]").forEach((link) => {
       const page = link.getAttribute("data-page");
       if (page === currentPath) link.classList.add("active");
     });
 
-    /* 🌫️ Scroll shrink effect */
-    window.addEventListener("scroll", () => {
-      if (window.scrollY > 20) {
-        nav.style.padding = "0.5rem 1.2rem";
-        nav.style.background = "rgba(15,23,42,0.9)";
-      } else {
-        nav.style.padding = "0.8rem 1.5rem";
-        nav.style.background = "var(--bg-glass)";
-      }
-    });
+    const handleScroll = () => {
+      nav.classList.toggle("is-scrolled", window.scrollY > 20);
+    };
 
-    /* 🧩 Dropdowns: desktop hover, mobile tap */
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
     dropdowns.forEach((dropdown) => {
       const dropdownBtn = dropdown.querySelector("button");
-      let dropdownTimer;
+      let dropdownTimer = null;
 
       dropdown.addEventListener("mouseenter", () => {
-        if (window.innerWidth > 768) {
+        if (!isMobile()) {
           clearTimeout(dropdownTimer);
-          dropdown.classList.add("open");
+          closeDropdowns(dropdown);
+          setDropdown(dropdown, true);
         }
       });
 
       dropdown.addEventListener("mouseleave", () => {
-        if (window.innerWidth > 768) {
-          dropdownTimer = setTimeout(() => dropdown.classList.remove("open"), 200);
+        if (!isMobile()) {
+          dropdownTimer = setTimeout(() => setDropdown(dropdown, false), 160);
         }
       });
 
-      dropdownBtn.addEventListener("click", (e) => {
-        if (window.innerWidth <= 768) {
-          e.preventDefault();
-          const willOpen = !dropdown.classList.contains("open");
-          closeDropdowns();
-          dropdown.classList.toggle("open", willOpen);
-          dropdownBtn.setAttribute("aria-expanded", String(willOpen));
-        }
+      dropdownBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        const willOpen = !dropdown.classList.contains("open");
+        closeDropdowns(dropdown);
+        setDropdown(dropdown, willOpen);
       });
+    });
+
+    document.addEventListener("click", (event) => {
+      const path = event.composedPath();
+      if (!path.includes(this)) closeDropdowns();
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         closeMenu();
+        closeDropdowns();
       }
     });
 
-    window.addEventListener("resize", () => {
-      if (window.innerWidth > 768) {
-        closeMenu();
-      }
+    mobileQuery.addEventListener?.("change", () => {
+      closeMenu();
+      closeDropdowns();
     });
-
-    /* 🎲 I'M FEELING LUCKY */
-    const luckyBtn = shadow.querySelector("#luckyBtn");
 
     const blockedRecruiters = new Set([
       // Add blocked recruiter IDs here if needed.
     ]);
 
     function getRandomRecruiter() {
-      while (true) {
+      let attempts = 0;
+      while (attempts < 1000) {
         const num = Math.floor(Math.random() * 603) + 1;
         const code = "LR" + String(num).padStart(5, "0");
         if (!blockedRecruiters.has(code)) return code;
+        attempts += 1;
       }
+      return "LR00001";
     }
 
-    luckyBtn.addEventListener("click", () => {
+    luckyBtn?.addEventListener("click", () => {
       luckyBtn.disabled = true;
       luckyBtn.textContent = "🎲 Loading...";
       const next = getRandomRecruiter();
       window.location.href = `/ligand/${next}`;
     });
 
-    /* Feather icons */
-    if (window.feather) {
-      feather.replace();
+    if (window.feather?.icons) {
+      shadow.querySelectorAll("i[data-feather]").forEach((icon) => {
+        const name = icon.getAttribute("data-feather");
+        if (window.feather.icons[name]) {
+          icon.outerHTML = window.feather.icons[name].toSvg({
+            "aria-hidden": "true",
+            focusable: "false",
+            width: 16,
+            height: 16,
+            "stroke-width": 2,
+          });
+        }
+      });
     }
   }
 }
 
-customElements.define("custom-navbar", CustomNavbar);
+if (!customElements.get("custom-navbar")) {
+  customElements.define("custom-navbar", CustomNavbar);
+}
