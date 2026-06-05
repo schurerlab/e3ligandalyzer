@@ -214,6 +214,7 @@ class CustomNavbar extends HTMLElement {
         .badge,
         .badge-soon,
         .badge-preprint,
+        .badge-published,
         .badge-github {
           display: inline-flex;
           align-items: center;
@@ -247,6 +248,15 @@ class CustomNavbar extends HTMLElement {
           background: rgba(239, 68, 68, 0.18);
           border: 1px solid rgba(248, 113, 113, 0.74);
           box-shadow: 0 0 8px rgba(239, 68, 68, 0.28);
+        }
+
+        .badge-published {
+          color: #dcfce7;
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(163, 230, 53, 0.2));
+          border: 1px solid rgba(74, 222, 128, 0.9);
+          box-shadow:
+            0 0 10px rgba(74, 222, 128, 0.4),
+            0 0 18px rgba(163, 230, 53, 0.18);
         }
 
         .badge-github {
@@ -617,6 +627,7 @@ class CustomNavbar extends HTMLElement {
           .badge,
           .badge-soon,
           .badge-preprint,
+          .badge-published,
           .badge-github {
             font-size: 0.6rem;
             padding: 0.22rem 0.36rem;
@@ -812,7 +823,16 @@ class CustomNavbar extends HTMLElement {
                   <i data-feather="cpu"></i> PyMACS
                 </span>
                 <span class="module-badges">
-                  <span class="badge-preprint">Preprint</span>
+                  <span class="badge-github">GitHub</span>
+                </span>
+              </a>
+
+              <a href="https://www.sciencedirect.com/science/article/pii/S0223523426004836" target="_blank" rel="noopener noreferrer">
+                <span class="module-label">
+                  <i data-feather="file-text"></i> PyMACS Paper
+                </span>
+                <span class="module-badges">
+                  <span class="badge-published">Published</span>
                 </span>
               </a>
 

@@ -553,11 +553,26 @@
     background: rgba(250,204,21,0.10);
     box-shadow: 0 0 18px rgba(250,204,21,0.34), inset 0 0 18px rgba(250,204,21,0.06);
   }
-  .e3-mini-btn.preprint:hover {
+  .e3-mini-btn.published {
+    color: #ecfdf5;
+    border-color: rgba(74,222,128,0.78);
+    background:
+      linear-gradient(135deg, rgba(21,128,61,0.42), rgba(101,163,13,0.22)),
+      rgba(15,23,42,0.74);
+    box-shadow:
+      0 0 0 1px rgba(74,222,128,0.15),
+      0 0 18px rgba(74,222,128,0.32),
+      inset 0 0 20px rgba(134,239,172,0.08);
+    animation: e3-pulse 2.3s infinite;
+  }
+  .e3-mini-btn.published:hover {
     color: #bbf7d0;
     border-color: rgba(52,211,153,0.82);
-    background: rgba(52,211,153,0.10);
-    box-shadow: 0 0 18px rgba(52,211,153,0.34), inset 0 0 18px rgba(52,211,153,0.06);
+    background: linear-gradient(135deg, rgba(21,128,61,0.58), rgba(101,163,13,0.28));
+    box-shadow:
+      0 0 22px rgba(74,222,128,0.46),
+      0 0 36px rgba(163,230,53,0.18),
+      inset 0 0 18px rgba(134,239,172,0.08);
   }
   .e3-mini-btn:active {
     transform: translateY(-1px) scale(0.98);
@@ -831,7 +846,7 @@
         <p>A modular MD automation suite integrating <strong>GROMACS</strong> and Python — designed for seamless simulation setup, checkpoint handling, and trajectory post-processing.</p>
         <div class="e3-tool-actions" aria-label="PyMacs links">
           <a class="e3-mini-btn github" href="https://github.com/schurerlab/Pymacs" target="_blank" rel="noopener noreferrer">🧩 View on GitHub</a>
-          <a class="e3-mini-btn preprint" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6584500" target="_blank" rel="noopener noreferrer">📄 Read Preprint</a>
+          <a class="e3-mini-btn published" href="https://www.sciencedirect.com/science/article/pii/S0223523426004836" target="_blank" rel="noopener noreferrer">📄 Read Published Paper</a>
         </div>
       </article>
       <a class="e3-tool-card e3-tilt" style="--accent:#818cf8;--glow:rgba(129,140,248,0.18)" href="https://butters.rove-vernier.ts.net" target="_blank" rel="noopener noreferrer">

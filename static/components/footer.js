@@ -24,6 +24,15 @@ class CustomFooter extends HTMLElement {
           color: #ef4444;
         }
 
+        .badge-published {
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(163, 230, 53, 0.18));
+          color: #dcfce7;
+          border: 1px solid rgba(74, 222, 128, 0.9);
+          box-shadow:
+            0 0 10px rgba(74, 222, 128, 0.36),
+            0 0 18px rgba(163, 230, 53, 0.16);
+        }
+
         :host {
           --primary: #38bdf8; /* Electric Blue */
           --accent: #facc15;  /* Electric Yellow */
@@ -229,8 +238,11 @@ class CustomFooter extends HTMLElement {
               <li><a href="https://vlisemod.com" target="_blank">
                 <i data-feather="activity"></i> V-LiSEMOD <span class="badge">Live</span></a>
               </li>
-              <li><a href="https://github.com/schurerlab/Pymacs" target="_blank">
-                <i data-feather="cpu"></i> PyMACS <span class="badge-preprint">Preprint</span></a>
+              <li><a href="https://github.com/schurerlab/Pymacs" target="_blank" rel="noopener noreferrer">
+                <i data-feather="cpu"></i> PyMACS <span class="badge">GitHub</span></a>
+              </li>
+              <li><a href="https://www.sciencedirect.com/science/article/pii/S0223523426004836" target="_blank" rel="noopener noreferrer">
+                <i data-feather="file-text"></i> PyMACS Paper <span class="badge-published">Published</span></a>
               </li>
               <li><a href="https://butters.rove-vernier.ts.net" target="_blank">
                 <i data-feather="flask"></i> AutoDock Suite <span class="badge">Live</span></a>
