@@ -244,7 +244,7 @@ class CustomFooter extends HTMLElement {
               <li><a href="https://www.sciencedirect.com/science/article/pii/S0223523426004836" target="_blank" rel="noopener noreferrer">
                 <i data-feather="file-text"></i> PyMACS Paper <span class="badge-published">Published</span></a>
               </li>
-              <li><a href="https://butters.rove-vernier.ts.net" target="_blank">
+              <li><a href="https://autodockvina.com" target="_blank">
                 <i data-feather="flask"></i> AutoDock Suite <span class="badge">Live</span></a>
               </li>
               <li><a href="https://github.com/Joey305/af3-Auto-analysis" target="_blank">

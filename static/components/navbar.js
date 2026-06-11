@@ -836,7 +836,7 @@ class CustomNavbar extends HTMLElement {
                 </span>
               </a>
 
-              <a href="https://butters.rove-vernier.ts.net" target="_blank" rel="noopener noreferrer">
+              <a href="https://autodockvina.com" target="_blank" rel="noopener noreferrer">
                 <span class="module-label">
                   <i data-feather="flask"></i> AutoDock Suite
                 </span>
