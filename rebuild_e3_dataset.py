@@ -427,7 +427,7 @@ class E3DatasetBuilder:
         
         # Step 1: Load existing ligases
         print("Step 1: Loading existing ligase dataset...")
-        ligases_dir = "/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases"
+        ligases_dir = "/srv/e3-recruiter-ligandalyzer/Ligases"
         self.load_existing_ligases(ligases_dir)
         print()
         
@@ -586,7 +586,7 @@ class E3DatasetBuilder:
 
 
 if __name__ == "__main__":
-    output_dir = "/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES"
+    output_dir = "/srv/e3-recruiter-ligandalyzer/Ligases/CLEAN_NEW_LIGASES"
     
     builder = E3DatasetBuilder(output_dir)
     structures = builder.build_clean_dataset(max_pdb_query=1000, rate_limit=0.5)

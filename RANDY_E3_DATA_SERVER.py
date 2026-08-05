@@ -26,7 +26,7 @@ from flask import Flask, Response, abort, jsonify, request, send_file
 
 APP = Flask(__name__)
 
-DEFAULT_E3_ROOT = Path("/home/jxs794/PROTAC_BUILDER/E3_Ligandalyzer")
+DEFAULT_E3_ROOT = Path("/srv/e3-ligandalyzer")
 E3_ROOT = Path(os.environ.get("E3_DATA_DIR", str(DEFAULT_E3_ROOT))).expanduser()
 DB_PATH = Path(os.environ.get("E3_DB_PATH", str(E3_ROOT / "Databases" / "Ligase_Recruiter.db"))).expanduser()
 ELIAH_DB_PATH = Path(os.environ.get("E3_ELIAH_DB_PATH", str(E3_ROOT / "Databases" / "eliah.db"))).expanduser()

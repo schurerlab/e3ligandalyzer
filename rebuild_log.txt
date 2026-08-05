@@ -508,10 +508,10 @@ Step 2: Processing curated E3 ligase list...
   Novel structures: 59
 
 Step 3: Saving manifest...
-✅ Manifest: /home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES/clean_ligase_manifest.csv
+✅ Manifest: /srv/e3-recruiter-ligandalyzer/Ligases/CLEAN_NEW_LIGASES/clean_ligase_manifest.csv
 
 Step 4: Generating report...
-✅ Report: /home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES/clean_ligase_report.md
+✅ Report: /srv/e3-recruiter-ligandalyzer/Ligases/CLEAN_NEW_LIGASES/clean_ligase_report.md
 
 ================================================================================
 ✅ FINAL DATASET: 59 validated structures

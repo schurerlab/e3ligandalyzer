@@ -102,7 +102,7 @@ ARTIFACTS = {
 def load_existing() -> set:
     """Load existing PDB IDs"""
     existing = set()
-    ligases_dir = Path("/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases")
+    ligases_dir = Path("/srv/e3-recruiter-ligandalyzer/Ligases")
     
     if ligases_dir.exists():
         for folder in ligases_dir.iterdir():
@@ -155,7 +155,7 @@ def main():
     print("="*80)
     print()
     
-    output_dir = Path("/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES")
+    output_dir = Path("/srv/e3-recruiter-ligandalyzer/Ligases/CLEAN_NEW_LIGASES")
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Load existing

@@ -468,7 +468,7 @@ These fetch ligase structures, clean PDBs, compute SASA, map SMILES, compute des
 The existing RANDY service is in:
 
 ```text
-/Users/jxs794/Documents/warhead-hunter/RANDY/app.py
+/path/to/warhead-hunter/RANDY/app.py
 ```
 
 That service is a Flask app. It uses:
@@ -604,14 +604,14 @@ E3_ASSET_ROOT=/absolute/path/to/E3Recruiter_Ligandalyzer/Ligases
 After the initial RANDY copy, the current known database paths are:
 
 ```text
-E3_DB_PATH=/home/jxs794/PROTAC_BUILDER/E3_Ligandalyzer/Databases/Ligase_Recruiter.db
-E3_ELIAH_DB_PATH=/home/jxs794/PROTAC_BUILDER/E3_Ligandalyzer/Databases/eliah.db
+E3_DB_PATH=/srv/e3-ligandalyzer/Databases/Ligase_Recruiter.db
+E3_ELIAH_DB_PATH=/srv/e3-ligandalyzer/Databases/eliah.db
 ```
 
 The molecular asset root still needs to exist on RANDY before PDB/SDF routes can be fully remote:
 
 ```text
-E3_ASSET_ROOT=/home/jxs794/PROTAC_BUILDER/E3_Ligandalyzer/Ligases
+E3_ASSET_ROOT=/srv/e3-ligandalyzer/Ligases
 ```
 
 If only the databases have been copied so far, database-backed JSON routes can be wired first, but PDB/SDF viewer and download routes still need the `Ligases/<ligase>/PDB`, `SDF`, and `SDF_4Download` asset tree copied or mounted on RANDY.
@@ -1037,7 +1037,7 @@ curl http://127.0.0.1:5025/api/eliah/ligases
 If database routes work but PDB/SDF routes fail, copy the `Ligases/<ligase>/PDB`, `Ligases/<ligase>/SDF`, and `Ligases/<ligase>/SDF_4Download` folders to:
 
 ```text
-/home/jxs794/PROTAC_BUILDER/E3_Ligandalyzer/Ligases
+/srv/e3-ligandalyzer/Ligases
 ```
 
 Browser pages:

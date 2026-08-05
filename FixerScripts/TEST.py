@@ -46,9 +46,9 @@
 #     print(f"\n✅ Finished — {moved} PDBs moved to RetiredPDBs.")
 
 # if __name__ == "__main__":
-#     base_dir = r"C:\Users\joeys\Documents\WorkingViralDB\Ligases\MODULE\e3-ligase-atlas-explorer\Ligases"
+#     base_dir = r"C:\path\to\e3-ligase-atlas-explorer\Ligases"
 #     csv_path = os.path.join(
-#         r"C:\Users\joeys\Documents\WorkingViralDB\Ligases\MODULE\e3-ligase-atlas-explorer",
+#         r"C:\path\to\e3-ligase-atlas-explorer",
 #         "ligand_unique_counts.csv"
 #     )
 
@@ -115,5 +115,5 @@ def move_unclean_duplicates(base_dir, backup_dir_name="ExtraPDBS"):
     print(f"\n✅ Cleanup complete — {moved} unclean PDBs moved to '{backup_dir_name}', {skipped} skipped.")
 
 if __name__ == "__main__":
-    base_dir = r"/mnt/c/Users/joeys/Documents/WorkingViralDB/Ligases/MODULE/e3-ligase-atlas-explorer/Ligases"
+    base_dir = os.environ.get("E3_LIGASES_DIR", os.path.join(os.getcwd(), "Ligases"))
     move_unclean_duplicates(base_dir)

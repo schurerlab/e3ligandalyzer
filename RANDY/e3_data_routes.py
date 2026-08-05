@@ -19,7 +19,7 @@ DEFAULT_E3_ELIAH_DB_PATH = PROJECT_ROOT / "Ligases" / "eliah.db"
 DEFAULT_E3_ASSET_ROOT = PROJECT_ROOT / "Ligases"
 DEFAULT_E3_TABLE_ROOT = PROJECT_ROOT / "Ligase_Table"
 DEFAULT_E3_SHIPMENT_DB_PATH = Path(
-    os.environ.get("E3_SHIPMENT_DB_PATH", "/home/jxs794/PROTAC_BUILDER/data/e3_shipments.db")
+    os.environ.get("E3_SHIPMENT_DB_PATH", "/var/lib/e3-ligandalyzer/e3_shipments.db")
 ).expanduser()
 
 MAX_QUERY_ROWS = int(os.environ.get("E3_MAX_QUERY_ROWS", "50000"))

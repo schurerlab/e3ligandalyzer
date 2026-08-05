@@ -126,12 +126,12 @@ TIER 3 (Exploratory):
 DATASET LOCATIONS
 
 OLD (FAILED):
-/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/NEW_LIGASES
+/srv/e3-recruiter-ligandalyzer/Ligases/NEW_LIGASES
 Status: Contains audit reports documenting failures
 Recommendation: Review for methodological lessons, do not use structures
 
 NEW (PRODUCTION):
-/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES
+/srv/e3-recruiter-ligandalyzer/Ligases/CLEAN_NEW_LIGASES
 Status: 100% validated, production ready
 Files:
   • clean_ligase_manifest.csv — Complete metadata

@@ -56,7 +56,7 @@
 
 
 # if __name__ == "__main__":
-#     base_dir = r"/mnt/c/Users/joeys/Documents/WorkingViralDB/Ligases/MODULE/e3-ligase-atlas-explorer/Ligases"
+#     base_dir = r"/path/to/e3-ligase-atlas-explorer/Ligases"
 #     count_unique_ligands(base_dir)
 
 

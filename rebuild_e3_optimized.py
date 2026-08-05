@@ -40,8 +40,8 @@ class E3Structure:
     notes: str
 
 # Configuration
-OUTPUT_DIR = Path("/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases/CLEAN_NEW_LIGASES")
-EXISTING_LIGASES_DIR = Path("/home/jxs794/WebTools/E3Recruiter_Ligandalyzer/Ligases")
+OUTPUT_DIR = Path("/srv/e3-recruiter-ligandalyzer/Ligases/CLEAN_NEW_LIGASES")
+EXISTING_LIGASES_DIR = Path("/srv/e3-recruiter-ligandalyzer/Ligases")
 
 # Known E3 ligase gene families
 E3_GENE_KEYWORDS = [

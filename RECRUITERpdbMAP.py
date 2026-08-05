@@ -3,7 +3,7 @@ import csv
 import json
 import os
 
-BASE_DIR = r"C:\Users\joeys\Documents\WorkingViralDB\Ligases\MODULE\e3-recruiter-mod\Ligases"
+BASE_DIR = os.environ.get("E3_LIGASES_DIR", os.path.join(os.getcwd(), "Ligases"))
 DB_PATH = os.path.join(BASE_DIR, "Ligase_Recruiter.db")
 
 OUTPUT_CSV = "recruiter_pdb_map.csv"

@@ -41,7 +41,7 @@ BACKUP_DIR = Path(os.environ.get("PROTAC_BACKUP_DIR", str(Path(__file__).resolve
 HUNTER_JOBS_DIR = Path(
     os.environ.get(
         "WARHEAD_HUNTER_JOBS_DIR",
-        "/home/jxs794/PROTAC_BUILDER/warhead_hunter/hunter_jobs",
+        "/srv/protac-builder/warhead_hunter/hunter_jobs",
     )
 ).expanduser()
 
