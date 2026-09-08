@@ -24,8 +24,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Joey305/e3ligandalyzer">
-    <img src="https://img.shields.io/badge/Repository-Joey305%2Fe3ligandalyzer-lightgrey?style=for-the-badge&logo=github" alt="GitHub repository">
+  <a href="https://github.com/schurerlab/e3ligandalyzer">
+    <img src="https://img.shields.io/badge/Repository-Schurerlab%2Fe3ligandalyzer-lightgrey?style=for-the-badge&logo=github" alt="GitHub repository">
   </a>
   <a href="mailto:jmschulz@med.miami.edu?subject=E3%20Ligandalyzer%20Question%20%2F%20Collaboration">
     <img src="https://img.shields.io/badge/Contact-Joseph%20M.%20Schulz-blue?style=for-the-badge&logo=gmail" alt="Contact Joseph M. Schulz">
@@ -138,7 +138,7 @@ The public site exposes both human-facing pages and machine-readable API routes.
 ## ⚡ Quick Start
 
 ```bash
-git clone https://github.com/Joey305/e3ligandalyzer.git
+git clone https://github.com/schurerlab/e3ligandalyzer.git
 cd e3ligandalyzer
 
 python -m venv .venv
