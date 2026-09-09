@@ -1298,8 +1298,8 @@ function initSasa3DHover(stage) {
 
 // ---------- 3D Renderer (Protein surface + colored ligand + SASA glow) ----------
 // NGL's built-in multiple-bond styles are difficult to read in a crowded
-// protein pocket. Draw a PyMOL-like dashed secondary track from the corrected
-// V2000 SDF so bond order stays obvious without moving any atoms.
+// protein pocket. Draw a subtle parallel gray track from the corrected V2000
+// SDF so bond order stays obvious without moving any atoms.
 function _vectorSubtract(a, b) {
   return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 }
@@ -1322,23 +1322,18 @@ function _bondOrderNormal(direction) {
   ]);
 }
 
-function _addDashedBondTrack(shape, start, end, offset, color) {
+function _addBondOrderTrack(shape, start, end, offset, color) {
   const vector = _vectorSubtract(end, start);
   const length = _vectorLength(vector);
   if (!length) return;
 
   const direction = _unitVector(vector);
-  const dashCount = Math.max(3, Math.min(7, Math.round(length / 0.42)));
-  const dashFraction = 0.56 / dashCount;
-  const shiftedStart = start.map((value, index) => value + offset[index]);
-
-  for (let i = 0; i < dashCount; i++) {
-    const from = (i / dashCount) + ((1 - 0.56) / (2 * dashCount));
-    const to = Math.min(1, from + dashFraction);
-    const dashStart = shiftedStart.map((value, index) => value + direction[index] * length * from);
-    const dashEnd = shiftedStart.map((value, index) => value + direction[index] * length * to);
-    shape.addCylinder(dashStart, dashEnd, color, 0.055, `bond_order_${i}`);
-  }
+  // A full, gray parallel cylinder matches the site's ball-and-stick bonds.
+  // Trim it slightly at each end so it meets the atom spheres cleanly.
+  const trim = Math.min(0.16, length * 0.12);
+  const trackStart = start.map((value, index) => value + offset[index] + direction[index] * trim);
+  const trackEnd = end.map((value, index) => value + offset[index] - direction[index] * trim);
+  shape.addCylinder(trackStart, trackEnd, color, 0.095, "bond_order");
 }
 
 async function addBondOrderOverlay(stage, sdfPath) {
@@ -1364,7 +1359,8 @@ async function addBondOrderOverlay(stage, sdfPath) {
   }
 
   const overlay = new NGL.Shape("bondOrderOverlay", { disableImpostor: true });
-  const markerColor = [1.0, 0.92, 0.25]; // high contrast against C/N/O atoms
+  // Match the existing carbon-bond gray rather than adding a new color code.
+  const markerColor = [0.55, 0.55, 0.55];
   let markedBondCount = 0;
   for (let i = 0; i < bondCount; i++) {
     const line = lines[4 + atomCount + i] || "";
@@ -1376,10 +1372,10 @@ async function addBondOrderOverlay(stage, sdfPath) {
     if (!start || !end || ![2, 3, 4].includes(order)) continue;
 
     const normal = _bondOrderNormal(_unitVector(_vectorSubtract(end, start)));
-    const trackOffset = normal.map(value => value * 0.20);
-    _addDashedBondTrack(overlay, start, end, trackOffset, markerColor);
+    const trackOffset = normal.map(value => value * 0.15);
+    _addBondOrderTrack(overlay, start, end, trackOffset, markerColor);
     if (order === 3) {
-      _addDashedBondTrack(overlay, start, end, trackOffset.map(value => -value), markerColor);
+      _addBondOrderTrack(overlay, start, end, trackOffset.map(value => -value), markerColor);
     }
     markedBondCount++;
   }
