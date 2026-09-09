@@ -1393,7 +1393,8 @@ async function render3D(mode = "sasa") {
     comp.addRepresentation("ball+stick", {
       sele: nonTargetHeteroSelection,
       colorScheme: "element",
-      multipleBond: "symmetric",
+      multipleBond: "offset",
+      bondSpacing: 1.35,
       radiusScale: 1.3,
       scale: 1.2
     });
@@ -1404,7 +1405,10 @@ async function render3D(mode = "sasa") {
         ligandComp = await stage3D.loadFile(ligandSdfPath, { ext: "sdf" });
         ligandComp.addRepresentation("ball+stick", {
           colorScheme: "element",
-          multipleBond: "symmetric",
+          // Offset bonds remain legible when the ligand is viewed inside a
+          // protein pocket or beneath a SASA marker.
+          multipleBond: "offset",
+          bondSpacing: 1.35,
           radiusScale: 1.3,
           scale: 1.2
         });
@@ -1418,7 +1422,8 @@ async function render3D(mode = "sasa") {
       comp.addRepresentation("ball+stick", {
         sele: ligandSelection,
         colorScheme: "element",
-        multipleBond: "symmetric",
+        multipleBond: "offset",
+        bondSpacing: 1.35,
         radiusScale: 1.3,
         scale: 1.2
       });
@@ -2652,7 +2657,8 @@ async function openProtacPopup(sdfText, ligase, pdbFile) {
 
     // Main molecule rendering
     protacPopupComp.addRepresentation("ball+stick", {
-      multipleBond: "symmetric"
+      multipleBond: "offset",
+      bondSpacing: 1.35
     });
 
     // Atom index labels drawn by NGL
