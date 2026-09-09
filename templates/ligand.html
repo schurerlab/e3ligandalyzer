@@ -1322,6 +1322,28 @@ function _bondOrderNormal(direction) {
   ]);
 }
 
+function _cameraRelativeBondNormal(stage, start, end) {
+  const midpoint = start.map((value, index) => (value + end[index]) / 2);
+  const cameraPosition = stage?.viewer?.camera?.position;
+  const direction = _unitVector(_vectorSubtract(end, start));
+  if (cameraPosition) {
+    const towardCamera = _unitVector([
+      cameraPosition.x - midpoint[0],
+      cameraPosition.y - midpoint[1],
+      cameraPosition.z - midpoint[2]
+    ]);
+    // Cross-product with the viewing direction lies in the screen plane, so
+    // the secondary rail cannot disappear by pointing toward the camera.
+    const screenNormal = _unitVector([
+      towardCamera[1] * direction[2] - towardCamera[2] * direction[1],
+      towardCamera[2] * direction[0] - towardCamera[0] * direction[2],
+      towardCamera[0] * direction[1] - towardCamera[1] * direction[0]
+    ]);
+    if (_vectorLength(screenNormal) > 0.001) return screenNormal;
+  }
+  return _bondOrderNormal(direction);
+}
+
 function _addBondOrderTrack(shape, start, end, offset, color) {
   const vector = _vectorSubtract(end, start);
   const length = _vectorLength(vector);
@@ -1371,8 +1393,8 @@ async function addBondOrderOverlay(stage, sdfPath) {
     const end = coordinates[second];
     if (!start || !end || ![2, 3, 4].includes(order)) continue;
 
-    const normal = _bondOrderNormal(_unitVector(_vectorSubtract(end, start)));
-    const trackOffset = normal.map(value => value * 0.15);
+    const normal = _cameraRelativeBondNormal(stage, start, end);
+    const trackOffset = normal.map(value => value * 0.22);
     _addBondOrderTrack(overlay, start, end, trackOffset, markerColor);
     if (order === 3) {
       _addBondOrderTrack(overlay, start, end, trackOffset.map(value => -value), markerColor);
