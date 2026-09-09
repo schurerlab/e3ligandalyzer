@@ -369,4 +369,4 @@ These additions enable PROTAC recruitment across new E3 families, expand beyond 
 
 *Analysis based on PDB structural database, medicinal chemistry literature, and PROTAC feasibility assessment.*  
 *All candidates have experimentally validated small-molecule co-crystal structures.*  
-*Report generated for Joseph-Michael Schulz (jxs794) | University of Miami*
+*Report generated for Joseph-Michael Schulz | University of Miami*

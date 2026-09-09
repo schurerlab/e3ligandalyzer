@@ -15,6 +15,7 @@ Provides:
 import os
 import re
 import sqlite3
+from functools import lru_cache
 from pathlib import Path
 import requests
 from flask import Blueprint, jsonify, request, send_from_directory, current_app
@@ -107,6 +108,93 @@ def query_eliah_db(query, args=(), one=False):
     return (rows[0] if rows else None) if one else [dict(r) for r in rows]
 
 
+# ---------------------------------------------------------------------------
+# 🔹 Authoritative chemical-component SMILES
+# ---------------------------------------------------------------------------
+# Coordinate-only PDB files do not reliably preserve small-molecule bond order.
+# The PDB Chemical Component Dictionary export shipped with this project is the
+# chemical authority for standard component IDs; PDB/SDF files are used only for
+# coordinates and atom correspondence.
+COMPONENT_SMILES_PATH = Path(__file__).resolve().parents[1] / "Components-smiles-stereo-oe.smi"
+
+
+@lru_cache(maxsize=1)
+def _component_smiles_by_id():
+    """Load raw CCD SMILES keyed by component ID without parsing all 51k rows."""
+    components = {}
+    try:
+        with COMPONENT_SMILES_PATH.open(encoding="utf-8") as handle:
+            for line in handle:
+                fields = line.rstrip("\n").split("\t")
+                if len(fields) < 2:
+                    continue
+                raw_smiles, component_id = fields[0].strip(), fields[1].strip().upper()
+                if not raw_smiles or not component_id:
+                    continue
+                components[component_id] = raw_smiles
+    except OSError:
+        current_app.logger.exception(
+            "Could not load authoritative component SMILES file: %s",
+            COMPONENT_SMILES_PATH,
+        )
+    return components
+
+
+def _ligand_id_for_recruiter(recruiter_code: str):
+    """Resolve a recruiter to its PDB chemical-component ID without SMILES input."""
+    for table in ("Ligand_Instance_Recruiter_Codes", "Ligase_Ligands_Smiles_3DMapped"):
+        try:
+            row = query_db(
+                f"SELECT Ligand FROM {table} WHERE RECRUITER_CODE = ? LIMIT 1;",
+                [recruiter_code],
+                one=True,
+            )
+        except Exception:
+            # Older deployments may not have both tables. The remaining table
+            # is still sufficient to resolve the component ID.
+            continue
+        if row and row["Ligand"]:
+            return str(row["Ligand"]).strip().upper()
+    return None
+
+
+def _validated_authoritative_smiles(recruiter_code: str):
+    """Return a repaired SMILES only after the atom map was validated offline."""
+    try:
+        row = query_db(
+            """
+            SELECT SMILES
+            FROM Authoritative_Recruiter_SMILES
+            WHERE RECRUITER_CODE = ?
+              AND Mapping_Status = 'full_heavy_atom_mcs'
+            LIMIT 1;
+            """,
+            [recruiter_code],
+            one=True,
+        )
+        return row["SMILES"] if row else None
+    except Exception:
+        # This table is created by scripts/repair_authoritative_smiles.py.
+        # Keep existing deployments usable until that migration is run.
+        return None
+
+
+def _authoritative_smiles_for_code(recruiter_code: str):
+    """Resolve a recruiter to CCD SMILES, falling back only when CCD has no entry."""
+    from rdkit import Chem
+
+    recruiter_code = str(recruiter_code or "").strip().upper()
+    ligand = _ligand_id_for_recruiter(recruiter_code)
+    if ligand:
+        raw_smiles = _component_smiles_by_id().get(ligand)
+        if raw_smiles:
+            mol = Chem.MolFromSmiles(raw_smiles)
+            if mol is not None:
+                return Chem.MolToSmiles(mol, canonical=True, isomericSmiles=True)
+            current_app.logger.warning("CCD SMILES could not be parsed: component=%s", ligand)
+    return None
+
+
 def _eliah_table_columns(table_name):
     """Read ELiAH table columns through a SELECT-compatible path for remote mode."""
     table_name = str(table_name or "").strip()
@@ -157,6 +245,26 @@ def candidate_sdf_filenames(filename: str) -> list[str]:
         candidates.append(f"{core_no_variant}.sdf")
     candidates.append(f"{core_no_variant}_1.sdf")
     return list(dict.fromkeys(candidates))
+
+
+def _display_sdf_filename(pdb_filename: str | None) -> str | None:
+    """Map a resolved PDB filename to its coordinate-preserving display SDF."""
+    if not pdb_filename:
+        return None
+    return f"{Path(str(pdb_filename)).stem}.sdf"
+
+
+def _resolve_display_sdf_filename(ligase: str, pdb_filename: str | None) -> str | None:
+    """Return a verified 3D-display SDF when it is present in the active backend."""
+    sdf_filename = _display_sdf_filename(pdb_filename)
+    if not sdf_filename:
+        return None
+    if randy_client.remote_enabled():
+        # The client performs a guarded fallback to PDB ligand rendering if a
+        # remote asset is not yet present during a staged deployment.
+        return sdf_filename
+    path = Path(__file__).resolve().parents[1] / "Ligases" / ligase / "SDF_3DDisplay" / sdf_filename
+    return sdf_filename if path.is_file() else None
 
 
 # ===========================================================================
@@ -239,7 +347,7 @@ def get_featured_recruiters():
     params.extend([limit, offset])
 
     rows = query_db(query, params)
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_with_authoritative_smiles(r) for r in rows])
 
 
 
@@ -750,10 +858,21 @@ def get_ligand_sasa(recruiter_code):
 def _get_smiles_for_code(recruiter_code: str):
     """
     Resolve a recruiter code → SMILES.
+
+    Chemical-component SMILES are deliberately preferred over SMILES generated
+    from PDB/SDF coordinates. PDB coordinate records can retain atom positions
+    while losing aromaticity and double-bond information.
+
     Priority:
-      1) Ligase_SMILE_Codes
-      2) Ligase_Chemical_Descriptors (fallback)
+      1) PDB Chemical Component Dictionary export bundled with this release
+      2) Ligase_SMILE_Codes (legacy fallback)
+      3) Ligase_Chemical_Descriptors (legacy fallback)
     """
+    recruiter_code = str(recruiter_code or "").strip().upper()
+    authoritative_smiles = _authoritative_smiles_for_code(recruiter_code)
+    if authoritative_smiles:
+        return authoritative_smiles
+
     row = query_db(
         "SELECT SMILES FROM Ligase_SMILE_Codes WHERE RECRUITER_CODE = ? LIMIT 1;",
         [recruiter_code],
@@ -768,6 +887,17 @@ def _get_smiles_for_code(recruiter_code: str):
         one=True
     )
     return row["SMILES"] if row else None
+
+
+def _with_authoritative_smiles(row):
+    """Replace a legacy row's display SMILES when its recruiter has a CCD graph."""
+    record = dict(row)
+    recruiter_code = record.get("RECRUITER_CODE")
+    if recruiter_code:
+        smiles = _get_smiles_for_code(recruiter_code)
+        if smiles:
+            record["SMILES"] = smiles
+    return record
 
 
 def _get_ligands_for_code(recruiter_code: str):
@@ -1022,13 +1152,7 @@ def get_ligand_visual(recruiter_code):
         ligand = key_row["Ligand"]
         variant = key_row["Variant"] or 1
 
-        sm_row = query_db("""
-            SELECT SMILES
-            FROM Recruiter_SMILES_Map
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1;
-        """, [recruiter_code], one=True)
-        canonical_smiles = sm_row["SMILES"] if sm_row else descriptor.get("SMILES")
+        canonical_smiles = _get_smiles_for_code(recruiter_code) or descriptor.get("SMILES")
 
         metadata = {
             "SMILES": canonical_smiles,
@@ -1076,6 +1200,11 @@ def get_ligand_visual(recruiter_code):
         pdb_file = _resolve_pdb_filename(ligase, pdb_id, ligand, variant)
         pdb_missing = not bool(pdb_file)
         pdb_path = f"/Ligases/{ligase}/PDB/{pdb_file}" if pdb_file else None
+        ligand_sdf_file = _resolve_display_sdf_filename(ligase, pdb_file)
+        ligand_sdf_path = (
+            f"/api/render-3d-sdf/{ligase}/{ligand_sdf_file}"
+            if ligand_sdf_file else None
+        )
 
         # ------------------------------------------------------------------
         # 🚨 STEP 5: Missing data fallback
@@ -1167,6 +1296,8 @@ def get_ligand_visual(recruiter_code):
             "pdb_path": pdb_path,
             "pdb_file": pdb_file,
             "pdb_missing": pdb_missing,
+            "ligand_sdf_path": ligand_sdf_path,
+            "ligand_sdf_file": ligand_sdf_file,
             "sasa_svg": sasa_svg,  # ⬅ ADD THIS
 
         })
@@ -1316,6 +1447,33 @@ def serve_sdf_file(ligase, filename):
     return (f"SDF file not found for {ligase}/{core_no_variant}", 404)
 
 
+@ligases_bp.route("/render-3d-sdf/<ligase>/<path:filename>", methods=["GET"])
+def serve_3d_display_sdf(ligase, filename):
+    """Serve a coordinate-preserving, CCD-bonded ligand SDF for NGL display."""
+    try:
+        normalized_filename = normalize_sdf_filename(filename)
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+    if randy_client.remote_enabled():
+        return randy_client.proxy_file(
+            f"file/display-sdf/{randy_client.quote_part(ligase)}/"
+            f"{randy_client.quote_path(normalized_filename)}",
+            mimetype="chemical/x-mdl-sdfile",
+        )
+
+    display_dir = Path(__file__).resolve().parents[1] / "Ligases" / ligase / "SDF_3DDisplay"
+    candidate = (display_dir / Path(normalized_filename).name).resolve()
+    if not display_dir.is_dir() or not candidate.is_file() or display_dir.resolve() not in candidate.parents:
+        return jsonify({
+            "ok": False,
+            "error": "Corrected 3D ligand SDF is not available.",
+            "ligase": ligase,
+            "filename": normalized_filename,
+        }), 404
+    return send_from_directory(display_dir, candidate.name, mimetype="chemical/x-mdl-sdfile", as_attachment=False)
+
+
 @ligases_bp.route("/recruiter-by-pdb", methods=["GET"])
 def get_recruiter_by_pdb():
     pdb_id = request.args.get("pdb_id")
@@ -1418,21 +1576,23 @@ def render_2d_sasa(recruiter_code):
     print("==========================")
 
     try:
-        # 1) Get canonical PDB-matched SMILES
-        row = query_db("""
-            SELECT SMILES
-            FROM Recruiter_SMILES_Map
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1;
-        """, [recruiter_code], one=True)
+        # 1) Use the authoritative component graph. For SASA, use it only once
+        # its 2D↔3D atom correspondence has been validated by the repair script.
+        smiles = _validated_authoritative_smiles(recruiter_code)
+        if smiles is None:
+            row = query_db("""
+                SELECT SMILES
+                FROM Recruiter_SMILES_Map
+                WHERE RECRUITER_CODE = ?
+                LIMIT 1;
+            """, [recruiter_code], one=True)
+            smiles = row["SMILES"] if row else None
 
-        if not row:
-            print("⚠️ No SMILES row found in Recruiter_SMILES_Map")
+        if not smiles:
+            print("⚠️ No SMILES row found for 2D SASA rendering")
             return "<svg><!-- no descriptor row, fallback --></svg>", 200, {
                 "Content-Type": "image/svg+xml"
             }
-
-        smiles = row["SMILES"]
         print(f"🧪 Using SMILES: {smiles}")
 
         from rdkit import Chem
@@ -2531,7 +2691,7 @@ def tooltip_all(recruiter_code):
         WHERE RECRUITER_CODE = ?;
     """
     d_rows = query_db(d_query, [recruiter_code])
-    descriptors = dict(d_rows[0]) if d_rows else {}
+    descriptors = _with_authoritative_smiles(d_rows[0]) if d_rows else {}
 
     # --- METADATA (optional extra data) ---
     m_query = """
@@ -2647,19 +2807,13 @@ def get_fixed_2d_smiles(recruiter):
     try:
         recruiter = recruiter.upper()
 
-        row = query_db("""
-            SELECT SMILES
-            FROM Ligase_Chemical_Descriptors
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1
-        """, [recruiter], one=True)
-
-        if not row:
+        smiles = _get_smiles_for_code(recruiter)
+        if not smiles:
             return jsonify({"error": "Not found"}), 404
 
         return jsonify({
             "RECRUITER_CODE": recruiter,
-            "SMILES": row["SMILES"]
+            "SMILES": smiles
         })
 
     except Exception as e:
@@ -2856,7 +3010,7 @@ def search_recruiters():
     # 🔥 THIS WAS THE BUG
     rows = query_db(query, params)
 
-    return jsonify([dict(r) for r in rows])
+    return jsonify([_with_authoritative_smiles(r) for r in rows])
 
 
 

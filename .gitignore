@@ -33,6 +33,10 @@ Ligases/CSVcache/
 Ligases/*/PDB/
 Ligases/*/SDF/
 Ligases/*/SDF_4Download/
+# Generated, coordinate-preserving CCD SDFs used by the Randy 3D renderer.
+# Deploy these separately with rsync; do not version hundreds of derived files.
+Ligases/*/SDF_3DDisplay/
+corrected_3d_sdf_manifest.csv
 logs/
 tmp_sessions/
 instance/

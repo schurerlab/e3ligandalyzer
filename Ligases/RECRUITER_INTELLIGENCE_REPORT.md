@@ -254,4 +254,4 @@ The dataset supports **2 clinical-ready**, **5 preclinical**, and **4 high-prior
 
 *Analysis performed using Ligase Recruiter Intelligence Scanner v1.0*  
 *Database: Ligase_Recruiter.db (771 recruiters, 571 ligands)*  
-*Contact: Joseph-Michael Schulz (jxs794) | University of Miami*
+*Contact: Joseph-Michael Schulz | University of Miami*

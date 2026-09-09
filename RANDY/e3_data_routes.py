@@ -159,6 +159,14 @@ def _resolve_sdf_folders(ligase_dir: Path) -> list[Path]:
     abort(404, description=f"No SDF folder found for {ligase_dir.name}.")
 
 
+def _resolve_display_sdf_folder(ligase_dir: Path) -> Path:
+    """Locate ligand-only SDFs with CCD bond order and PDB-derived coordinates."""
+    folder = ligase_dir / "SDF_3DDisplay"
+    if folder.is_dir():
+        return folder
+    abort(404, description=f"No corrected 3D SDF folder found for {ligase_dir.name}.")
+
+
 def _iter_asset_files(ligase_dir: Path, asset_type: str) -> list[tuple[str, Path]]:
     key = str(asset_type or "").strip().lower()
     options = {
@@ -475,6 +483,12 @@ def register_e3_routes(app) -> None:
                 if exc.code != 404:
                     raise
         abort(404, description=f"SDF not found: {ligase}/{filename}")
+
+    @bp.get("/file/display-sdf/<ligase>/<path:filename>")
+    def file_display_sdf(ligase: str, filename: str):
+        ligase_dir = _resolve_ligase_dir(ligase)
+        file_path = _find_variant_file(_resolve_display_sdf_folder(ligase_dir), filename, ".sdf")
+        return send_file(file_path, mimetype="chemical/x-mdl-sdfile", as_attachment=False, max_age=0)
 
     @bp.get("/download/ligase/<ligase>/<asset_type>.zip")
     def download_ligase_zip(ligase: str, asset_type: str):
