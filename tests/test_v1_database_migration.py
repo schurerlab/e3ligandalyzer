@@ -1,8 +1,9 @@
 import hashlib
 import unittest
+import csv
 from pathlib import Path
 
-from e3_database import E3Database, configured_database_path
+from e3_database import E3Database, configured_asset_root, configured_database_path, configured_release_root
 from Ligase_app import flask_app
 
 
@@ -26,21 +27,21 @@ class V1DatabaseMigrationTests(unittest.TestCase):
     def test_v1_database_opens_and_has_release_metadata(self):
         metadata = self.database.release_metadata()
         self.assertEqual(metadata["Release_Version"], "1.0")
-        self.assertEqual(metadata["Release_Date"], "2026-09-09")
-        self.assertEqual(metadata["Database_Cutoff_Date"], "2026-05-08")
+        self.assertEqual(metadata["Release_Date"], "2026-09-08")
+        self.assertEqual(metadata["Database_Cutoff_Date"], "2026-09-08")
 
     def test_release_counts_match_v1_contract(self):
         self.assertEqual(self.database.release_counts(), {
-            "recruiter_entities": 345,
-            "recruiter_instances": 820,
-            "scaffolds": 244,
-            "ligase_recruiter_rows": 353,
-            "ligase_scaffold_rows": 254,
-            "ligases": 32,
-            "distinct_pdbs": 371,
-            "sasa_atoms": 33047,
-            "mapped_atoms": 26716,
-            "source_crosswalk_rows": 345,
+            "recruiter_entities": 610,
+            "recruiter_instances": 1378,
+            "scaffolds": 429,
+            "ligase_recruiter_rows": 623,
+            "ligase_scaffold_rows": 453,
+            "ligases": 35,
+            "distinct_pdbs": 691,
+            "sasa_atoms": 49245,
+            "mapped_atoms": 49245,
+            "source_crosswalk_rows": 614,
             "source_ambiguity_rows": 0,
         })
 
@@ -76,6 +77,19 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         pdb_search = self.database.search_recruiters("4W9E")
         self.assertTrue(pdb_search["instances"])
 
+    def test_prd_source_aliases_resolve_to_their_canonical_recruiters(self):
+        aliases = {
+            "PRD_001141": "LR00224", "1YH": "LR00224",
+            "PRD_001139": "LR00240", "1BG": "LR00240",
+            "PRD_001137": "LR00297", "1Y0": "LR00297",
+            "PRD_001138": "LR00303", "1AQ": "LR00303",
+        }
+        for source_id, recruiter_id in aliases.items():
+            with self.subTest(source_id=source_id):
+                self.assertEqual(self.database.legacy_identifier_entities(source_id), [recruiter_id])
+                results = self.database.search_recruiters(source_id)["entities"]
+                self.assertIn(recruiter_id, {row["Recruiter_ID"] for row in results})
+
     def test_core_routes_render_and_return_v1_results(self):
         for path in [
             "/api/release-info",
@@ -88,7 +102,6 @@ class V1DatabaseMigrationTests(unittest.TestCase):
             "/api/instances/LR00172-01/mapped-atoms",
             "/api/instances/LR00172-01/visual",
             "/api/instances/LR00172-01/pdb",
-            "/api/instances/LR00172-01/sdf",
             "/api/instances/LR00172-01/render-2d-sasa",
             "/api/search/recruiters?q=4W9E",
             "/recruiter/LR00172",
@@ -111,15 +124,16 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         exact = self.client.get("/ligand/LR00172-01")
         self.assertEqual(exact.status_code, 200)
         self.assertIn(b"instance-selector", exact.data)
+        self.assertEqual(self.client.get("/api/instances/LR00172-01/sdf").status_code, 404)
 
     def test_exact_visual_payload_keeps_suffixed_instance_assets(self):
         payload = self.client.get("/api/instances/LR00001-03/visual").get_json()
         self.assertEqual(payload["recruiter"]["Recruiter_ID"], "LR00001")
         self.assertEqual(payload["instance"]["Recruiter_Instance_ID"], "LR00001-03")
-        self.assertEqual(payload["assets"]["pdb"]["filename"], "4W9E_3JT_3.pdb")
-        self.assertEqual(payload["assets"]["sdf"]["filename"], "4W9E_3JT_3.sdf")
+        self.assertEqual(payload["assets"]["pdb"]["filename"], "LR00001-03.pdb")
+        self.assertFalse(payload["assets"]["sdf"]["available"])
         self.assertTrue(payload["assets"]["pdb"]["url"].endswith("/LR00001-03/pdb"))
-        self.assertTrue(payload["assets"]["sdf"]["url"].endswith("/LR00001-03/sdf"))
+        self.assertIsNone(payload["assets"]["sdf"]["url"])
 
         # Even generic local compatibility paths no longer substitute _1 or a
         # sibling when an exact V1 filename is absent.
@@ -197,25 +211,32 @@ class V1DatabaseMigrationTests(unittest.TestCase):
 
     def test_all_v1_instance_assets_are_served_by_exact_instance_routes(self):
         """Guard against reintroducing basename/variant fallback in the viewer API."""
-        instances = self.database.execute_read(
-            "SELECT Recruiter_Instance_ID, Ligase, Step4_PDB, Source_SDF "
-            "FROM Recruiter_Instance_Catalog ORDER BY Recruiter_Instance_ID"
-        )
-        self.assertEqual(len(instances), 820)
-        for row in instances:
-            for kind, column, folder in (
-                ("pdb", "Step4_PDB", "PDB"),
-                ("sdf", "Source_SDF", "SDF_4Download"),
-            ):
-                expected = ROOT / "Ligases" / row["Ligase"] / folder / Path(row[column]).name
-                with self.subTest(instance=row["Recruiter_Instance_ID"], asset=kind):
-                    self.assertTrue(expected.is_file())
-                    response = self.client.get(
-                        f"/api/instances/{row['Recruiter_Instance_ID']}/{kind}"
-                    )
+        release_root = configured_release_root()
+        asset_root = configured_asset_root()
+        self.assertIsNotNone(release_root)
+        self.assertIsNotNone(asset_root)
+        with (release_root / "manifests" / "Web_Asset_Manifest.csv").open(newline="") as handle:
+            assets = list(csv.DictReader(handle))
+        self.assertEqual(len(assets), 1378)
+        for row in assets:
+            instance_id = row["Recruiter_Instance_ID"]
+            expected = asset_root / row["PDB_Web_Path"]
+            with self.subTest(instance=instance_id, asset="pdb"):
+                self.assertTrue(expected.is_file())
+                response = self.client.get(f"/api/instances/{instance_id}/pdb")
+                try:
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(sha256(expected), hashlib.sha256(response.data).hexdigest())
+                finally:
+                    response.close()
+            if row["SDF_Web_Path"]:
+                expected_sdf = asset_root / row["SDF_Web_Path"]
+                with self.subTest(instance=instance_id, asset="sdf"):
+                    self.assertTrue(expected_sdf.is_file())
+                    response = self.client.get(f"/api/instances/{instance_id}/sdf")
                     try:
                         self.assertEqual(response.status_code, 200)
-                        self.assertEqual(sha256(expected), hashlib.sha256(response.data).hexdigest())
+                        self.assertEqual(sha256(expected_sdf), hashlib.sha256(response.data).hexdigest())
                     finally:
                         response.close()
 

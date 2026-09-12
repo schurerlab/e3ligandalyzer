@@ -222,6 +222,10 @@ def create_app():
     def serve_ligase_file(filename):
         # Compatibility URL only: its root is the selected release asset tree.
         # It must never quietly fall through to the historical Ligases directory.
+        if randy_client.remote_enabled():
+            # Hosted mode exposes structures only through the instance-aware
+            # same-origin API routes; it must not reconstruct Randy paths.
+            abort(404)
         asset_root = configured_asset_root()
         if not asset_root or not asset_root.is_dir():
             abort(404)

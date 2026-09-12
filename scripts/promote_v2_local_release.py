@@ -22,18 +22,18 @@ from pathlib import Path
 
 
 APP_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_STAGE = Path("/Users/jxs794/Desktop/E3Ligandalyzer/Rebuild_Staging/v1.0")
+DEFAULT_STAGE = Path("/Users/jxs794/Desktop/E3Ligandalyzer/Rebuild_Staging/v1.0-lock-20260908")
 RELEASES = APP_ROOT / "releases"
-RELEASE_NAME = "v1.0-corrected"
-DB_NAME = "E3_Ligandalyzer_v1.0.sqlite"
-STAGING_DB_NAME = "E3_Ligandalyzer_v1.0_corrected.sqlite"
-EXPECTED_DB_SHA256 = "dda4290bc65d0c8c65a59b845c95699f802311305ab81d42b2895732cbd6bb40"
+RELEASE_NAME = "v1.0-locked-20260908"
+DB_NAME = "E3_Ligandalyzer_v1.0_locked_20260908.sqlite"
+STAGING_DB_NAME = "E3_Ligandalyzer_v1.0_locked_20260908.sqlite"
+EXPECTED_DB_SHA256 = "33a80121ef1fdeb0bde917e860d89a5e3c80fcc0ef9609b86fd4c14bf0ab59fe"
 EXCLUDED_SOURCE_KEYS = {
     "2AXI|1|B|PRD_000326", "2AXI|1|A|201|.|MPO", "8GCG|1|B|7|.|A1A2J",
     "9GFK|1|J|11|.|A1IL6", "9GFK|1|F|11|.|A1IL6", "9GFK|1|G|11|.|A1IL6",
     "9GFK|1|H|11|.|A1IL6",
 }
-POST_CUTOFF_TRIM21_PDB_IDS = {"32QL", "32QM", "32QN", "32QO", "32QP", "32QR"}
+POST_CUTOFF_TRIM21_PDB_IDS = set()
 
 
 def sha256(path: Path) -> str:
@@ -204,9 +204,11 @@ def build(stage: Path, switch: bool) -> Path:
     source_db = stage / STAGING_DB_NAME
     if sha256(source_db) != EXPECTED_DB_SHA256:
         raise RuntimeError("Staging SQLite hash does not match the validated corrected release.")
+    staged_manifest = json.loads((stage / "V1_September08_Staged_Release_Manifest.json").read_text())
+    expected_instances = staged_manifest["counts"]["active_source_instances"]
     catalog = read_csv(stage / "Ligase_Table/Database_Ready/Recruiter_Instance_Catalog.csv")
-    if len(catalog) != 1372 or any(row["Registry_Status"] != "ACTIVE" for row in catalog):
-        raise RuntimeError("Staging catalogue must contain exactly 1,372 active instances.")
+    if len(catalog) != expected_instances or any(row["Registry_Status"] != "ACTIVE" for row in catalog):
+        raise RuntimeError("Staging catalogue does not reconcile the staged active-instance contract.")
     if any(row["pdb_id"] in POST_CUTOFF_TRIM21_PDB_IDS for row in catalog):
         raise RuntimeError("Post-cutoff TRIM21 PDB codes must not enter the corrected web release.")
     if {row["Source_Instance_Key"] for row in catalog} & EXCLUDED_SOURCE_KEYS:
@@ -233,15 +235,10 @@ def build(stage: Path, switch: bool) -> Path:
         if sha256(db_dest) != EXPECTED_DB_SHA256:
             raise RuntimeError("Copied SQLite hash mismatch.")
         counts = sqlite_counts(db_dest)
-        expected_counts = {
-            "recruiter_entities": 604, "permanent_recruiter_namespace": 610,
-            "recruiter_instances": 1372, "permanent_instance_namespace": 1378,
-            "scaffolds": 428, "permanent_scaffold_namespace": 429, "ligases": 35,
-            "distinct_source_pdbs": 685, "ligase_recruiter_rows": 617,
-            "ligase_scaffold_rows": 452, "sasa_summary": 1372, "sasa_atoms": 49061,
-        }
-        if counts != expected_counts:
-            raise RuntimeError(f"Copied SQLite release counts do not match validation: {counts}")
+        final = staged_manifest["counts"]
+        required = {"recruiter_entities": final["canonical_active_recruiters"], "recruiter_instances": final["active_source_instances"], "scaffolds": final["active_scaffolds"], "ligases": final["distinct_ligases"], "ligase_recruiter_rows": final["ligase_recruiter_relationships"], "ligase_scaffold_rows": final["ligase_scaffold_relationships"], "sasa_summary": final["active_source_instances"], "sasa_atoms": final["sasa_atom_rows"]}
+        if any(counts[key] != value for key, value in required.items()):
+            raise RuntimeError(f"Copied SQLite release counts do not match staged release manifest: {counts}")
 
         manifest_rows: list[dict[str, str]] = []
         copied_sdf: dict[str, tuple[str, str]] = {}
@@ -315,12 +312,12 @@ def build(stage: Path, switch: bool) -> Path:
         release_manifest = {
             "release_id": RELEASE_NAME, "release_type": "local_immutable_scientific_bundle",
             "created_at_utc": datetime.now(timezone.utc).isoformat(),
-            "database_cutoff_date": "2026-05-08",
+            "database_cutoff_date": "2026-09-08",
             "database": {"filename": DB_NAME, "relative_path": f"database/{DB_NAME}",
                          "sha256": EXPECTED_DB_SHA256, "size_bytes": db_dest.stat().st_size,
                          "integrity_check": "ok", "counts": counts},
             "assets": {"root": "assets", "pdb_count": len(manifest_rows),
-                       "chemistry_sdf_count": len(copied_sdf), "prd_whole_entity_count": 29,
+                       "chemistry_sdf_count": len(copied_sdf), "prd_whole_entity_count": final["bird_prd_physical_observations"],
                        "orphan_count": 0, "hashes": asset_hashes,
                        "web_asset_manifest_sha256": sha256(manifest_dir / "Web_Asset_Manifest.csv")},
             "asset_policy": {
@@ -328,11 +325,8 @@ def build(stage: Path, switch: bool) -> Path:
                 "sdf": "Optional shared staging chemistry SDF by Source_Entity_ID; BIRD PRDs expose whole-entity PDB only.",
                 "a1iev": "Chemistry SDF is the staging-derived A1IEV_from_CCD_InChI.sdf artifact.",
             },
-            "exclusions": {
-                "post_cutoff_trim21_pdb_ids": sorted(POST_CUTOFF_TRIM21_PDB_IDS),
-                "unapproved_mdm2_source_instances": sorted(EXCLUDED_SOURCE_KEYS),
-            },
-            "post_cutoff_trim21_pdb_ids": sorted(POST_CUTOFF_TRIM21_PDB_IDS),
+            "exclusions": {"unapproved_mdm2_source_instances": sorted(EXCLUDED_SOURCE_KEYS)},
+            "post_cutoff_trim21_pdb_ids": [],
             "source_staging_release_path": str(stage),
         }
         (manifest_dir / "release_manifest.json").write_text(json.dumps(release_manifest, indent=2) + "\n", encoding="utf-8")

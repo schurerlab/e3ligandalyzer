@@ -32,6 +32,11 @@ def _env_flag(name: str, default: bool = False) -> bool:
 
 def remote_enabled() -> bool:
     """Return True when this app should use RANDY instead of local SQLite/files."""
+    mode = str(os.environ.get("E3_DATA_MODE", "") or "").strip().lower()
+    if mode in {"remote_backend", "remote", "randy"}:
+        return True
+    if mode in {"local_release", "local"}:
+        return False
     backend = str(os.environ.get("E3_DATA_BACKEND", "") or "").strip().lower()
     if backend in {"remote", "randy"}:
         return True
@@ -158,6 +163,14 @@ def health() -> Dict[str, Any]:
     payload = resp.json()
     if not payload.get("ok", False):
         raise RuntimeError(f"RANDY E3 health check failed: {payload}")
+    return payload
+
+
+def release_info() -> Dict[str, Any]:
+    """Return the immutable release provenance asserted by RANDY."""
+    payload = get_json("release-info")
+    if not isinstance(payload, dict) or not payload.get("ok", False):
+        raise RemoteServiceError("Remote E3 release metadata is unavailable.")
     return payload
 
 

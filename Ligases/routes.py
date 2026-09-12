@@ -155,6 +155,17 @@ def _exact_instance_asset(instance, asset_kind):
     return path if path.is_file() else None
 
 
+def _remote_instance_asset_available(instance_id, asset_kind):
+    """Ask Randy about an optional exact asset without any legacy lookup."""
+    if asset_kind == "pdb":
+        # Every active V1 instance has a manifest-indexed PDB; the proxy route
+        # remains the final authority and returns its exact status to callers.
+        return True
+    return randy_client.file_exists(
+        f"instances/{randy_client.quote_part(instance_id)}/{asset_kind}"
+    )
+
+
 def _viewer_smiles(entity, chemistry_sdf):
     """Prefer catalog chemistry, with a validated release-SDF repair fallback.
 
@@ -267,20 +278,23 @@ def _instance_visual_payload(instance_id):
     if not instance:
         return None
     entity = database.recruiter_entity(instance["Recruiter_ID"])
-    pdb_path = _exact_instance_asset(instance, "pdb")
-    sdf_path = _exact_instance_asset(instance, "sdf")
-    pdb_filename = pdb_path.name if pdb_path else Path(str(instance.get("Step4_PDB") or "")).name
-    sdf_filename = sdf_path.name if sdf_path else Path(str(instance.get("Source_SDF") or "")).name
+    remote = randy_client.remote_enabled()
+    pdb_path = None if remote else _exact_instance_asset(instance, "pdb")
+    sdf_path = None if remote else _exact_instance_asset(instance, "sdf")
+    pdb_available = _remote_instance_asset_available(instance_id, "pdb") if remote else bool(pdb_path)
+    sdf_available = _remote_instance_asset_available(instance_id, "sdf") if remote else bool(sdf_path)
+    pdb_filename = f"{instance_id}.pdb" if remote else (pdb_path.name if pdb_path else Path(str(instance.get("Step4_PDB") or "")).name)
+    sdf_filename = Path(str(instance.get("Source_SDF") or "")).name
     assets = {
         "pdb": {
-            "url": f"/api/instances/{instance_id}/pdb" if pdb_path else None,
+            "url": f"/api/instances/{instance_id}/pdb" if pdb_available else None,
             "filename": pdb_filename or None,
-            "available": bool(pdb_path),
+            "available": pdb_available,
         },
         "sdf": {
-            "url": f"/api/instances/{instance_id}/sdf" if sdf_path else None,
+            "url": f"/api/instances/{instance_id}/sdf" if sdf_available else None,
             "filename": sdf_filename or None,
-            "available": bool(sdf_path),
+            "available": sdf_available,
         },
     }
     viewer_smiles = _viewer_smiles(entity, sdf_path)
@@ -532,22 +546,36 @@ def _resolve_display_sdf_filename(ligase: str, pdb_filename: str | None) -> str 
 # ===========================================================================
 @ligases_bp.route("/release-info", methods=["GET"])
 def release_info():
-    """Expose the verified database-and-assets local release linkage."""
+    """Expose immutable V1 provenance without exposing backend filesystem paths."""
     database = get_database()
     bundle = release_bundle_info()
     manifest = bundle.get("manifest", {})
-    return jsonify({
+    metadata = database.release_metadata()
+    counts = database.release_counts()
+    payload = {
+        "release_version": metadata.get("Release_Version"),
+        "release_status": metadata.get("Release_Status", "LOCKED"),
+        "database_cutoff": metadata.get("Database_Cutoff_Date"),
+        "lockdown_date": metadata.get("Release_Date"),
+        "database_sha256": bundle.get("database_sha256") or metadata.get("Database_SHA256"),
+        "canonical_recruiters": counts["recruiter_entities"],
+        "physical_instances": counts["recruiter_instances"],
+        "scaffolds": counts["scaffolds"],
+        "ligases": counts["ligases"],
+        "distinct_pdbs": counts["distinct_pdbs"],
         "metadata": database.release_metadata(),
-        "counts": database.release_counts(),
+        "counts": counts,
         "bundle": {
             "mode": bundle.get("mode", "versioned-release"),
-            "release_root": bundle.get("release_root"),
             "release_id": manifest.get("release_id"),
-            "database_sha256": bundle.get("database_sha256"),
+            "database_sha256": bundle.get("database_sha256") or metadata.get("Database_SHA256"),
             "asset_policy": manifest.get("asset_policy"),
             "assets": {key: value for key, value in manifest.get("assets", {}).items() if key != "hashes"},
         },
-    })
+    }
+    if bundle.get("mode") != "remote-backend":
+        payload["bundle"]["release_root"] = bundle.get("release_root")
+    return jsonify(payload)
 
 
 @ligases_bp.route("/recruiters/<recruiter_id>", methods=["GET"])
@@ -631,6 +659,11 @@ def recruiter_instance_pdb_api(instance_id):
     instance = get_database().recruiter_instance(instance_id)
     if not instance:
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    if randy_client.remote_enabled():
+        return randy_client.proxy_file(
+            f"instances/{randy_client.quote_part(instance_id)}/pdb",
+            mimetype="chemical/x-pdb",
+        )
     asset = _exact_instance_asset(instance, "pdb")
     if not asset:
         return jsonify({"error": "The exact V1 PDB asset is unavailable.", "recruiter_instance_id": instance_id}), 404
@@ -642,6 +675,11 @@ def recruiter_instance_sdf_api(instance_id):
     instance = get_database().recruiter_instance(instance_id)
     if not instance:
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    if randy_client.remote_enabled():
+        return randy_client.proxy_file(
+            f"instances/{randy_client.quote_part(instance_id)}/sdf",
+            mimetype="chemical/x-mdl-sdfile",
+        )
     asset = _exact_instance_asset(instance, "sdf")
     if not asset:
         return jsonify({"error": "The exact V1 SDF asset is unavailable.", "recruiter_instance_id": instance_id}), 404

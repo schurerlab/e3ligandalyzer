@@ -25,6 +25,13 @@ class E3DatabaseError(RuntimeError):
     """A configuration or read-only release-query failure."""
 
 
+def remote_backend_enabled() -> bool:
+    """Keep transport selection in one place for local and hosted deployments."""
+    from Ligases import randy_client
+
+    return randy_client.remote_enabled()
+
+
 def configured_release_root() -> Optional[Path]:
     """Return the active versioned local release, if one has been selected."""
     raw_root = os.environ.get("E3_RELEASE_ROOT", "").strip()
@@ -36,17 +43,31 @@ def configured_release_root() -> Optional[Path]:
 
 def configured_asset_root() -> Optional[Path]:
     """Return the asset tree coupled to the active versioned release."""
+    if remote_backend_enabled():
+        return None
     release_root = configured_release_root()
     if release_root:
         return release_root / "assets"
     return None
 
 
+def release_database_path(release_root: Path) -> Path:
+    """Resolve the immutable DB named by this release's own manifest."""
+    manifest = release_root / "manifests" / "release_manifest.json"
+    try:
+        relative = json.loads(manifest.read_text(encoding="utf-8")).get("database", {}).get("relative_path")
+    except (OSError, json.JSONDecodeError):
+        relative = None
+    return release_root / str(relative or f"database/{RELEASE_DATABASE_NAME}")
+
+
 def configured_database_path() -> Path:
     """Return the active release DB, preferring the coupled release root."""
+    if remote_backend_enabled():
+        raise E3DatabaseError("Remote backend mode does not expose a local scientific database path.")
     release_root = configured_release_root()
     if release_root:
-        return release_root / "database" / RELEASE_DATABASE_NAME
+        return release_database_path(release_root)
     raw_path = (
         os.environ.get("E3_DATABASE_PATH", "").strip()
         or os.environ.get("E3_LOCAL_DB_PATH", "").strip()
@@ -67,7 +88,7 @@ def _verified_release_bundle(root_text: str, manifest_mtime_ns: int, db_mtime_ns
     """Validate the release linkage once per manifest/database revision."""
     root = Path(root_text)
     manifest_path = root / "manifests" / "release_manifest.json"
-    database_path = root / "database" / RELEASE_DATABASE_NAME
+    database_path = release_database_path(root)
     asset_root = root / "assets"
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -90,11 +111,26 @@ def _verified_release_bundle(root_text: str, manifest_mtime_ns: int, db_mtime_ns
 
 def release_bundle_info() -> Dict[str, Any]:
     """Return verified local bundle provenance, or a legacy-path indicator."""
+    if remote_backend_enabled():
+        from Ligases import randy_client
+
+        info = randy_client.release_info()
+        return {
+            "mode": "remote-backend",
+            "release_id": f"v{info.get('release_version', 'unknown')}",
+            "database_sha256": info.get("database_sha256"),
+            "manifest": {
+                "release_id": f"v{info.get('release_version', 'unknown')}",
+                "release_status": info.get("release_status"),
+                "database_cutoff": info.get("database_cutoff"),
+                "lockdown_date": info.get("lockdown_date"),
+            },
+        }
     root = configured_release_root()
     if not root:
         return {"mode": "legacy-path", "database_path": str(configured_database_path().resolve())}
     manifest = root / "manifests" / "release_manifest.json"
-    database = root / "database" / RELEASE_DATABASE_NAME
+    database = release_database_path(root)
     if not manifest.is_file() or not database.is_file():
         raise E3DatabaseError(f"Active local release is incomplete: {root}")
     return _verified_release_bundle(
@@ -300,12 +336,19 @@ class E3Database:
         rows = self._all(
             """
             SELECT DISTINCT Recruiter_ID
-            FROM Recruiter_Instance_Catalog
-            WHERE RECRUITER_CODE = ? COLLATE NOCASE
-               OR Source_Entity_ID = ? COLLATE NOCASE
+            FROM (
+                SELECT Recruiter_ID
+                FROM Recruiter_Instance_Catalog
+                WHERE RECRUITER_CODE = ? COLLATE NOCASE
+                   OR Source_Entity_ID = ? COLLATE NOCASE
+                UNION
+                SELECT Recruiter_ID
+                FROM Source_Entity_Recruiter_Crosswalk
+                WHERE Source_Entity_ID = ? COLLATE NOCASE
+            )
             ORDER BY Recruiter_ID
             """,
-            (value, value),
+            (value, value, value),
         )
         return [row["Recruiter_ID"] for row in rows]
 
@@ -321,15 +364,17 @@ class E3Database:
                    r.Scaffold_ID, r.Scaffold_Class
             FROM Recruiter_Catalog AS r
             LEFT JOIN Ligase_Recruiter_Catalog AS lr USING (Recruiter_ID)
+            LEFT JOIN Source_Entity_Recruiter_Crosswalk AS src USING (Recruiter_ID)
             WHERE r.Recruiter_ID LIKE ? COLLATE NOCASE
                OR r.Primary_Source_Entity_ID LIKE ? COLLATE NOCASE
+               OR src.Source_Entity_ID LIKE ? COLLATE NOCASE
                OR r.Canonical_SMILES LIKE ? COLLATE NOCASE
                OR r.Scaffold_ID LIKE ? COLLATE NOCASE
                OR lr.Ligase LIKE ? COLLATE NOCASE
             ORDER BY r.Recruiter_ID
             LIMIT ?
             """,
-            (pattern, pattern, pattern, pattern, pattern, limit),
+            (pattern, pattern, pattern, pattern, pattern, pattern, limit),
         )
         instances = self._all(
             """
@@ -369,6 +414,47 @@ class E3Database:
         return self._all(sql + " ORDER BY Ligase, Recruiter_Count DESC", params)
 
 
+class RemoteE3Database(E3Database):
+    """The same logical V1 read interface backed only by RANDY's API.
+
+    Hosted deployments deliberately inherit the entity/instance methods above:
+    their SQL is transported to Randy's read-only query endpoint, never opened
+    from a Heroku filesystem.
+    """
+
+    def __init__(self):
+        from Ligases import randy_client
+
+        if not randy_client.configured():
+            raise E3DatabaseError("Remote backend mode requires RANDY E3 URL and authentication configuration.")
+
+    def connect(self) -> sqlite3.Connection:
+        raise E3DatabaseError("Remote backend mode does not permit local SQLite connections.")
+
+    def _all(self, sql: str, params: Iterable[Any] = ()) -> List[Dict[str, Any]]:
+        from Ligases import randy_client
+
+        try:
+            return list(randy_client.query("main", sql, params))
+        except Exception as error:
+            raise E3DatabaseError("Remote V1 scientific query failed.") from error
+
+    def release_metadata(self) -> Dict[str, str]:
+        from Ligases import randy_client
+
+        info = randy_client.release_info()
+        return {
+            "Release_Version": str(info.get("release_version") or "unknown"),
+            "Release_Status": str(info.get("release_status") or "unknown"),
+            "Release_Date": str(info.get("lockdown_date") or "Unknown"),
+            "Database_Cutoff_Date": str(info.get("database_cutoff") or "Unknown"),
+            "Database_SHA256": str(info.get("database_sha256") or ""),
+            "Schema_Version": "V1",
+        }
+
+
 def get_database() -> E3Database:
     """Construct a database service using the active environment configuration."""
+    if remote_backend_enabled():
+        return RemoteE3Database()
     return E3Database()
