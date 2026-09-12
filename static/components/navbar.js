@@ -1006,12 +1006,12 @@ class CustomNavbar extends HTMLElement {
         const response = await fetch("/api/random-recruiter");
         if (!response.ok) throw new Error(`random-recruiter returned ${response.status}`);
         const result = await response.json();
-        if (!result?.recruiter_instance_id || !result?.url) {
-          throw new Error("random-recruiter returned no exact V1 instance");
+        if (!result?.recruiter_id || !result?.url) {
+          throw new Error("random-recruiter returned no canonical V1 recruiter");
         }
         window.location.href = result.url;
       } catch (error) {
-        console.error("Unable to select a random V1 recruiter instance:", error);
+        console.error("Unable to select a random V1 recruiter:", error);
         luckyBtn.disabled = false;
         luckyBtn.textContent = "🎲 I'm Feeling Lucky";
       }

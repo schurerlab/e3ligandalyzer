@@ -688,8 +688,23 @@ def recruiter_instance_sdf_api(instance_id):
 
 @ligases_bp.route("/instances/<instance_id>/render-2d-sasa", methods=["GET"])
 def recruiter_instance_render_2d_sasa_api(instance_id):
-    if not get_database().recruiter_instance(instance_id):
+    database = get_database()
+    if not database.recruiter_instance(instance_id):
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    # V1 preserves exact structural atom provenance, but its locked mapping
+    # table does not claim a canonical-2D atom index.  Never color a 2D atom
+    # by inference: a visually plausible wrong highlight is scientifically
+    # worse than an explicit unavailable result.
+    mapping = database.instance_atom_mapping(instance_id)
+    usable = [row for row in mapping if row.get("chemistry_atom_index") is not None]
+    if not usable:
+        return jsonify({
+            "error": "A validated 2D atom mapping is unavailable for this exact V1 instance.",
+            "recruiter_instance_id": instance_id,
+            "mapped_atom_rows": len(mapping),
+            "validated_2d_atom_rows": 0,
+            "guidance": "Use the exact 3D SASA view; it retains structural atom provenance.",
+        }), 409
     return _render_instance_sasa_svg(instance_id)
 
 
@@ -2949,11 +2964,11 @@ def random_recruiter():
     # fabricated legacy LR number or a pre-V1 recruiter-code column.
     row = get_database().execute_read(
         """
-        SELECT i.Recruiter_Instance_ID
+        SELECT i.Recruiter_ID, MIN(i.Recruiter_Instance_ID) AS example_instance_id
         FROM Recruiter_Instance_Catalog AS i
         JOIN Ligase_Ligand_SASA_summary AS s USING (Recruiter_Instance_ID)
         JOIN Ligase_Ligand_SASA_atoms AS a USING (Recruiter_Instance_ID)
-        GROUP BY i.Recruiter_Instance_ID
+        GROUP BY i.Recruiter_ID
         HAVING COUNT(a.atom_id) > 0
         ORDER BY RANDOM()
         LIMIT 1
@@ -2962,10 +2977,11 @@ def random_recruiter():
     )
     if not row:
         return jsonify({"error": "No V1 recruiter instances are available."}), 404
-    instance_id = row["Recruiter_Instance_ID"]
+    recruiter_id = row["Recruiter_ID"]
     return jsonify({
-        "recruiter_instance_id": instance_id,
-        "url": f"/ligand/{instance_id}",
+        "recruiter_id": recruiter_id,
+        "example_recruiter_instance_id": row["example_instance_id"],
+        "url": f"/recruiter/{recruiter_id}",
     })
 
     import random

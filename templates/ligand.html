@@ -802,22 +802,33 @@ window.addEventListener("popstate", () => loadSelectedInstance(decodeURIComponen
   
   document.getElementById("btn-2d-sasa").addEventListener("click", async () => {
     toggle2DButton("sasa");
-
     const code = window.currentRecruiterInstanceId;
+    const button = document.getElementById("btn-2d-sasa");
+    button.disabled = true;
     console.log("2D SASA button clicked — requesting exact instance:", `/api/instances/${code}/render-2d-sasa`);
-
-
     console.log("🟦 Fetching 2D SASA SVG for:", code);
-
-    const svg = await fetch(`/api/instances/${encodeURIComponent(code)}/render-2d-sasa`)
-                        .then(r => r.text())
-                        .catch(err => {
-                            console.error("❌ Error fetching 2D SASA:", err);
-                            return "<svg><!-- error --></svg>";
-                        });
-
-    document.getElementById("svg2d").innerHTML = svg;
-    document.getElementById("legend-2d").classList.remove("hidden");
+    try {
+      const response = await fetch(`/api/instances/${encodeURIComponent(code)}/render-2d-sasa`);
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({}));
+        console.info("2D SASA overlay unavailable:", detail);
+        current2D.mode = "normal";
+        document.getElementById("svg2d").innerHTML = current2D.svgRaw;
+        document.getElementById("legend-2d").classList.add("hidden");
+        document.getElementById("instance-context").textContent =
+          "2D SASA overlay is unavailable because this V1 instance has no validated canonical-atom mapping. The 3D SASA view remains exact.";
+        return;
+      }
+      document.getElementById("svg2d").innerHTML = await response.text();
+      document.getElementById("legend-2d").classList.remove("hidden");
+    } catch (err) {
+      console.error("❌ Error fetching 2D SASA:", err);
+      current2D.mode = "normal";
+      document.getElementById("svg2d").innerHTML = current2D.svgRaw;
+      document.getElementById("legend-2d").classList.add("hidden");
+    } finally {
+      button.disabled = false;
+    }
 });
 
 

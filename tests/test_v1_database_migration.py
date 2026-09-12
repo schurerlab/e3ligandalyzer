@@ -102,7 +102,6 @@ class V1DatabaseMigrationTests(unittest.TestCase):
             "/api/instances/LR00172-01/mapped-atoms",
             "/api/instances/LR00172-01/visual",
             "/api/instances/LR00172-01/pdb",
-            "/api/instances/LR00172-01/render-2d-sasa",
             "/api/search/recruiters?q=4W9E",
             "/recruiter/LR00172",
             "/scaffolds/SCF00001",
@@ -125,6 +124,9 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         self.assertEqual(exact.status_code, 200)
         self.assertIn(b"instance-selector", exact.data)
         self.assertEqual(self.client.get("/api/instances/LR00172-01/sdf").status_code, 404)
+        unavailable = self.client.get("/api/instances/LR00172-01/render-2d-sasa")
+        self.assertEqual(unavailable.status_code, 409)
+        self.assertIn("validated 2D atom mapping", unavailable.get_json()["error"])
 
     def test_exact_visual_payload_keeps_suffixed_instance_assets(self):
         payload = self.client.get("/api/instances/LR00001-03/visual").get_json()
@@ -195,18 +197,20 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         self.assertIn("const renderedAtomKeys = new Set()", source)
         self.assertIn("sasa_overlay_atoms", source)
 
-    def test_random_recruiter_returns_a_real_exact_v1_instance(self):
+    def test_random_recruiter_returns_a_canonical_v1_recruiter_page(self):
         response = self.client.get("/api/random-recruiter")
         self.assertEqual(response.status_code, 200)
         result = response.get_json()
-        instance_id = result["recruiter_instance_id"]
-        self.assertTrue(instance_id.startswith("LR"))
-        self.assertIn("-", instance_id)
-        self.assertEqual(result["url"], f"/ligand/{instance_id}")
-        self.assertIsNotNone(self.database.recruiter_instance(instance_id))
+        recruiter_id = result["recruiter_id"]
+        self.assertTrue(recruiter_id.startswith("LR"))
+        self.assertNotIn("-", recruiter_id)
+        self.assertEqual(result["url"], f"/recruiter/{recruiter_id}")
+        self.assertIsNotNone(self.database.recruiter_entity(recruiter_id))
+        self.assertIsNotNone(self.database.recruiter_instance(result["example_recruiter_instance_id"]))
 
         navbar = (ROOT / "static" / "components" / "navbar.js").read_text()
         self.assertIn('fetch("/api/random-recruiter")', navbar)
+        self.assertIn("result?.recruiter_id", navbar)
         self.assertNotIn('const num = Math.floor(Math.random() * 603)', navbar)
 
     def test_all_v1_instance_assets_are_served_by_exact_instance_routes(self):
