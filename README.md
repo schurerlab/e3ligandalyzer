@@ -157,6 +157,11 @@ http://127.0.0.1:5025
 
 The local app defaults to port `5025`. Production deployments should set `PUBLIC_SITE_URL=https://e3ligandalyzer.com`.
 
+The application distinguishes a canonical `Recruiter_ID` (chemical/recruiter
+entity) from a `Recruiter_Instance_ID` (one exact observed structure). See
+[V1_MIGRATION.md](V1_MIGRATION.md) for the V1 runtime contract, crosswalk, and
+the intentionally unsupported legacy metrics.
+
 ---
 
 <a id="configuration"></a>
@@ -170,7 +175,8 @@ E3 Ligandalyzer is configured through environment variables. Do not commit real 
 | `PUBLIC_SITE_URL` | Canonical public root URL. Defaults to `https://e3ligandalyzer.com`. |
 | `PROTAC_BUILDER_BASE_URL` | Base URL for PROTAC Builder handoff links. Defaults to `https://protacbuilder.com`. |
 | `E3_SUPPORT_EMAIL` | Public support/contact email shown in templates. |
-| `E3_LOCAL_DB_PATH` | Local path to the primary Ligandalyzer SQLite database. |
+| `E3_DATABASE_PATH` | Path to the immutable `E3_Ligandalyzer_v1.0.sqlite` release. Defaults to `data/E3_Ligandalyzer_v1.0.sqlite`. |
+| `E3_LOCAL_DB_PATH` | Legacy alias for `E3_DATABASE_PATH`; prefer the new setting. |
 | `E3_LOCAL_ELIAH_DB_PATH` | Local path to the ELiAH/tissue-expression SQLite database. |
 | `E3_DATA_BACKEND` / `E3_USE_RANDY` | Enable remote RANDY-backed data access instead of local SQLite/files. |
 | `E3_RANDY_BASE_URL` | Authenticated remote data-service URL. |

@@ -12,16 +12,23 @@ Provides:
 ===============================================================================
 """
 
+from __future__ import annotations
+
 import os
 import re
 import sqlite3
+import csv
 from functools import lru_cache
 from pathlib import Path
 import requests
-from flask import Blueprint, jsonify, request, send_from_directory, current_app
+from flask import Blueprint, jsonify, request, send_file, send_from_directory, current_app
 import pandas as pd
 from Ligases import randy_client
 from Ligases import shipment_store
+from e3_database import (
+    E3DatabaseError, configured_asset_root, configured_release_root,
+    get_database, release_bundle_info,
+)
 from werkzeug.exceptions import HTTPException
 
 
@@ -45,6 +52,11 @@ def _json_remote_error(error: randy_client.RemoteServiceError):
     return jsonify({"error": str(error)}), getattr(error, "status_code", 502)
 
 
+@ligases_bp.errorhandler(E3DatabaseError)
+def _json_release_error(error: E3DatabaseError):
+    return jsonify({"error": str(error)}), 503
+
+
 @ligases_bp.errorhandler(Exception)
 def _json_unhandled_error(error: Exception):
     current_app.logger.exception("Unhandled E3 API route error")
@@ -53,10 +65,6 @@ def _json_unhandled_error(error: Exception):
 # ---------------------------------------------------------------------------
 # 🔹 Database Paths
 # ---------------------------------------------------------------------------
-DB_PATH = os.environ.get(
-    "E3_LOCAL_DB_PATH",
-    os.path.join(os.path.dirname(__file__), "Ligase_Recruiter.db"),
-)
 ELIAH_DB_PATH = os.environ.get(
     "E3_LOCAL_ELIAH_DB_PATH",
     os.path.join(os.path.dirname(__file__), "eliah.db"),
@@ -78,18 +86,269 @@ def public_api_base() -> str:
 # ---------------------------------------------------------------------------
 def query_db(query, args=(), one=False):
     """
-    Execute a query against the primary Ligase_Recruiter.db database.
+    Execute a read query against the immutable E3 Ligandalyzer V1 database.
     Returns a list of Row objects or a single record if one=True.
     """
-    if randy_client.remote_enabled():
-        return randy_client.query("main", query, args, one=one)
+    return get_database().execute_read(query, args, one=one)
 
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cur = conn.execute(query, args)
-    rows = cur.fetchall()
-    conn.close()
-    return (rows[0] if rows else None) if one else rows
+
+def _exact_instance_or_selection(identifier):
+    """Resolve an exact V1 structure instance without silently selecting one."""
+    database = get_database()
+    resolved = database.entity_for_identifier(identifier)
+    if not resolved:
+        return None, (jsonify({"error": "Recruiter or instance not found."}), 404)
+    if resolved["kind"] == "instance":
+        return resolved["instance"], None
+
+    instances = database.recruiter_instances(resolved["entity"]["Recruiter_ID"])
+    if len(instances) == 1:
+        return instances[0], None
+    return None, (
+        jsonify({
+            "error": "An exact Recruiter_Instance_ID is required for structure-specific data.",
+            "recruiter_id": resolved["entity"]["Recruiter_ID"],
+            "instances": instances,
+        }),
+        409,
+    )
+
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+@lru_cache(maxsize=4)
+def _release_asset_manifest(manifest_text: str, manifest_mtime_ns: int):
+    """Read the release-owned exact asset map, never the historical tree."""
+    with Path(manifest_text).open(newline="", encoding="utf-8") as handle:
+        return {row["Recruiter_Instance_ID"]: row for row in csv.DictReader(handle)}
+
+
+def _asset_manifest_for_active_release():
+    release_root = configured_release_root()
+    if not release_root:
+        return {}
+    manifest = release_root / "manifests" / "Web_Asset_Manifest.csv"
+    if not manifest.is_file():
+        raise E3DatabaseError("The active release has no exact web asset manifest.")
+    return _release_asset_manifest(str(manifest.resolve()), manifest.stat().st_mtime_ns)
+
+
+def _exact_instance_asset(instance, asset_kind):
+    """Resolve an exact instance asset through the active bundle manifest only."""
+    asset_root = configured_asset_root()
+    if not asset_root:
+        return None
+    instance_id = str(instance.get("Recruiter_Instance_ID") or "")
+    row = _asset_manifest_for_active_release().get(instance_id)
+    if not row or row.get("Source_Instance_Key") != str(instance.get("Source_Instance_Key") or ""):
+        return None
+    relative = row.get("PDB_Web_Path" if asset_kind == "pdb" else "SDF_Web_Path") or ""
+    if not relative:
+        return None
+    root = asset_root.resolve()
+    path = (root / relative).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return None
+    return path if path.is_file() else None
+
+
+def _viewer_smiles(entity, chemistry_sdf):
+    """Prefer catalog chemistry, with a validated release-SDF repair fallback.
+
+    This is especially material for A1IEV: its V2 web chemistry artifact is the
+    staged InChI-derived SDF, not the historical malformed SMILES string.
+    """
+    smiles = str((entity or {}).get("Canonical_SMILES") or "")
+    try:
+        from rdkit import Chem
+        if smiles and Chem.MolFromSmiles(smiles) is not None:
+            return smiles
+        if chemistry_sdf and chemistry_sdf.is_file():
+            supplier = Chem.SDMolSupplier(str(chemistry_sdf), removeHs=True)
+            molecule = next((item for item in supplier if item is not None), None)
+            if molecule is not None:
+                return Chem.MolToSmiles(molecule, isomericSmiles=True)
+    except Exception:
+        current_app.logger.warning("Release chemistry SDF fallback could not be parsed.")
+    return smiles
+
+
+def _instance_sasa_overlay(instance_id):
+    """Return deterministic 3D overlay atoms for one exact V1 instance.
+
+    Scientific SASA rows remain intact in the payload.  The viewer receives a
+    separate, one-to-one intersection with the stored SDF mapping so it cannot
+    draw an atom that has no exact selected-instance coordinate correspondence.
+    """
+    database = get_database()
+    sasa_atoms = database.instance_sasa_atoms(instance_id)
+    mapped_atoms = database.instance_atom_mapping(instance_id)
+    sasa_by_id = {str(row["atom_id"]): row for row in sasa_atoms}
+    overlay, seen = [], set()
+    unmapped_sasa_ids, duplicate_mapping_keys = [], []
+
+    for mapping in sorted(
+        mapped_atoms,
+        key=lambda row: (row.get("instance_sdf_atom_index") is None, row.get("instance_sdf_atom_index") or -1, row.get("SASA_atom_id") or -1),
+    ):
+        sasa_id = str(mapping.get("SASA_atom_id"))
+        atom = sasa_by_id.get(sasa_id)
+        if not atom:
+            continue
+        # This is the physical atom identity in the selected V1 instance,
+        # rather than a parent-entity chemistry index or a coordinate guess.
+        key = (instance_id, sasa_id, mapping.get("instance_sdf_atom_index"))
+        if key in seen:
+            duplicate_mapping_keys.append(key)
+            continue
+        seen.add(key)
+        merged = dict(atom)
+        merged.update({
+            "instance_sdf_atom_index": mapping.get("instance_sdf_atom_index"),
+            "chemistry_atom_index": mapping.get("chemistry_atom_index"),
+            "mapping_coordinate_distance_A": mapping.get("coordinate_distance_A"),
+        })
+        overlay.append(merged)
+
+    mapped_sasa_ids = {str(row.get("SASA_atom_id")) for row in mapped_atoms}
+    unmapped_sasa_ids = [row["atom_id"] for row in sasa_atoms if str(row["atom_id"]) not in mapped_sasa_ids]
+    return overlay, {
+        "sasa_atom_rows": len(sasa_atoms),
+        "mapped_atom_rows": len(mapped_atoms),
+        "overlay_atom_rows": len(overlay),
+        "unmapped_sasa_atom_ids": unmapped_sasa_ids,
+        "duplicate_mapping_keys": [list(key) for key in duplicate_mapping_keys],
+    }
+
+
+def _render_entity_2d_svg(entity):
+    """Render a normal, entity-level 2D depiction from canonical V1 chemistry."""
+    from flask import Response
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+
+    smiles = (entity or {}).get("Canonical_SMILES")
+    mol = Chem.MolFromSmiles(smiles or "")
+    if mol is None:
+        return jsonify({"error": "Canonical entity SMILES cannot be rendered."}), 422
+    rdDepictor.Compute2DCoords(mol)
+    drawer = rdMolDraw2D.MolDraw2DSVG(460, 320)
+    options = drawer.drawOptions()
+    options.setBackgroundColour((0, 0, 0, 0))
+    # White bonds/carbon on the dark card, with high-contrast element colours
+    # shared with the cyan/amber/coral scientific UI.
+    options.useDefaultAtomPalette()
+    options.updateAtomPalette({
+        1: (0.94, 0.97, 1.00),   # H — pale slate
+        6: (0.94, 0.97, 1.00),   # C — pale slate
+        7: (0.13, 0.83, 0.93),   # N — cyan
+        8: (0.97, 0.44, 0.44),   # O — coral
+        9: (0.13, 0.83, 0.93),   # F — cyan
+        15: (0.74, 0.65, 0.99), # P — violet
+        16: (0.98, 0.78, 0.18), # S — amber
+        17: (0.22, 0.74, 0.97), # Cl — sky blue
+        35: (0.98, 0.58, 0.24), # Br — orange
+        53: (0.77, 0.70, 1.00), # I — lavender
+    })
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText().replace("stroke:#000000", "stroke:#FFFFFF").replace("fill:#000000", "fill:#FFFFFF")
+    return Response(svg, mimetype="image/svg+xml")
+
+
+def _instance_visual_payload(instance_id):
+    """Build the canonical, exact-instance payload used by the rich viewer."""
+    database = get_database()
+    instance = database.recruiter_instance(instance_id)
+    if not instance:
+        return None
+    entity = database.recruiter_entity(instance["Recruiter_ID"])
+    pdb_path = _exact_instance_asset(instance, "pdb")
+    sdf_path = _exact_instance_asset(instance, "sdf")
+    pdb_filename = pdb_path.name if pdb_path else Path(str(instance.get("Step4_PDB") or "")).name
+    sdf_filename = sdf_path.name if sdf_path else Path(str(instance.get("Source_SDF") or "")).name
+    assets = {
+        "pdb": {
+            "url": f"/api/instances/{instance_id}/pdb" if pdb_path else None,
+            "filename": pdb_filename or None,
+            "available": bool(pdb_path),
+        },
+        "sdf": {
+            "url": f"/api/instances/{instance_id}/sdf" if sdf_path else None,
+            "filename": sdf_filename or None,
+            "available": bool(sdf_path),
+        },
+    }
+    viewer_smiles = _viewer_smiles(entity, sdf_path)
+    metadata = dict(instance)
+    metadata.update({
+        "SMILES": viewer_smiles,
+        "PDB_ID": instance.get("pdb_id"),
+    })
+    sasa_atoms = database.instance_sasa_atoms(instance_id)
+    mapped_atoms = database.instance_atom_mapping(instance_id)
+    sasa_overlay_atoms, overlay_diagnostics = _instance_sasa_overlay(instance_id)
+    return {
+        "ok": True,
+        "recruiter": entity,
+        "instance": instance,
+        "siblings": database.recruiter_instances(instance["Recruiter_ID"]),
+        "descriptor": entity or {},
+        "metadata": metadata,
+        "sasa_summary": database.instance_sasa_summary(instance_id) or {},
+        "sasa_atoms": sasa_atoms,
+        "mapped_atoms": mapped_atoms,
+        "sasa_overlay_atoms": sasa_overlay_atoms,
+        "sasa_overlay_diagnostics": overlay_diagnostics,
+        "scaffold": database.scaffold((entity or {}).get("Scaffold_ID", "")),
+        "assets": assets,
+        # Compatibility fields used by the established ligand.html renderer.
+        "pdb_path": assets["pdb"]["url"],
+        "pdb_file": assets["pdb"]["filename"],
+        "ligand_sdf_path": assets["sdf"]["url"],
+        "ligand_sdf_file": assets["sdf"]["filename"],
+    }
+
+
+def _render_instance_sasa_svg(instance_id):
+    """Draw V1 SASA highlights from the stored atom mapping; do not recompute SASA."""
+    database = get_database()
+    instance = database.recruiter_instance(instance_id)
+    entity = database.recruiter_entity(instance["Recruiter_ID"]) if instance else None
+    if not instance or not entity or not entity.get("Canonical_SMILES"):
+        return "<svg><!-- instance chemistry unavailable --></svg>", 404, {"Content-Type": "image/svg+xml"}
+
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+
+    mol = Chem.MolFromSmiles(entity["Canonical_SMILES"])
+    if mol is None:
+        return "<svg><!-- invalid canonical smiles --></svg>", 422, {"Content-Type": "image/svg+xml"}
+    rdDepictor.Compute2DCoords(mol)
+    atoms_by_id = {str(row.get("atom_id")): row for row in database.instance_sasa_atoms(instance_id)}
+    highlights, colors, radii = [], {}, {}
+    for mapping in database.instance_atom_mapping(instance_id):
+        index = mapping.get("chemistry_atom_index")
+        atom = atoms_by_id.get(str(mapping.get("SASA_atom_id")))
+        if index is None or not atom:
+            continue
+        color = sasa_color_for_exposure(atom.get("Exposure_A2"))
+        if color is None or not 0 <= int(index) < mol.GetNumAtoms():
+            continue
+        index = int(index)
+        highlights.append(index)
+        colors[index], radii[index] = color, 0.45
+    drawer = rdMolDraw2D.MolDraw2DSVG(400, 400)
+    drawer.drawOptions().setBackgroundColour((0, 0, 0, 0))
+    drawer.DrawMolecule(mol, highlightAtoms=sorted(set(highlights)), highlightAtomColors=colors, highlightAtomRadii=radii)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText().replace("stroke:#000000", "stroke:#FFFFFF").replace("fill:#000000", "fill:#FFFFFF")
+    return svg, 200, {"Content-Type": "image/svg+xml"}
 
 
 def query_eliah_db(query, args=(), one=False):
@@ -263,18 +522,143 @@ def _resolve_display_sdf_filename(ligase: str, pdb_filename: str | None) -> str 
         # The client performs a guarded fallback to PDB ligand rendering if a
         # remote asset is not yet present during a staged deployment.
         return sdf_filename
-    path = Path(__file__).resolve().parents[1] / "Ligases" / ligase / "SDF_3DDisplay" / sdf_filename
+    asset_root = configured_asset_root()
+    path = (asset_root / "Ligases" / ligase / "SDF_3DDisplay" / sdf_filename) if asset_root else Path()
     return sdf_filename if path.is_file() else None
 
 
 # ===========================================================================
 # 🧠 BASIC ENDPOINTS
 # ===========================================================================
+@ligases_bp.route("/release-info", methods=["GET"])
+def release_info():
+    """Expose the verified database-and-assets local release linkage."""
+    database = get_database()
+    bundle = release_bundle_info()
+    manifest = bundle.get("manifest", {})
+    return jsonify({
+        "metadata": database.release_metadata(),
+        "counts": database.release_counts(),
+        "bundle": {
+            "mode": bundle.get("mode", "versioned-release"),
+            "release_root": bundle.get("release_root"),
+            "release_id": manifest.get("release_id"),
+            "database_sha256": bundle.get("database_sha256"),
+            "asset_policy": manifest.get("asset_policy"),
+            "assets": {key: value for key, value in manifest.get("assets", {}).items() if key != "hashes"},
+        },
+    })
+
+
+@ligases_bp.route("/recruiters/<recruiter_id>", methods=["GET"])
+def recruiter_entity_api(recruiter_id):
+    database = get_database()
+    entity = database.recruiter_entity(recruiter_id)
+    if not entity:
+        return jsonify({"error": f"Recruiter entity not found: {recruiter_id}"}), 404
+    return jsonify({
+        "recruiter": entity,
+        "instances": database.recruiter_instances(recruiter_id),
+        "ligases": database.entity_ligases(recruiter_id),
+    })
+
+
+@ligases_bp.route("/recruiters/<recruiter_id>/instances", methods=["GET"])
+def recruiter_instances_api(recruiter_id):
+    database = get_database()
+    if not database.recruiter_entity(recruiter_id):
+        return jsonify({"error": f"Recruiter entity not found: {recruiter_id}"}), 404
+    return jsonify(database.recruiter_instances(recruiter_id))
+
+
+@ligases_bp.route("/recruiters/<recruiter_id>/render-2d", methods=["GET"])
+def recruiter_entity_render_2d_api(recruiter_id):
+    """Normal 2D depiction of the parent entity; never selects an instance."""
+    entity = get_database().recruiter_entity(recruiter_id)
+    if not entity:
+        return jsonify({"error": f"Recruiter entity not found: {recruiter_id}"}), 404
+    return _render_entity_2d_svg(entity)
+
+
+@ligases_bp.route("/instances/<instance_id>", methods=["GET"])
+def recruiter_instance_api(instance_id):
+    database = get_database()
+    instance = database.recruiter_instance(instance_id)
+    if not instance:
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    return jsonify({
+        "instance": instance,
+        "recruiter": database.recruiter_entity(instance["Recruiter_ID"]),
+        "sasa": database.instance_sasa_summary(instance_id),
+    })
+
+
+@ligases_bp.route("/instances/<instance_id>/sasa", methods=["GET"])
+def recruiter_instance_sasa_api(instance_id):
+    database = get_database()
+    if not database.recruiter_instance(instance_id):
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    return jsonify(database.instance_sasa_summary(instance_id) or {})
+
+
+@ligases_bp.route("/instances/<instance_id>/sasa-atoms", methods=["GET"])
+def recruiter_instance_sasa_atoms_api(instance_id):
+    database = get_database()
+    if not database.recruiter_instance(instance_id):
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    return jsonify(database.instance_sasa_atoms(instance_id))
+
+
+@ligases_bp.route("/instances/<instance_id>/mapped-atoms", methods=["GET"])
+def recruiter_instance_mapped_atoms_api(instance_id):
+    database = get_database()
+    if not database.recruiter_instance(instance_id):
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    return jsonify(database.instance_atom_mapping(instance_id))
+
+
+@ligases_bp.route("/instances/<instance_id>/visual", methods=["GET"])
+def recruiter_instance_visual_api(instance_id):
+    """Exact V1 visual contract: one instance, its entity, and its exact assets."""
+    payload = _instance_visual_payload(instance_id)
+    if not payload:
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    return jsonify(payload)
+
+
+@ligases_bp.route("/instances/<instance_id>/pdb", methods=["GET"])
+def recruiter_instance_pdb_api(instance_id):
+    instance = get_database().recruiter_instance(instance_id)
+    if not instance:
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    asset = _exact_instance_asset(instance, "pdb")
+    if not asset:
+        return jsonify({"error": "The exact V1 PDB asset is unavailable.", "recruiter_instance_id": instance_id}), 404
+    return send_file(asset, mimetype="chemical/x-pdb", conditional=True)
+
+
+@ligases_bp.route("/instances/<instance_id>/sdf", methods=["GET"])
+def recruiter_instance_sdf_api(instance_id):
+    instance = get_database().recruiter_instance(instance_id)
+    if not instance:
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    asset = _exact_instance_asset(instance, "sdf")
+    if not asset:
+        return jsonify({"error": "The exact V1 SDF asset is unavailable.", "recruiter_instance_id": instance_id}), 404
+    return send_file(asset, mimetype="chemical/x-mdl-sdfile", conditional=True)
+
+
+@ligases_bp.route("/instances/<instance_id>/render-2d-sasa", methods=["GET"])
+def recruiter_instance_render_2d_sasa_api(instance_id):
+    if not get_database().recruiter_instance(instance_id):
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    return _render_instance_sasa_svg(instance_id)
+
+
 @ligases_bp.route("/ligases", methods=["GET"])
 def get_ligases():
     """Return unique ligase list for dropdowns."""
-    rows = query_db("SELECT DISTINCT Ligase FROM Ligase_Scaffold_Data ORDER BY Ligase;")
-    return jsonify([r["Ligase"] for r in rows])
+    return jsonify(get_database().ligases())
 
 
 @ligases_bp.route("/featured-recruiters", methods=["GET"])
@@ -300,54 +684,32 @@ def get_featured_recruiters():
     offset = int(request.args.get("offset", 0))
 
     query = """
-        SELECT 
-            d.RECRUITER_CODE,
-            m.Ligase,
-            d.MW,
-            d.LogP,
-            d.QED,
-            d.SMILES,
-            d.RECRUITER_CODE,
-            sd.Scaffold_ID,
-            sd.Scaffold_Class,
-            sa.Recruiter_Class,
-            ROUND(sa.[%Exposed], 2) AS Percent_Exposed,
-            ROUND(sa.[%Buried], 2) AS Percent_Buried
-        FROM Ligase_Chemical_Descriptors AS d
-        LEFT JOIN Ligase_Ligands_Smiles_3DMapped AS m
-            ON d.RECRUITER_CODE = m.RECRUITER_CODE
-        LEFT JOIN Ligase_Scaffold_Data AS sd
-            ON m.Ligase = sd.Ligase
-        LEFT JOIN Ligase_Ligand_SASA_summary AS sa
-            ON m.Ligase = sa.Ligase AND sa.Ligand = m.Ligand
-        WHERE d.QED BETWEEN ? AND ?
-            AND m.Ligase IS NOT NULL
-            AND TRIM(m.Ligase) != ''
-            AND m.Ligase NOT LIKE 'Unknown Ligase'
-
-
+        SELECT r.Recruiter_ID AS RECRUITER_CODE, lr.Ligase, lr.Physical_Instance_Count, r.MW, r.LogP,
+               r.QED, r.Canonical_SMILES AS SMILES, r.Scaffold_ID,
+               r.Scaffold_Class, r.Recruiter_Entity_Type AS Recruiter_Class
+        FROM Recruiter_Catalog AS r
+        JOIN Ligase_Recruiter_Catalog AS lr USING (Recruiter_ID)
+        WHERE r.QED BETWEEN ? AND ?
     """
     params = [min_qed, max_qed]
 
     if ligase:
-        query += " AND m.Ligase = ?"
+        query += " AND lr.Ligase = ?"
         params.append(ligase)
     if scaffold_class:
-        query += " AND sd.Scaffold_Class = ?"
+        query += " AND r.Scaffold_Class = ?"
         params.append(scaffold_class)
     if recruiter_class:
-        query += " AND sa.Recruiter_Class = ?"
+        query += " AND r.Recruiter_Entity_Type = ?"
         params.append(recruiter_class)
 
     query += """
-        GROUP BY d.RECRUITER_CODE, m.Ligase
-        ORDER BY d.QED DESC
+        ORDER BY r.QED DESC, r.Recruiter_ID
         LIMIT ? OFFSET ?;
     """
     params.extend([limit, offset])
 
-    rows = query_db(query, params)
-    return jsonify([_with_authoritative_smiles(r) for r in rows])
+    return jsonify(query_db(query, params))
 
 
 
@@ -368,37 +730,9 @@ def get_scaffold_data():
     ligase = request.args.get("ligase")
     scaf_class = request.args.get("class")
 
-    query = """
-        SELECT
-            Ligase,
-            Scaffold_ID,
-            Recruiter_Count,
-            Scaffold_SMILES,
-            Murcko_SMILES,
-            Scaffold_Class,
-            Scaffold_Center_of_Mass_X,
-            Scaffold_Center_of_Mass_Y,
-            Scaffold_Center_of_Mass_Z,
-            Ligase_Scaffold_Connectivity,
-            Total_Recruiters,
-            Recruiter_Density_Score,
-            Shannon_Diversity_Index,
-            Normalized_Diversity
-        FROM Ligase_Scaffold_Data
-        WHERE 1=1
-    """
-
-    params = []
-    if ligase:
-        query += " AND Ligase = ?"
-        params.append(ligase)
+    rows = get_database().scaffold_data(ligase)
     if scaf_class:
-        query += " AND Scaffold_Class = ?"
-        params.append(scaf_class)
-
-    query += " ORDER BY Shannon_Diversity_Index DESC;"
-
-    rows = query_db(query, params)
+        rows = [row for row in rows if row.get("Scaffold_Class") == scaf_class]
 
     def convert_row(r):
         raw_class = r["Scaffold_Class"]
@@ -417,17 +751,17 @@ def get_scaffold_data():
             "totalRecruiters": r["Total_Recruiters"],
             "connectivity": r["Ligase_Scaffold_Connectivity"],
             "recruiterDensity": r["Recruiter_Density_Score"],
-            "shannonIndex": r["Shannon_Diversity_Index"],
-            "normalizedDiversity": r["Normalized_Diversity"],
+            "shannonIndex": None,
+            "normalizedDiversity": None,
 
             # chemistry
             "scaffoldSmiles": r["Scaffold_SMILES"],
             "murckoSmiles": r["Murcko_SMILES"],
 
             # coordinates (for future true 3D placement if you want)
-            "x": r["Scaffold_Center_of_Mass_X"],
-            "y": r["Scaffold_Center_of_Mass_Y"],
-            "z": r["Scaffold_Center_of_Mass_Z"],
+            "x": None,
+            "y": None,
+            "z": None,
         }
 
     clean = [convert_row(r) for r in rows]
@@ -446,18 +780,12 @@ def get_scaffold_summary():
     Return summarized scaffold diversity metrics per ligase.
       Example: /api/scaffold-summary
     """
-    query = """
-        SELECT 
-            Ligase,
-            Unique_Scaffolds,
-            Total_Recruiters,
-            Diversity_Score,
-            Shannon_Index
-        FROM Ligase_Scaffold_Summary
-        ORDER BY Shannon_Index DESC;
-    """
-    rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+    return jsonify(query_db("""
+        SELECT Ligase, COUNT(*) AS Unique_Scaffolds,
+               SUM(Recruiter_Entity_Count) AS Total_Recruiters,
+               NULL AS Diversity_Score, NULL AS Shannon_Index
+        FROM Ligase_Scaffold_Data GROUP BY Ligase ORDER BY Total_Recruiters DESC
+    """))
 
 
 @ligases_bp.route("/scaffold-frequency", methods=["GET"])
@@ -468,22 +796,11 @@ def get_scaffold_frequency():
                /api/scaffold-frequency?ligase=CRBN
     """
     ligase = request.args.get("ligase")
-    if ligase:
-        query = """
-            SELECT Ligase, Scaffold_ID, Recruiter_Count
-            FROM Ligase_Scaffold_Frequency
-            WHERE Ligase = ?
-            ORDER BY Recruiter_Count DESC;
-        """
-        rows = query_db(query, [ligase])
-    else:
-        query = """
-            SELECT Ligase, Scaffold_ID, Recruiter_Count
-            FROM Ligase_Scaffold_Frequency
-            ORDER BY Recruiter_Count DESC;
-        """
-        rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+    return jsonify([
+        {"Ligase": row["Ligase"], "Scaffold_ID": row["Scaffold_ID"],
+         "Recruiter_Count": row["Recruiter_Count"]}
+        for row in get_database().scaffold_data(ligase)
+    ])
 
 
 @ligases_bp.route("/scaffold-recruiters", methods=["GET"])
@@ -494,32 +811,18 @@ def get_recruiter_scaffolds():
                /api/scaffold-recruiters?ligase=CHIP
     """
     ligase = request.args.get("ligase")
+    query = """
+        SELECT lr.Ligase, lr.Scaffold_ID, lr.Recruiter_ID AS RECRUITER_CODE,
+               lr.Scaffold_Identity_SMILES AS Scaffold_SMILES,
+               lr.Scaffold_Identity_SHA256 AS Scaffold_Hash
+        FROM Ligase_Recruiter_Catalog AS lr
+    """
+    params = []
     if ligase:
-        query = """
-            SELECT 
-                Ligase,
-                Scaffold_ID,
-                RECRUITER_CODE,
-                Scaffold_SMILES,
-                Scaffold_Hash
-            FROM Ligase_Recruiters_Scaffold
-            WHERE Ligase = ?
-            ORDER BY Scaffold_ID;
-        """
-        rows = query_db(query, [ligase])
-    else:
-        query = """
-            SELECT 
-                Ligase,
-                Scaffold_ID,
-                RECRUITER_CODE,
-                Scaffold_SMILES,
-                Scaffold_Hash
-            FROM Ligase_Recruiters_Scaffold
-            ORDER BY Ligase, Scaffold_ID;
-        """
-        rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+        query += " WHERE lr.Ligase = ?"
+        params.append(ligase)
+    query += " ORDER BY lr.Ligase, lr.Scaffold_ID, lr.Recruiter_ID"
+    return jsonify(query_db(query, params))
 
 
 
@@ -545,23 +848,32 @@ def get_recruiter_scaffolds():
 @ligases_bp.route("/descriptors/<recruiter_code>", methods=["GET"])
 def get_descriptors(recruiter_code):
     """Return chemical descriptors for a given recruiter."""
-    recruiter_code = str(recruiter_code or "").strip().upper()
-    query = "SELECT * FROM Ligase_Chemical_Descriptors WHERE RECRUITER_CODE = ?;"
-    rows = [dict(r) for r in query_db(query, [recruiter_code])]
-    if not rows:
-        return jsonify({"error": f"Descriptor data is not available for recruiter code {recruiter_code}.", "recruiter_code": recruiter_code}), 404
-    return jsonify(rows)
+    database = get_database()
+    resolved = database.entity_for_identifier(recruiter_code)
+    if not resolved:
+        return jsonify({"error": f"Descriptor data is not available for {recruiter_code}."}), 404
+    recruiter_id = (
+        resolved["entity"]["Recruiter_ID"]
+        if resolved["kind"] == "entity"
+        else resolved["instance"]["Recruiter_ID"]
+    )
+    row = database.execute_read(
+        "SELECT * FROM Ligase_Chemical_Descriptors WHERE Recruiter_ID = ?",
+        (recruiter_id,), one=True,
+    )
+    return jsonify([row] if row else [])
 
 
 @ligases_bp.route("/metadata/<recruiter_code>", methods=["GET"])
 def get_metadata(recruiter_code):
-    """Return metadata for a given ligand."""
-    query = """
-        SELECT * FROM Ligase_Ligand_Metadata
-        WHERE Name LIKE ? OR Ligand LIKE ? OR Canonical_SMILES LIKE ?;
-    """
-    rows = query_db(query, [recruiter_code, recruiter_code, recruiter_code])
-    return jsonify([dict(r) for r in rows])
+    """Return one exact instance or all instances for a recruiter entity."""
+    database = get_database()
+    resolved = database.entity_for_identifier(recruiter_code)
+    if not resolved:
+        return jsonify([])
+    if resolved["kind"] == "instance":
+        return jsonify([resolved["instance"]])
+    return jsonify(database.recruiter_instances(resolved["entity"]["Recruiter_ID"]))
 
 
 # ===========================================================================
@@ -571,19 +883,19 @@ def get_metadata(recruiter_code):
 def get_ligase_summary():
     """Return per-ligase statistics aggregated from Ligase_Scaffold_Data."""
     query = """
-        SELECT 
+        SELECT
             Ligase,
             COUNT(DISTINCT Scaffold_ID) AS Unique_Scaffolds,
-            SUM(Recruiter_Count) AS Total_Recruiters,
-            AVG(Recruiter_Density_Score) AS Avg_Density,
-            AVG(Shannon_Diversity_Index) AS Avg_Shannon,
-            AVG(Normalized_Diversity) AS Avg_Normalized
+            SUM(Recruiter_Entity_Count) AS Total_Recruiters,
+            AVG(Recruiter_Entity_Density) AS Avg_Density,
+            NULL AS Avg_Shannon,
+            NULL AS Avg_Normalized
         FROM Ligase_Scaffold_Data
         GROUP BY Ligase
         ORDER BY Total_Recruiters DESC;
     """
     rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+    return jsonify(rows)
 
 
 @ligases_bp.route("/recruiter-class-summary", methods=["GET"])
@@ -596,7 +908,7 @@ def recruiter_class_summary():
         ORDER BY Ligase, Count DESC;
     """
     rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+    return jsonify(rows)
 
 
 @ligases_bp.route("/scaffold-class-summary", methods=["GET"])
@@ -609,7 +921,7 @@ def scaffold_class_summary():
         ORDER BY Ligase, Count DESC;
     """
     rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+    return jsonify(rows)
 
 
 @ligases_bp.route("/ligase-ligand-stats", methods=["GET"])
@@ -626,7 +938,7 @@ def get_ligase_ligand_stats():
         ORDER BY Avg_MW DESC;
     """
     rows = query_db(query)
-    return jsonify([dict(r) for r in rows])
+    return jsonify(rows)
 
 
 # ===========================================================================
@@ -664,12 +976,7 @@ def get_ligase_pdbs(ligase):
     if randy_client.remote_enabled():
         return jsonify(randy_client.get_json(f"ligase-pdbs/{randy_client.quote_part(ligase)}"))
 
-    # Walk up until we find the top-level Ligases/ folder
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    while not os.path.exists(os.path.join(base_dir, "Ligases")) and base_dir != "/":
-        base_dir = os.path.dirname(base_dir)
-
-    ligase_dir = os.path.join(base_dir, "Ligases", ligase, "PDB")
+    ligase_dir = str(_download_ligases_root() / ligase / "PDB")
     if not os.path.exists(ligase_dir):
         print(f"[404] Ligase PDB folder not found: {ligase_dir}")
         return jsonify([])
@@ -704,6 +1011,15 @@ def serve_ligase_pdb(ligase, filename):
             f"file/pdb/{randy_client.quote_part(ligase)}/{randy_client.quote_path(filename)}",
             mimetype="chemical/x-pdb",
         )
+
+    # Local V1 mode has no filename inference.  Callers without an exact
+    # instance ID may still request a known filename, but a missing basename
+    # must be a 404 rather than another physical observation.
+    pdb_dir = (_download_ligases_root() / ligase / "PDB").resolve()
+    candidate = (pdb_dir / Path(filename).name).resolve()
+    if pdb_dir.is_dir() and candidate.parent == pdb_dir and candidate.is_file():
+        return send_from_directory(pdb_dir, candidate.name, mimetype="chemical/x-pdb")
+    return jsonify({"error": "Exact PDB filename not found.", "ligase": ligase, "filename": filename}), 404
 
     print("\n==============================")
     print(f"🔍 REQUEST RECEIVED for ligase: {ligase}")
@@ -822,30 +1138,17 @@ def get_ligand_sasa(recruiter_code):
     Includes atom-level exposure, coordinates, and atom type.
     """
 
-    query = """
-        SELECT 
-            a.Ligase,
-            a.pdb_id,
-            a.Ligand,
-            a.Residue_ID,
-            a.atom_id,
-            a.exact_atom,
-            a.atom_type,
-            a.x, a.y, a.z,
-            a.Exposure_A2,
-            m.smiles_atom_index,
-            m.smile_atom
-        FROM Ligase_Ligand_SASA_atoms AS a
-        LEFT JOIN Ligase_Ligands_Smiles_3DMapped AS m
-            ON a.Ligase = m.Ligase
-           AND a.Ligand = m.Ligand
-           AND a.atom_id = m.atom_id
-        WHERE m.RECRUITER_CODE = ?
-        ORDER BY a.atom_id ASC;
-    """
-
-    rows = query_db(query, [recruiter_code])
-    return jsonify([dict(r) for r in rows])
+    database = get_database()
+    resolved = database.entity_for_identifier(recruiter_code)
+    if not resolved:
+        return jsonify({"error": f"Recruiter or instance not found: {recruiter_code}"}), 404
+    if resolved["kind"] == "entity":
+        return jsonify({
+            "error": "SASA is instance-specific. Select an exact Recruiter_Instance_ID.",
+            "recruiter_id": resolved["entity"]["Recruiter_ID"],
+            "instances": database.recruiter_instances(resolved["entity"]["Recruiter_ID"]),
+        }), 409
+    return jsonify(database.instance_sasa_atoms(resolved["instance"]["Recruiter_Instance_ID"]))
 
 
 # ============================================================
@@ -868,25 +1171,14 @@ def _get_smiles_for_code(recruiter_code: str):
       2) Ligase_SMILE_Codes (legacy fallback)
       3) Ligase_Chemical_Descriptors (legacy fallback)
     """
-    recruiter_code = str(recruiter_code or "").strip().upper()
-    authoritative_smiles = _authoritative_smiles_for_code(recruiter_code)
-    if authoritative_smiles:
-        return authoritative_smiles
-
-    row = query_db(
-        "SELECT SMILES FROM Ligase_SMILE_Codes WHERE RECRUITER_CODE = ? LIMIT 1;",
-        [recruiter_code],
-        one=True
+    resolved = get_database().entity_for_identifier(recruiter_code)
+    if not resolved:
+        return None
+    entity = (
+        resolved["entity"] if resolved["kind"] == "entity"
+        else get_database().recruiter_entity(resolved["instance"]["Recruiter_ID"])
     )
-    if row:
-        return row["SMILES"]
-
-    row = query_db(
-        "SELECT SMILES FROM Ligase_Chemical_Descriptors WHERE RECRUITER_CODE = ? LIMIT 1;",
-        [recruiter_code],
-        one=True
-    )
-    return row["SMILES"] if row else None
+    return entity.get("Canonical_SMILES") if entity else None
 
 
 def _with_authoritative_smiles(row):
@@ -927,8 +1219,8 @@ def _get_ligands_for_code(recruiter_code: str):
 def recruiter_smiles(recruiter_code):
     smiles = _get_smiles_for_code(recruiter_code)
     if not smiles:
-        return jsonify({"RECRUITER_CODE": recruiter_code, "SMILES": None}), 404
-    return jsonify({"RECRUITER_CODE": recruiter_code, "SMILES": smiles})
+        return jsonify({"identifier": recruiter_code, "SMILES": None}), 404
+    return jsonify({"identifier": recruiter_code, "SMILES": smiles})
 
 
 # ---------------------------------------------
@@ -1118,6 +1410,16 @@ def get_ligand_visual(recruiter_code):
     """
 
     recruiter_code = str(recruiter_code or "").strip().upper()
+    # This historical endpoint remains a guarded facade.  V1 visual data is
+    # structure-specific, so entity IDs with multiple observations must select
+    # an exact Recruiter_Instance_ID instead of falling through to LIMIT 1.
+    instance, selection = _exact_instance_or_selection(recruiter_code)
+    if selection:
+        return selection
+    return jsonify(_instance_visual_payload(instance["Recruiter_Instance_ID"]))
+
+    # Retained below only as unreachable source history for old deployments;
+    # the immutable V1 application must use the exact-instance contract above.
     backend_mode = "remote" if randy_client.remote_enabled() else "local"
 
     try:
@@ -1404,6 +1706,15 @@ def serve_sdf_file(ligase, filename):
             "attempted": attempted_filenames,
         }), 404
 
+    # As above, local generic downloads are exact-name only.  The canonical
+    # viewer uses the instance endpoint, but this prevents legacy callers from
+    # receiving an arbitrary _1/_n sibling when they misspell a V1 filename.
+    sdf_dir = (_download_ligases_root() / ligase / "SDF_4Download").resolve()
+    candidate = (sdf_dir / Path(normalized_filename).name).resolve()
+    if sdf_dir.is_dir() and candidate.parent == sdf_dir and candidate.is_file():
+        return send_from_directory(sdf_dir, candidate.name, mimetype="chemical/x-mdl-sdfile", as_attachment=True)
+    return jsonify({"error": "Exact SDF filename not found.", "ligase": ligase, "filename": normalized_filename}), 404
+
     from flask import send_from_directory
     import os
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -1417,6 +1728,7 @@ def serve_sdf_file(ligase, filename):
     primary_sdf = f"{core_no_variant}.sdf"         # 4W9L_3JJ.sdf
     variant_sdf = f"{core_no_variant}_1.sdf"       # 4W9L_3JJ_1.sdf
 
+    exact_path = os.path.join(sdf_dir, normalized_filename)
     primary_path = os.path.join(sdf_dir, primary_sdf)
     variant_path = os.path.join(sdf_dir, variant_sdf)
 
@@ -1426,17 +1738,23 @@ def serve_sdf_file(ligase, filename):
     print(f"🔎 core_no_variant = {core_no_variant}")
     print("==============================")
 
-    # 1) Try exact match
+    # 1) The V1 instance filename is authoritative.  In particular, do not
+    # collapse an explicit _2, _3, … suffix to an unrelated base or _1 SDF.
+    if os.path.exists(exact_path):
+        print(f"✅ Exact V1 SDF found: {exact_path}")
+        return send_from_directory(sdf_dir, normalized_filename, as_attachment=True)
+
+    # 2) Retain legacy no-variant fallback for historical URLs.
     if os.path.exists(primary_path):
-        print(f"✅ Exact SDF found: {primary_path}")
+        print(f"🔁 Legacy base SDF fallback found: {primary_path}")
         return send_from_directory(sdf_dir, primary_sdf, as_attachment=True)
 
-    # 2) Try the _1 fallback
+    # 3) Try the _1 fallback.
     if os.path.exists(variant_path):
         print(f"🔁 Variant SDF found: {variant_path}")
         return send_from_directory(sdf_dir, variant_sdf, as_attachment=True)
 
-    # 3) FINAL: Scan directory for ANY matching variant (e.g. _2, _3)
+    # 4) FINAL: Scan directory for any matching variant.
     pattern = re.compile(rf"^{core_no_variant}_(\d+)\.sdf$", re.IGNORECASE)
     for f in os.listdir(sdf_dir):
         if pattern.match(f):
@@ -1462,7 +1780,8 @@ def serve_3d_display_sdf(ligase, filename):
             mimetype="chemical/x-mdl-sdfile",
         )
 
-    display_dir = Path(__file__).resolve().parents[1] / "Ligases" / ligase / "SDF_3DDisplay"
+    asset_root = configured_asset_root()
+    display_dir = (asset_root / "Ligases" / ligase / "SDF_3DDisplay") if asset_root else Path()
     candidate = (display_dir / Path(normalized_filename).name).resolve()
     if not display_dir.is_dir() or not candidate.is_file() or display_dir.resolve() not in candidate.parents:
         return jsonify({
@@ -1478,18 +1797,26 @@ def serve_3d_display_sdf(ligase, filename):
 def get_recruiter_by_pdb():
     pdb_id = request.args.get("pdb_id")
     ligand = request.args.get("ligand")
-    variant = request.args.get("variant", "").replace(".pdb", "").replace("_", "")
-
-    row = query_db("""
-        SELECT RECRUITER_CODE
-        FROM Ligase_Ligands_Smiles_3DMapped
-        WHERE PDB_ID = ? AND Ligand = ? COLLATE NOCASE
-        LIMIT 1
-    """, (pdb_id, ligand), one=True)
-
-    if row:
-        return jsonify(dict(row))
-    return jsonify({"error": "No recruiter found"}), 404
+    variant = str(request.args.get("variant", "") or "").strip()
+    query = """
+        SELECT DISTINCT Recruiter_ID, Recruiter_Instance_ID, Ligase, pdb_id,
+               Source_Entity_ID, Ligand, Variant
+        FROM Recruiter_Instance_Catalog
+        WHERE pdb_id = ? COLLATE NOCASE AND Ligand = ? COLLATE NOCASE
+    """
+    params = [pdb_id, ligand]
+    if variant.isdigit():
+        query += " AND Variant = ?"
+        params.append(int(variant))
+    rows = query_db(query + " ORDER BY Recruiter_Instance_ID", params)
+    if not rows:
+        return jsonify({"error": "No recruiter instance found"}), 404
+    if len(rows) == 1:
+        return jsonify(rows[0])
+    return jsonify({
+        "error": "The PDB/ligand query identifies multiple physical instances.",
+        "instances": rows,
+    }), 409
 
 
 
@@ -1499,41 +1826,30 @@ def global_stats():
     Returns high-level dataset metrics for About page visualization.
     """
     try:
-        # ========== Structural Counts ==========
-        ligase_count = query_db("SELECT COUNT(DISTINCT Ligase) AS n FROM Ligase_Scaffold_Data;", one=True)["n"]
-        ligand_count = query_db("SELECT COUNT(DISTINCT Ligand) AS n FROM Ligase_Ligand_SASA_summary;", one=True)["n"]
-        structure_count = query_db("SELECT COUNT(DISTINCT pdb_id) AS n FROM Ligase_Ligand_SASA_summary;", one=True)["n"]
-        scaffold_count = query_db("SELECT COUNT(DISTINCT Scaffold_ID) AS n FROM Ligase_Scaffold_Data;", one=True)["n"]
-
-        # ========== Scientific Metrics ==========
-        avg_shannon = query_db("SELECT AVG(Shannon_Diversity_Index) AS val FROM Ligase_Scaffold_Data;", one=True)["val"] or 0
-        mean_connectivity = query_db("SELECT AVG(Ligase_Scaffold_Connectivity) AS val FROM Ligase_Scaffold_Data;", one=True)["val"] or 0
-        median_bertz = query_db("SELECT BertzCT FROM Ligase_Chemical_Descriptors WHERE BertzCT IS NOT NULL ORDER BY BertzCT;",)
+        counts = get_database().release_counts()
+        structure_count = query_db("SELECT COUNT(DISTINCT pdb_id) AS n FROM Recruiter_Instance_Catalog", one=True)["n"]
+        mean_connectivity = query_db("SELECT AVG(Ligase_Scaffold_Connectivity) AS val FROM Ligase_Scaffold_Data", one=True)["val"] or 0
+        median_bertz = query_db("SELECT BertzCT FROM Ligase_Chemical_Descriptors WHERE BertzCT IS NOT NULL ORDER BY BertzCT")
         median_bertz_val = median_bertz[len(median_bertz)//2]["BertzCT"] if median_bertz else 0
-        avg_qed = query_db("SELECT AVG(QED) AS val FROM Ligase_Chemical_Descriptors;", one=True)["val"] or 0
-        percent_lipinski = query_db("SELECT (SUM(Lipinski_Pass)*100.0/COUNT(*)) AS val FROM Ligase_Chemical_Descriptors;", one=True)["val"] or 0
-        avg_norm_div = query_db("SELECT AVG(Normalized_Diversity) AS val FROM Ligase_Scaffold_Data;", one=True)["val"] or 0
-
-        # ========== Top Ligase ==========
+        avg_qed = query_db("SELECT AVG(QED) AS val FROM Ligase_Chemical_Descriptors", one=True)["val"] or 0
+        percent_lipinski = query_db("SELECT AVG(CASE WHEN Lipinski_Pass THEN 1.0 ELSE 0.0 END) * 100 AS val FROM Ligase_Chemical_Descriptors", one=True)["val"] or 0
         top_row = query_db("""
-            SELECT Ligase, SUM(Recruiter_Count) AS total
-            FROM Ligase_Scaffold_Data
-            GROUP BY Ligase
-            ORDER BY total DESC LIMIT 1;
+            SELECT Ligase, SUM(Recruiter_Entity_Count) AS total
+            FROM Ligase_Scaffold_Data GROUP BY Ligase ORDER BY total DESC LIMIT 1
         """, one=True)
         top_ligase = top_row["Ligase"] if top_row else "N/A"
 
         return jsonify({
             "structures": structure_count,
-            "ligases": ligase_count,
-            "ligands": ligand_count,
-            "total_scaffolds": scaffold_count,
-            "avg_shannon": round(avg_shannon, 2),
+            "ligases": counts["ligases"],
+            "ligands": counts["recruiter_entities"],
+            "total_scaffolds": counts["scaffolds"],
+            "avg_shannon": None,
             "mean_connectivity": round(mean_connectivity, 2),
             "median_bertz": round(median_bertz_val, 1),
             "avg_qed": round(avg_qed, 2),
             "percent_lipinski": round(percent_lipinski, 1),
-            "avg_norm_div": round(avg_norm_div, 2),
+            "avg_norm_div": None,
             "top_ligase": top_ligase
         })
     except Exception as e:
@@ -1576,6 +1892,11 @@ def render_2d_sasa(recruiter_code):
     print("==========================")
 
     try:
+        instance, selection = _exact_instance_or_selection(recruiter_code)
+        if selection:
+            return selection
+        return _render_instance_sasa_svg(instance["Recruiter_Instance_ID"])
+
         # 1) Use the authoritative component graph. For SASA, use it only once
         # its 2D↔3D atom correspondence has been validated by the repair script.
         smiles = _validated_authoritative_smiles(recruiter_code)
@@ -1721,113 +2042,31 @@ def render_2d_sasa(recruiter_code):
 
 @ligases_bp.route("/sasa-atoms/<recruiter_code>", methods=["GET"])
 def sasa_atoms(recruiter_code):
-    try:
-        recruiter_code = str(recruiter_code or "").strip().upper()
-        # Step 1: Get ligand mapping (Ligase, pdb, Ligand, Variant)
-        key = query_db("""
-            SELECT Ligase, pdb_id, Ligand, Variant
-            FROM Ligase_Ligands_Smiles_3DMapped
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1;
-        """, [recruiter_code], one=True)
-
-        if not key:
-            return jsonify({"error": "No mapping found"}), 404
-
-        ligase  = key["Ligase"]
-        pdb     = key["pdb_id"]
-        ligand  = key["Ligand"]
-        variant = key["Variant"]
-
-        # Step 2: Get atom-level SASA
-        atoms = query_db("""
-            SELECT atom_id, atom_type, Exposure_A2, x, y, z
-            FROM Ligase_Ligand_SASA_atoms
-            WHERE Ligase=? AND pdb_id=? AND Ligand=? AND Variant=?;
-        """, [ligase, pdb, ligand, variant])
-
-        return jsonify({"recruiter_code": recruiter_code, "atoms": [dict(r) for r in atoms]})
-
-    except Exception as e:
-        current_app.logger.exception("SASA atom lookup failed for %s", recruiter_code)
-        return jsonify({"error": f"SASA atom data is not available for recruiter code {recruiter_code}.", "recruiter_code": recruiter_code}), 500
+    instance, selection = _exact_instance_or_selection(recruiter_code)
+    if selection:
+        return selection
+    return jsonify({
+        "recruiter_id": instance["Recruiter_ID"],
+        "recruiter_instance_id": instance["Recruiter_Instance_ID"],
+        "atoms": get_database().instance_sasa_atoms(instance["Recruiter_Instance_ID"]),
+    })
 
 
 
 @ligases_bp.route("/sasa-full/<recruiter_code>", methods=["GET"])
 def sasa_full(recruiter_code):
-    try:
-        recruiter_code = str(recruiter_code or "").strip().upper()
-        # ----------------------------------------------
-        # STEP 1 — Get full composite key from 3DMapped
-        # ----------------------------------------------
-        key = query_db("""
-            SELECT Ligase, pdb_id, Ligand, Variant
-            FROM Ligase_Ligands_Smiles_3DMapped
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1;
-        """, [recruiter_code], one=True)
-
-        if not key:
-            return jsonify({"error": f"SASA data is not available for recruiter code {recruiter_code}.", "recruiter_code": recruiter_code}), 404
-
-        ligase  = key["Ligase"]
-        pdb_id  = key["pdb_id"]
-        ligand  = key["Ligand"]
-        variant = key["Variant"]
-
-        # ----------------------------------------------
-        # STEP 2 — SASA SUMMARY (single row)
-        # ----------------------------------------------
-        summary = query_db("""
-            SELECT *
-            FROM Ligase_Ligand_SASA_summary
-            WHERE Ligase = ?
-              AND pdb_id = ?
-              AND Ligand = ?
-              AND Variant = ?
-            LIMIT 1;
-        """, [ligase, pdb_id, ligand, variant], one=True)
-
-        if not summary:
-            summary = {}
-
-        # ----------------------------------------------
-        # STEP 3 — Full SASA atom table
-        # ----------------------------------------------
-        atoms = query_db("""
-            SELECT atom_id, atom_type,
-                   x, y, z,
-                   Exposure_A2, Residue_ID
-            FROM Ligase_Ligand_SASA_atoms
-            WHERE Ligase = ?
-              AND pdb_id = ?
-              AND Ligand = ?
-              AND Variant = ?
-            ORDER BY atom_id ASC;
-        """, [ligase, pdb_id, ligand, variant])
-
-        # ----------------------------------------------
-        # STEP 4 — Return unified payload
-        # ----------------------------------------------
-        return jsonify({
-            "ok": True,
-            "recruiter_code": recruiter_code,
-            "Ligase": ligase,
-            "pdb_id": pdb_id,
-            "Ligand": ligand,
-            "Variant": variant,
-            "summary": dict(summary) if summary else {},
-            "atoms": [dict(r) for r in atoms],
-        })
-
-    except Exception as e:
-        current_app.logger.exception("SASA full lookup failed for %s", recruiter_code)
-        return jsonify({
-            "error": f"SASA data could not be retrieved for recruiter code {recruiter_code}.",
-            "recruiter_code": recruiter_code,
-            "exception_type": type(e).__name__,
-        }), 500
+    instance, selection = _exact_instance_or_selection(recruiter_code)
+    if selection:
+        return selection
+    instance_id = instance["Recruiter_Instance_ID"]
+    return jsonify({
+        "ok": True,
+        "recruiter_id": instance["Recruiter_ID"],
+        "recruiter_instance_id": instance_id,
+        "instance": instance,
+        "summary": get_database().instance_sasa_summary(instance_id) or {},
+        "atoms": get_database().instance_sasa_atoms(instance_id),
+    })
 
 
 
@@ -2196,69 +2435,11 @@ def scaffold_network_full():
 
 @ligases_bp.route("/sasa-summary/<recruiter_code>", methods=["GET"])
 def sasa_summary(recruiter_code):
-    print("\n\n====================================")
-    print(f"📥 [SASA-SUMMARY] Request for recruiter: {recruiter_code}")
-    print("====================================\n")
-
-    try:
-        # 1) Composite key lookup
-        key = query_db("""
-            SELECT Ligase, pdb_id, Ligand, Variant
-            FROM Ligase_Ligands_Smiles_3DMapped
-            WHERE RECRUITER_CODE = ?
-            LIMIT 1;
-        """, [recruiter_code], one=True)
-
-        if not key:
-            return jsonify({"error": "No mapping found"}), 404
-
-        ligase  = key["Ligase"]
-        pdb     = key["pdb_id"]
-        ligand  = key["Ligand"]
-        variant = key["Variant"]
-
-        # 2) Try summary table
-        summary = query_db("""
-            SELECT *
-            FROM Ligase_Ligand_SASA_summary
-            WHERE Ligase=? AND pdb_id=? AND Ligand=? AND Variant=?
-            LIMIT 1;
-        """, [ligase, pdb, ligand, variant], one=True)
-
-        # 3) Fallback using atoms table (optional but safe)
-        if not summary:
-            fallback = query_db("""
-                SELECT DISTINCT Residue_ID
-                FROM Ligase_Ligand_SASA_atoms
-                WHERE Ligase=? AND pdb_id=? AND Ligand=? AND Variant=?
-                LIMIT 1;
-            """, [ligase, pdb, ligand, variant], one=True)
-
-            if fallback:
-                summary = query_db("""
-                    SELECT *
-                    FROM Ligase_Ligand_SASA_summary
-                    WHERE Ligase=? AND pdb_id=? AND Ligand=? AND Variant=? AND Residue_ID=?
-                    LIMIT 1;
-                """, [ligase, pdb, ligand, variant, fallback["Residue_ID"]], one=True)
-
-        # 4) If STILL missing → return empty
-        if not summary:
-            return jsonify({
-                "Total_atoms": None,
-                "Exposed_atoms": None,
-                "SASA_in_complex_A2": None,
-                "Percent_Exposed": None,
-                "Percent_Buried": None
-            })
-
-        # 5) Convert sqlite Row → dict and return
-        return jsonify({k: summary[k] for k in summary.keys()})
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+    instance, selection = _exact_instance_or_selection(recruiter_code)
+    if selection:
+        return selection
+    summary = get_database().instance_sasa_summary(instance["Recruiter_Instance_ID"])
+    return jsonify(summary or {})
 
 
 
@@ -2285,41 +2466,17 @@ def sasa_summary(recruiter_code):
 
 @ligases_bp.route("/scaffold/<recruiter_code>")
 def api_scaffold_for_recruiter(recruiter_code):
-
-    # 1️⃣ Check if this recruiter is in duplicate master map
-    master_row = query_db("""
-        SELECT MasterRecruiter
-        FROM Recruiter_Master_Map
-        WHERE RECRUITER_CODE = ?
-        LIMIT 1;
-    """, [recruiter_code], one=True)
-
-    if master_row:
-        master = (master_row["MasterRecruiter"] or "").strip().upper()
-
-        # Case C — duplicate group with NO scaffold (master = BLANK)
-        if master == "BLANK":
-            return jsonify({"error": "NO_MASTER"}), 404
-
-        # Case B — duplicate group WITH valid master
-        if master != "":
-            recruiter_code = master  # rewrite recruiter code
-    
-        # Case A — master_row exists but empty? (should not happen)
-        # Fall through and continue normally
-
-    # 2️⃣ Continue normal scaffold lookup
-    row = query_db("""
-        SELECT Scaffold_ID, Scaffold_SMILES
-        FROM Ligase_Recruiters_Scaffold
-        WHERE RECRUITER_CODE = ?
-        LIMIT 1;
-    """, [recruiter_code], one=True)
-
-    if not row:
+    resolved = get_database().entity_for_identifier(recruiter_code)
+    if not resolved:
         return jsonify({"error": "Not found"}), 404
-
-    return jsonify(dict(row))
+    entity = (resolved["entity"] if resolved["kind"] == "entity"
+              else get_database().recruiter_entity(resolved["instance"]["Recruiter_ID"]))
+    scaffold = get_database().scaffold(entity["Scaffold_ID"])
+    return jsonify({
+        "Recruiter_ID": entity["Recruiter_ID"],
+        "Scaffold_ID": entity["Scaffold_ID"],
+        "Scaffold_Identity_SMILES": scaffold.get("Scaffold_Identity_SMILES") if scaffold else None,
+    })
 
 
 
@@ -2658,14 +2815,14 @@ def get_visits():
 @ligases_bp.route("/tooltip/descriptors/<recruiter_code>", methods=["GET"])
 def tooltip_descriptors(recruiter_code):
     """Return a single cleaned descriptor row for tooltip rendering."""
-    query = """
-        SELECT MW, LogP, TPSA, HBA, HBD, Ring_Count, QED, SA_Score,
-               Lipinski_Pass, Veber_Pass, Egan_Pass
-        FROM Ligase_Chemical_Descriptors
-        WHERE RECRUITER_CODE = ?;
-    """
-    rows = query_db(query, [recruiter_code])
-    return jsonify(dict(rows[0]) if rows else {})
+    resolved = get_database().entity_for_identifier(recruiter_code)
+    if not resolved:
+        return jsonify({})
+    entity = (resolved["entity"] if resolved["kind"] == "entity"
+              else get_database().recruiter_entity(resolved["instance"]["Recruiter_ID"]))
+    keys = ("MW", "LogP", "TPSA", "HBA", "HBD", "Ring_Count", "QED", "SA_Score",
+            "Lipinski_Pass", "Veber_Pass", "Egan_Pass")
+    return jsonify({key: entity.get(key) for key in keys})
 
 @ligases_bp.route("/tooltip/metadata/<recruiter_code>", methods=["GET"])
 def tooltip_metadata(recruiter_code):
@@ -2677,8 +2834,16 @@ def tooltip_metadata(recruiter_code):
            OR Name = ?
            OR Canonical_SMILES = ?;
     """
-    rows = query_db(query, [recruiter_code, recruiter_code, recruiter_code])
-    return jsonify(dict(rows[0]) if rows else {})
+    resolved = get_database().entity_for_identifier(recruiter_code)
+    if not resolved:
+        return jsonify({})
+    instance = resolved.get("instance")
+    entity = (resolved["entity"] if resolved["kind"] == "entity"
+              else get_database().recruiter_entity(instance["Recruiter_ID"]))
+    return jsonify({"Name": instance.get("Name") if instance else None,
+                    "Formula": entity.get("Formula"),
+                    "Type": instance.get("Type") if instance else entity.get("Recruiter_Class"),
+                    "Canonical_SMILES": entity.get("Canonical_SMILES")})
 
 @ligases_bp.route("/tooltip/all/<recruiter_code>", methods=["GET"])
 def tooltip_all(recruiter_code):
@@ -2690,8 +2855,15 @@ def tooltip_all(recruiter_code):
         FROM Ligase_Chemical_Descriptors
         WHERE RECRUITER_CODE = ?;
     """
-    d_rows = query_db(d_query, [recruiter_code])
-    descriptors = _with_authoritative_smiles(d_rows[0]) if d_rows else {}
+    resolved = get_database().entity_for_identifier(recruiter_code)
+    if not resolved:
+        return jsonify({"descriptors": {}, "metadata": {}, "smiles": ""})
+    instance = resolved.get("instance")
+    entity = (resolved["entity"] if resolved["kind"] == "entity"
+              else get_database().recruiter_entity(instance["Recruiter_ID"]))
+    keys = ("MW", "LogP", "TPSA", "HBA", "HBD", "Ring_Count", "QED", "SA_Score",
+            "Lipinski_Pass", "Veber_Pass", "Egan_Pass")
+    descriptors = {key: entity.get(key) for key in keys}
 
     # --- METADATA (optional extra data) ---
     m_query = """
@@ -2700,22 +2872,12 @@ def tooltip_all(recruiter_code):
         WHERE Canonical_SMILES = ? 
         OR SMILES = ?;
     """
-    m_rows = query_db(m_query, [descriptors.get("SMILES"), descriptors.get("SMILES")])
-
-    metadata = dict(m_rows[0]) if m_rows else {}
-
-    # --- Select correct SMILES ---
-    smiles = (
-        descriptors.get("SMILES")
-        or metadata.get("Canonical_SMILES")
-        or ""
-    )
-
-    return jsonify({
-        "descriptors": descriptors,
-        "metadata": metadata,
-        "smiles": smiles
-    })
+    metadata = {"Name": instance.get("Name") if instance else None,
+                "Formula": entity.get("Formula"),
+                "Type": instance.get("Type") if instance else entity.get("Recruiter_Class"),
+                "Canonical_SMILES": entity.get("Canonical_SMILES")}
+    return jsonify({"descriptors": descriptors, "metadata": metadata,
+                    "smiles": entity.get("Canonical_SMILES") or ""})
 
 
 
@@ -2745,6 +2907,29 @@ def random_recruiter():
       - A valid PDB file in the active backend
     Ensures random clicks never hit missing_data.html
     """
+    # V1 random navigation must choose an exact observed structure, not a
+    # fabricated legacy LR number or a pre-V1 recruiter-code column.
+    row = get_database().execute_read(
+        """
+        SELECT i.Recruiter_Instance_ID
+        FROM Recruiter_Instance_Catalog AS i
+        JOIN Ligase_Ligand_SASA_summary AS s USING (Recruiter_Instance_ID)
+        JOIN Ligase_Ligand_SASA_atoms AS a USING (Recruiter_Instance_ID)
+        GROUP BY i.Recruiter_Instance_ID
+        HAVING COUNT(a.atom_id) > 0
+        ORDER BY RANDOM()
+        LIMIT 1
+        """,
+        one=True,
+    )
+    if not row:
+        return jsonify({"error": "No V1 recruiter instances are available."}), 404
+    instance_id = row["Recruiter_Instance_ID"]
+    return jsonify({
+        "recruiter_instance_id": instance_id,
+        "url": f"/ligand/{instance_id}",
+    })
+
     import random
 
     # Step 1 — Get all recruiters with valid composite key
@@ -2839,18 +3024,19 @@ def get_scaffold_clusters():
     """
 
     try:
-        # Core aggregation — one row per Scaffold_Hash
+        # V1 has no historical scaffold hash; its canonical Scaffold_ID is the
+        # stable cluster key used by the existing Cytoscape client.
         query = """
             SELECT
-                Scaffold_Hash,
-                GROUP_CONCAT(DISTINCT Scaffold_ID)      AS Scaffold_IDs,
-                GROUP_CONCAT(DISTINCT Ligase)           AS Ligases,
-                COUNT(DISTINCT RECRUITER_CODE)          AS Recruiter_Count,
-                MAX(COALESCE(Scaffold_SMILES, ''))      AS Scaffold_SMILES
-            FROM Ligase_Recruiters_Scaffold
-            WHERE Scaffold_Hash IS NOT NULL
-              AND TRIM(Scaffold_Hash) != ''
-            GROUP BY Scaffold_Hash
+                s.Scaffold_ID AS Scaffold_Hash,
+                s.Scaffold_ID AS Scaffold_IDs,
+                GROUP_CONCAT(DISTINCT lr.Ligase) AS Ligases,
+                COUNT(DISTINCT r.Recruiter_ID) AS Recruiter_Count,
+                MAX(COALESCE(s.Scaffold_Identity_SMILES, '')) AS Scaffold_SMILES
+            FROM Scaffold_Catalog AS s
+            LEFT JOIN Recruiter_Catalog AS r USING (Scaffold_ID)
+            LEFT JOIN Ligase_Recruiter_Catalog AS lr USING (Recruiter_ID)
+            GROUP BY s.Scaffold_ID
         """
 
         rows = query_db(query)
@@ -2928,7 +3114,10 @@ def serve_pdb(ligase, filename):
             mimetype="chemical/x-pdb",
         )
 
-    base = os.path.join(app.root_path, "Ligases")
+    asset_root = configured_asset_root()
+    if not asset_root:
+        return jsonify({"error": "No versioned local release asset root is selected."}), 503
+    base = str(asset_root / "Ligases")
     return send_from_directory(
         os.path.join(base, ligase),
         f"PDB/{filename}"
@@ -2937,6 +3126,20 @@ def serve_pdb(ligase, filename):
 
 @ligases_bp.route("/search/recruiters", methods=["GET"])
 def search_recruiters():
+    """Search canonical recruiter entities and exact physical instances.
+
+    `q` returns explicitly separated entity and instance result sets.  The
+    retained filter-only mode returns entity rows for the legacy explorer.
+    """
+    database = get_database()
+    text = request.args.get("q", "").strip()
+    if text:
+        try:
+            limit = int(request.args.get("limit", 50))
+        except ValueError:
+            limit = 50
+        return jsonify(database.search_recruiters(text, limit))
+
     ligase = request.args.get("ligase")
     min_qed = float(request.args.get("min_qed", 0))
     min_mw = float(request.args.get("min_mw", 0))
@@ -2954,20 +3157,14 @@ def search_recruiters():
         return jsonify([])
 
     query = """
-        SELECT
-            d.RECRUITER_CODE,
-            d.SMILES,
-            d.QED,
-            d.MW
-        FROM Ligase_Chemical_Descriptors d
+        SELECT r.Recruiter_ID, r.Canonical_SMILES AS SMILES, r.QED, r.MW,
+               r.LogP, r.TPSA, r.HBA, r.HBD, r.Rotatable_Bonds,
+               r.Fraction_CSP3, r.Scaffold_ID
+        FROM Recruiter_Catalog AS r
         WHERE EXISTS (
-            SELECT 1
-            FROM Ligase_Ligands_Smiles_3DMapped m
-            WHERE m.RECRUITER_CODE = d.RECRUITER_CODE
-            AND m.Ligase = ?
-        )
-        AND d.QED >= ?
-        AND d.MW >= ?
+            SELECT 1 FROM Ligase_Recruiter_Catalog AS lr
+            WHERE lr.Recruiter_ID = r.Recruiter_ID AND lr.Ligase = ?
+        ) AND r.QED >= ? AND r.MW >= ?
     """
 
 
@@ -2976,41 +3173,38 @@ def search_recruiters():
     # ---------- ADVANCED FILTERS ----------
 
     if logp is not None:
-        query += " AND (d.LogP IS NULL OR d.LogP <= ?)"
+        query += " AND (r.LogP IS NULL OR r.LogP <= ?)"
         params.append(logp)
 
     if tpsa is not None:
-        query += " AND (d.TPSA IS NULL OR d.TPSA <= ?)"
+        query += " AND (r.TPSA IS NULL OR r.TPSA <= ?)"
         params.append(tpsa)
 
     if hba is not None:
-        query += " AND (d.HBA IS NULL OR d.HBA <= ?)"
+        query += " AND (r.HBA IS NULL OR r.HBA <= ?)"
         params.append(hba)
 
     if hbd is not None:
-        query += " AND (d.HBD IS NULL OR d.HBD <= ?)"
+        query += " AND (r.HBD IS NULL OR r.HBD <= ?)"
         params.append(hbd)
 
     if rotb is not None:
-        query += " AND (d.Rotatable_Bonds IS NULL OR d.Rotatable_Bonds <= ?)"
+        query += " AND (r.Rotatable_Bonds IS NULL OR r.Rotatable_Bonds <= ?)"
         params.append(rotb)
 
     if fsp3 is not None:
-        query += " AND (d.Fraction_CSP3 IS NULL OR d.Fraction_CSP3 >= ?)"
+        query += " AND (r.Fraction_CSP3 IS NULL OR r.Fraction_CSP3 >= ?)"
         params.append(fsp3)
 
 
     query += """
-        ORDER BY d.QED DESC
+        ORDER BY r.QED DESC, r.Recruiter_ID
         LIMIT ?;
     """
 
     params.append(limit)
 
-    # 🔥 THIS WAS THE BUG
-    rows = query_db(query, params)
-
-    return jsonify([_with_authoritative_smiles(r) for r in rows])
+    return jsonify(query_db(query, params))
 
 
 
@@ -3045,8 +3239,14 @@ from flask import Response, abort, jsonify, request, send_file
 # Safe filesystem helpers
 # ---------------------------------------------------------------------------
 def _download_ligases_root() -> Path:
-    """Return the physical Ligases/ directory that contains routes.py."""
-    return Path(__file__).resolve().parent
+    """Return release-owned compatibility assets, never historical Ligases files."""
+    asset_root = configured_asset_root()
+    if not asset_root:
+        abort(503, description="No versioned local release asset root is selected.")
+    root = asset_root / "Ligases"
+    if not root.is_dir():
+        abort(503, description="The selected release has no compatibility asset root.")
+    return root
 
 
 def _is_relative_to(path: Path, root: Path) -> bool:
@@ -3418,23 +3618,19 @@ def _parse_recruiter_codes(codes):
 
 
 def _mapping_rows_for_recruiter_codes(codes):
-    """Resolve canonical LR##### recruiter codes to physical structure mappings."""
+    """Resolve canonical entity IDs to their physical structure mappings."""
     cleaned = _parse_recruiter_codes(codes)
 
     placeholders = ",".join(["?"] * len(cleaned))
     rows = query_db(f"""
-        SELECT DISTINCT
-            RECRUITER_CODE,
-            Ligase,
-            PDB_ID AS pdb_id,
-            Ligand,
-            Variant
-        FROM Ligase_Ligands_Smiles_3DMapped
-        WHERE UPPER(RECRUITER_CODE) IN ({placeholders})
-        ORDER BY RECRUITER_CODE, Ligase, pdb_id, Ligand, Variant;
+        SELECT DISTINCT Recruiter_ID, Recruiter_Instance_ID, Ligase,
+               pdb_id, Ligand, Variant
+        FROM Recruiter_Instance_Catalog
+        WHERE Recruiter_ID IN ({placeholders})
+        ORDER BY Recruiter_ID, Recruiter_Instance_ID;
     """, cleaned)
 
-    return [dict(r) for r in rows]
+    return rows
 
 
 def _remote_bundle_payload(rows):
@@ -3444,7 +3640,7 @@ def _remote_bundle_payload(rows):
     missing = []
 
     for row in rows:
-        row_key = f"{row['RECRUITER_CODE']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
+        row_key = f"{row['Recruiter_ID']}/{row['Recruiter_Instance_ID']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
         for ext, label in [(".pdb", "PDB"), (".sdf", "SDF")]:
             filename = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ext)
             if not filename:
@@ -3573,31 +3769,25 @@ def download_recruiter_code_index():
     limit = max(1, min(limit, 1000))
 
     query = """
-        SELECT DISTINCT
-            RECRUITER_CODE,
-            Ligase,
-            PDB_ID AS pdb_id,
-            Ligand,
-            Variant
-        FROM Ligase_Ligands_Smiles_3DMapped
-        WHERE RECRUITER_CODE IS NOT NULL
-          AND TRIM(RECRUITER_CODE) != ''
-          AND UPPER(RECRUITER_CODE) LIKE 'LR%'
+        SELECT Recruiter_ID, Recruiter_Instance_ID, Ligase, pdb_id, Ligand, Variant
+        FROM Recruiter_Instance_Catalog
+        WHERE Recruiter_ID IS NOT NULL AND TRIM(Recruiter_ID) != ''
     """
     params = []
     if ligase:
         query += " AND Ligase = ?"
         params.append(ligase)
-    query += " ORDER BY RECRUITER_CODE, Ligase, pdb_id, Ligand LIMIT ?;"
+    query += " ORDER BY Recruiter_ID, Recruiter_Instance_ID LIMIT ?;"
     params.append(limit)
 
-    rows = [dict(r) for r in query_db(query, params)]
+    rows = query_db(query, params)
     results = []
     for row in rows:
         pdb_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
         sdf_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
         results.append({
-            "recruiter_code": row["RECRUITER_CODE"],
+            "recruiter_id": row["Recruiter_ID"],
+            "recruiter_instance_id": row["Recruiter_Instance_ID"],
             "ligase": row["Ligase"],
             "pdb_id": row["pdb_id"],
             "ligand": row["Ligand"],
@@ -3610,7 +3800,7 @@ def download_recruiter_code_index():
 
     example_codes = []
     for item in results:
-        code = item["recruiter_code"]
+        code = item["recruiter_id"]
         if code not in example_codes and (item["has_pdb"] or item["has_sdf"]):
             example_codes.append(code)
         if len(example_codes) >= 3:
@@ -3778,7 +3968,7 @@ def download_recruiter_bundle(recruiter_code):
     missing = []
 
     for row in rows:
-        row_key = f"{row['RECRUITER_CODE']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
+        row_key = f"{row['Recruiter_ID']}/{row['Recruiter_Instance_ID']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
         pdb_file = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
         sdf_file = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
 
@@ -3843,7 +4033,7 @@ def download_multiple_recruiter_bundle():
     missing = []
 
     for row in rows:
-        row_key = f"{row['RECRUITER_CODE']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
+        row_key = f"{row['Recruiter_ID']}/{row['Recruiter_Instance_ID']}/{row['Ligase']}/{row['pdb_id']}_{row['Ligand']}_v{row.get('Variant') or 'NA'}"
         for ext, label in [(".pdb", "PDB"), (".sdf", "SDF")]:
             asset = _find_asset_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ext)
             if asset:
@@ -3867,20 +4057,24 @@ def download_multiple_recruiter_bundle():
 
 
 # ---------------------------------------------------------------------------
-# CSV table exports from Ligase_Recruiter.db
+# CSV exports from the manifest-approved V1 scientific release.
 # ---------------------------------------------------------------------------
 _PUBLIC_DOWNLOAD_TABLES = {
+    "Recruiter_Catalog",
+    "Recruiter_Instance_Catalog",
+    "Ligase_Recruiter_Catalog",
+    "Scaffold_Catalog",
+    "Source_Entity_Recruiter_Crosswalk",
+    "Source_Entity_Ambiguity",
     "Ligase_Scaffold_Data",
-    "Ligase_Scaffold_Summary",
-    "Ligase_Scaffold_Frequency",
-    "Ligase_Recruiters_Scaffold",
     "Ligase_Chemical_Descriptors",
     "Ligase_Ligand_Metadata",
     "Ligase_Ligand_SASA_summary",
     "Ligase_Ligand_SASA_atoms",
     "Ligase_Ligands_Smiles_3DMapped",
-    "Ligase_SMILE_Codes",
-    "Recruiter_SMILES_Map",
+    "Recruiter_Registry",
+    "Recruiter_Instance_Registry",
+    "Scaffold_Registry",
 }
 
 
@@ -3901,13 +4095,6 @@ def download_table_csv(table_name):
     """
     if table_name not in _PUBLIC_DOWNLOAD_TABLES:
         abort(404, description=f"Table is not available for public export: {table_name}")
-    if randy_client.remote_enabled():
-        return randy_client.proxy_file(
-            f"download/table/{randy_client.quote_part(table_name)}.csv",
-            download_name=f"E3Ligandalyzer_{table_name}.csv",
-            mimetype="text/csv",
-        )
-
     rows = query_db(f"SELECT * FROM {table_name};")
     output = StringIO()
 

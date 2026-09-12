@@ -999,26 +999,22 @@ class CustomNavbar extends HTMLElement {
       closeDropdowns();
     });
 
-    const blockedRecruiters = new Set([
-      // Add blocked recruiter IDs here if needed.
-    ]);
-
-    function getRandomRecruiter() {
-      let attempts = 0;
-      while (attempts < 1000) {
-        const num = Math.floor(Math.random() * 603) + 1;
-        const code = "LR" + String(num).padStart(5, "0");
-        if (!blockedRecruiters.has(code)) return code;
-        attempts += 1;
-      }
-      return "LR00001";
-    }
-
-    luckyBtn?.addEventListener("click", () => {
+    luckyBtn?.addEventListener("click", async () => {
       luckyBtn.disabled = true;
       luckyBtn.textContent = "🎲 Loading...";
-      const next = getRandomRecruiter();
-      window.location.href = `/ligand/${next}`;
+      try {
+        const response = await fetch("/api/random-recruiter");
+        if (!response.ok) throw new Error(`random-recruiter returned ${response.status}`);
+        const result = await response.json();
+        if (!result?.recruiter_instance_id || !result?.url) {
+          throw new Error("random-recruiter returned no exact V1 instance");
+        }
+        window.location.href = result.url;
+      } catch (error) {
+        console.error("Unable to select a random V1 recruiter instance:", error);
+        luckyBtn.disabled = false;
+        luckyBtn.textContent = "🎲 I'm Feeling Lucky";
+      }
     });
 
     if (window.feather?.icons) {

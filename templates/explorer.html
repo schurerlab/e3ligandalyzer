@@ -1228,8 +1228,8 @@ function enableLigandHover() {
     try {
       const res = await fetch(`/api/recruiter-by-pdb?pdb_id=${pdbId}&ligand=${lig}&variant=${variant}`);
       const data = await res.json();
-      if (data && data.RECRUITER_CODE) {
-        window.open(`/ligand/${encodeURIComponent(data.RECRUITER_CODE)}`, "_blank");
+      if (data && data.Recruiter_Instance_ID) {
+        window.open(`/ligand/${encodeURIComponent(data.Recruiter_Instance_ID)}`, "_blank");
       } else {
         window.open(`/missing?pdb=${pdbId}&ligand=${lig}&variant=${variant}`, "_blank");
       }
@@ -1379,8 +1379,8 @@ function enableLigandInfoHover() {
         // 🔗 Open Ligand Page
         tip.querySelector(".open-btn").addEventListener("click", (e) => {
           e.stopPropagation();
-          if (recruiterData?.RECRUITER_CODE)
-            window.open(`/ligand/${encodeURIComponent(recruiterData.RECRUITER_CODE)}`, "_blank");
+          if (recruiterData?.Recruiter_Instance_ID)
+            window.open(`/ligand/${encodeURIComponent(recruiterData.Recruiter_Instance_ID)}`, "_blank");
           else if (pdbId)
             window.open(`/missing?pdb=${pdbId}&ligand=${ligand || ligName}&variant=${variant || ""}`, "_blank");
         });
@@ -1767,8 +1767,8 @@ function buildModelTogglePanel() {
       try {
         const res = await fetch(`/api/recruiter-by-pdb?pdb_id=${pdbId}&ligand=${lig}&variant=${variant || ''}`);
         const data = await res.json();
-        if (data && data.RECRUITER_CODE)
-          window.open(`/ligand/${encodeURIComponent(data.RECRUITER_CODE)}`, "_blank");
+        if (data && data.Recruiter_Instance_ID)
+          window.open(`/ligand/${encodeURIComponent(data.Recruiter_Instance_ID)}`, "_blank");
         else
           window.open('/missing', "_blank");
       } catch (err) {
@@ -1959,7 +1959,7 @@ Promise.all([
       .then(r => r.json())
       .then(list => {
         if (list.length > 0)
-          window.open(`/ligand/${encodeURIComponent(list[0].RECRUITER_CODE)}`, "_blank");
+          window.open(`/recruiter/${encodeURIComponent(list[0].RECRUITER_CODE)}`, "_blank");
         else
           alert(`No recruiter found for ${rowData.Ligase}`);
       });

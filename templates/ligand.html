@@ -61,6 +61,8 @@
     animation: loader-progress-slide 1.6s ease-in-out infinite;
   }
 
+  #instance-selector button[aria-current="true"] { border-color: rgb(56 189 248); background: rgb(12 74 110 / .7); color: white; }
+
   @keyframes loader-spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -81,8 +83,18 @@
 
 
   <p class="text-gray-400 mb-4">
-    Detailed view of recruiter compound properties and SASA exposure.
+    Exact observed structure view with entity-level chemical identity and instance-level SASA.
   </p>
+
+  <section id="instance-selector" class="mb-6 rounded-xl border border-slate-700 bg-slate-900/80 p-4" aria-label="Observed structure selector">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div><p class="text-xs uppercase tracking-[0.2em] text-sky-300">Recruiter entity</p><p id="entity-id" class="font-mono text-lg text-amber-300">—</p></div>
+      <div class="text-sm text-slate-300"><span id="instance-count">0</span> observed structure(s)</div>
+      <div class="flex gap-2"><button id="instance-prev" class="rounded border border-slate-600 px-3 py-1 text-sm hover:bg-slate-700" type="button">Previous</button><button id="instance-next" class="rounded border border-slate-600 px-3 py-1 text-sm hover:bg-slate-700" type="button">Next</button></div>
+    </div>
+    <div id="instance-options" class="mt-3 flex flex-wrap gap-2" role="list"></div>
+    <p id="instance-context" class="mt-3 text-xs text-slate-400" aria-live="polite">Loading exact V1 instance…</p>
+  </section>
 
   <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
     <!-- Left / Main -->
@@ -510,7 +522,7 @@ function replaceFeather() {
 replaceFeather();
 
 let stage3D = null;
-let current3D = { atoms: [], mode: "sasa", pdbUrl: null };
+let current3D = { atoms: [], mode: "sasa", pdbUrl: null, renderGeneration: 0 };
 let current2D = { svgRaw: "", mode: "normal", exposure: new Map() };
 window.ligandVisualData = null;
 
@@ -559,26 +571,28 @@ function hideLigandLoader() {
   }, 450);
 }
 
-// 🔑 Extract recruiter code from URL (e.g. L00470)
+// Exact V1 URLs are /ligand/<Recruiter_Instance_ID>. Entity URLs intentionally
+// resolve to their overview page on the server, never an arbitrary structure.
+const INITIAL_INSTANCE = {{ initial_instance_id|default('', true)|tojson }};
 const RECRUITER = window.location.pathname.split("/").pop().toUpperCase();
-console.log("🔑 Recruiter =", RECRUITER);
+const viewerState = { controller: null, generation: 0, instanceId: INITIAL_INSTANCE || RECRUITER, siblings: [] };
 
-async function loadLigandBootstrap(recruiterCode) {
+async function loadLigandBootstrap(instanceId, signal) {
   setLigandLoaderMessage("Pulling recruiter data from the database…");
-  const res = await fetch(`/api/ligand-visual/${encodeURIComponent(recruiterCode)}`);
+  const res = await fetch(`/api/instances/${encodeURIComponent(instanceId)}/visual`, { signal });
 
-  if (res.status === 404 || res.status === 411) {
-    window.location.href = `/missing-recruiter?code=${recruiterCode}`;
+  if (res.status === 404) {
+    window.location.href = `/missing-recruiter?code=${instanceId}`;
     return null;
   }
 
   if (!res.ok) {
-    throw new Error(`ligand-visual returned ${res.status}`);
+    throw new Error(`instance visual returned ${res.status}`);
   }
 
   const data = await res.json();
   if (!data.ok || data.error) {
-    throw new Error(data.error || "ligand-visual returned invalid payload");
+    throw new Error(data.error || "instance visual returned invalid payload");
   }
 
   window.ligandVisualData = data;
@@ -613,36 +627,40 @@ async function resolveLigandSmiles(data, recruiterCode) {
   }
 }
 
-function applyLigandBootstrapGlobals(data, recruiterCode) {
+function applyLigandBootstrapGlobals(data, instanceId) {
   const metadata = data?.metadata || {};
   const sasaSum = data?.sasa_summary || {};
   const atoms = Array.isArray(data?.sasa_atoms) ? data.sasa_atoms : [];
+  const overlayAtoms = Array.isArray(data?.sasa_overlay_atoms) ? data.sasa_overlay_atoms : atoms;
 
   const ligase = metadata.Ligase || sasaSum.Ligase || atoms[0]?.Ligase || "";
   const ligand = metadata.Ligand || sasaSum.Ligand || atoms[0]?.Ligand || "";
   const pdbId = metadata.PDB_ID || sasaSum.pdb_id || atoms[0]?.pdb_id || "";
-  const pdbFile = data?.pdb_file || (pdbId && ligand ? `${pdbId}_${ligand}.pdb` : "");
-  const pdbPath = data?.pdb_path || (
-    ligase && pdbFile
-      ? `/Ligases/${encodeURIComponent(ligase)}/PDB/${encodeURIComponent(pdbFile)}`
-      : null
-  );
+  const pdbFile = data?.assets?.pdb?.filename || data?.pdb_file || "";
+  const pdbPath = data?.assets?.pdb?.url || data?.pdb_path || null;
 
-  window.currentLigandCode = recruiterCode;
+  window.currentRecruiterId = data?.recruiter?.Recruiter_ID || data?.instance?.Recruiter_ID || "";
+  window.currentRecruiterInstanceId = instanceId;
+  window.currentLigandCode = instanceId;
   window.currentLigase = ligase;
   window.currentPDB = pdbFile;
   window.currentPDBurl = pdbPath;
+  window.currentSDFurl = data?.assets?.sdf?.url || data?.ligand_sdf_path || null;
+  window.currentSDF = data?.assets?.sdf?.filename || data?.ligand_sdf_file || "";
   window.currentModel = { name: pdbFile };
   window.models = [window.currentModel];
 
-  current3D.atoms = atoms;
+  // The overlay is the exact SASA↔selected-SDF intersection.  Raw SASA rows
+  // remain available for summaries and 2D rendering, but never drive 3D glow.
+  current3D.atoms = overlayAtoms;
+  current3D.overlayDiagnostics = data?.sasa_overlay_diagnostics || {};
   current3D.summary = sasaSum;
   current3D.sasa_summary = sasaSum;
   current3D.bootstrapData = data;
   current3D.pdbPath = pdbPath;
 }
 
-function updateReportIssueLink({ recruiterCode = "", ligase = "", ligand = "", pdbId = "", source = "ligand-page" } = {}) {
+function updateReportIssueLink({ recruiterCode = "", recruiterId = "", recruiterInstanceId = "", ligase = "", ligand = "", pdbId = "", source = "ligand-page" } = {}) {
   const link = document.getElementById("report-issue-btn");
   if (!link) return;
 
@@ -655,6 +673,8 @@ function updateReportIssueLink({ recruiterCode = "", ligase = "", ligand = "", p
   const pdbValue = pdbId || "";
 
   if (code) params.set("recruiter_code", code);
+  if (recruiterId || window.currentRecruiterId) params.set("recruiter_id", recruiterId || window.currentRecruiterId);
+  if (recruiterInstanceId || window.currentRecruiterInstanceId) params.set("recruiter_instance_id", recruiterInstanceId || window.currentRecruiterInstanceId);
   if (ligaseValue && ligaseValue !== "—") params.set("ligase", ligaseValue);
   if (ligandValue && ligandValue !== "—") params.set("ligand", ligandValue);
   if (pdbValue) params.set("pdb", pdbValue);
@@ -663,19 +683,38 @@ function updateReportIssueLink({ recruiterCode = "", ligase = "", ligand = "", p
   link.href = `/report-issue?${params.toString()}`;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+function renderInstanceSelector(data) {
+  const selected = data.instance.Recruiter_Instance_ID;
+  viewerState.siblings = data.siblings || [];
+  document.getElementById("entity-id").textContent = data.recruiter?.Recruiter_ID || data.instance.Recruiter_ID;
+  document.getElementById("instance-count").textContent = viewerState.siblings.length;
+  document.getElementById("instance-options").innerHTML = viewerState.siblings.map((row) => {
+    const active = row.Recruiter_Instance_ID === selected;
+    return `<button type="button" role="listitem" aria-current="${active}" data-instance-id="${row.Recruiter_Instance_ID}" class="rounded border border-slate-600 px-2 py-1 font-mono text-xs hover:bg-slate-700">${row.Recruiter_Instance_ID}</button>`;
+  }).join("");
+  document.querySelectorAll("[data-instance-id]").forEach((button) => button.addEventListener("click", () => loadSelectedInstance(button.dataset.instanceId, { push: true })));
+  const i = data.instance;
+  document.getElementById("instance-context").textContent = `${i.Ligase || "—"} · ${i.pdb_id || "—"} · ${i.Ligand || "—"} · asym ${i.Recruiter_Asym_ID || "—"}, residue ${i.Recruiter_Residue_ID || "—"}${i.Variant != null ? ` · variant ${i.Variant}` : ""}`;
+}
+
+async function loadSelectedInstance(instanceId, { push = false } = {}) {
+  if (!instanceId) return;
+  if (viewerState.controller) viewerState.controller.abort();
+  const generation = ++viewerState.generation;
+  viewerState.instanceId = instanceId;
+  viewerState.controller = new AbortController();
   showLigandLoader();
   try {
-    const recruiterCode = decodeURIComponent(RECRUITER);
-    const data = await loadLigandBootstrap(recruiterCode);
+    const data = await loadLigandBootstrap(instanceId, viewerState.controller.signal);
     if (!data) return;
+    if (generation !== viewerState.generation || instanceId !== viewerState.instanceId) return;
 
     const descriptor = data.descriptor || {};
     const metadata = data.metadata || {};
     const sasaSum = data.sasa_summary || {};
     const atoms = Array.isArray(data.sasa_atoms) ? data.sasa_atoms : [];
 
-    const fixedSmiles = await resolveLigandSmiles(data, recruiterCode);
+    const fixedSmiles = await resolveLigandSmiles(data, data.recruiter?.Recruiter_ID || instanceId);
     const ligandSmiles = fixedSmiles || "";
     const ligase = metadata.Ligase || sasaSum.Ligase || atoms[0]?.Ligase || "—";
     const ligand = metadata.Ligand || sasaSum.Ligand || "—";
@@ -683,12 +722,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderLigandSMILES(ligandSmiles);
 
-    document.getElementById("ligand-code").textContent = recruiterCode;
+    document.getElementById("ligand-code").textContent = instanceId;
     document.getElementById("ligase-badge").textContent = ligase.toUpperCase();
     document.getElementById("ligand-badge").textContent = ligand;
 
-    applyLigandBootstrapGlobals(data, recruiterCode);
-    updateReportIssueLink({ recruiterCode, ligase, ligand, pdbId });
+    applyLigandBootstrapGlobals(data, instanceId);
+    renderInstanceSelector(data);
+    updateReportIssueLink({ recruiterCode: instanceId, recruiterId: data.recruiter?.Recruiter_ID, recruiterInstanceId: instanceId, ligase, ligand, pdbId });
 
     console.log("🧬 DOWNLOAD METADATA SET:", window.currentLigase, window.currentPDB);
 
@@ -701,11 +741,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     toggle3DButton("sasa");
 
     setLigandLoaderMessage("Building the 3D structure and surface overlays…");
-    await render3D("sasa");
+    await render3D("sasa", generation);
+    if (generation !== viewerState.generation) return;
 
     setLigandLoaderMessage("Finalizing properties, links, and scaffold details…");
     setExternalLinks(ligandSmiles, pdbId);
-    renderProperties(descriptor, ligandSmiles, recruiterCode);
+    renderProperties(descriptor, ligandSmiles, data.recruiter?.Recruiter_ID || instanceId);
     renderRules(descriptor);
     renderQuality(descriptor);
     renderStructuralMetrics(metadata, descriptor);
@@ -715,16 +756,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data.scaffold && data.scaffold.Scaffold_ID) {
       renderScaffoldLink(data.scaffold);
     } else {
-      loadScaffoldInfo(recruiterCode);
+      loadScaffoldInfo(data.recruiter?.Recruiter_ID || instanceId);
+    }
+    if (push) {
+      window.history.pushState({ instanceId }, "", `/ligand/${encodeURIComponent(instanceId)}`);
+      updateReportIssueLink({ recruiterCode: instanceId, recruiterId: data.recruiter?.Recruiter_ID, recruiterInstanceId: instanceId, ligase, ligand, pdbId });
     }
   } catch (err) {
+    if (err.name === "AbortError") return;
     console.error("🚨 Ligand page initialization failed:", err);
     document.getElementById("svg2d").innerHTML = '<span class="text-red-400">Failed to load</span>';
     document.getElementById("ngl").innerHTML = '';
   } finally {
     hideLigandLoader();
   }
-}); // END DOMContentLoaded
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadSelectedInstance(viewerState.instanceId);
+  document.getElementById("instance-prev").addEventListener("click", () => selectAdjacentInstance(-1));
+  document.getElementById("instance-next").addEventListener("click", () => selectAdjacentInstance(1));
+});
+
+function selectAdjacentInstance(direction) {
+  const index = viewerState.siblings.findIndex((row) => row.Recruiter_Instance_ID === viewerState.instanceId);
+  const next = viewerState.siblings[index + direction];
+  if (next) loadSelectedInstance(next.Recruiter_Instance_ID, { push: true });
+}
+
+window.addEventListener("popstate", () => loadSelectedInstance(decodeURIComponent(window.location.pathname.split("/").pop()), { push: false }));
 
 
   
@@ -743,13 +803,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("btn-2d-sasa").addEventListener("click", async () => {
     toggle2DButton("sasa");
 
-    const code = document.getElementById("ligand-code").textContent.trim();
-    console.log("2D SASA button clicked — requesting:", `/api/render-2d-sasa/${code}`);
+    const code = window.currentRecruiterInstanceId;
+    console.log("2D SASA button clicked — requesting exact instance:", `/api/instances/${code}/render-2d-sasa`);
 
 
     console.log("🟦 Fetching 2D SASA SVG for:", code);
 
-    const svg = await fetch(`/api/render-2d-sasa/${encodeURIComponent(code)}`)
+    const svg = await fetch(`/api/instances/${encodeURIComponent(code)}/render-2d-sasa`)
                         .then(r => r.text())
                         .catch(err => {
                             console.error("❌ Error fetching 2D SASA:", err);
@@ -1301,8 +1361,12 @@ function initSasa3DHover(stage) {
 // these are true ball-and-stick cylinders generated from the corrected SDF and
 // remain coherent while the molecule is rotated.
 
-async function render3D(mode = "sasa") {
+async function render3D(mode = "sasa", generation = viewerState.generation) {
   current3D.mode = mode;
+  const renderGeneration = ++current3D.renderGeneration;
+  const isCurrentRender = () => (
+    generation === viewerState.generation && renderGeneration === current3D.renderGeneration
+  );
 
   if (!stage3D) {
     stage3D = new NGL.Stage("ngl", { backgroundColor: "#000" });
@@ -1345,20 +1409,13 @@ async function render3D(mode = "sasa") {
         : null
     );
 
-  // --- File path fallback: probe only if bootstrap payload lacks a resolved PDB file
-  if (!pdbPath) {
-    pdbPath = await getProteinPdbPath({
-      Ligase: ligase,
-      pdb_id: pdbId,
-      Ligand: ligand,
-      Variant: variant
-    });
-  }
+  if (!pdbPath) throw new Error("The exact V1 PDB asset is unavailable.");
 
   console.log(`[3D] Loading complex: ${pdbPath}`);
 
   try {
     const comp = await stage3D.loadFile(pdbPath, { ext: "pdb" });
+    if (!isCurrentRender()) return;
 
     window.currentLigase = ligase;
     window.currentPDB = pdbPath.split("/").pop();
@@ -1398,6 +1455,7 @@ async function render3D(mode = "sasa") {
     if (ligandSdfPath) {
       try {
         ligandComp = await stage3D.loadFile(ligandSdfPath, { ext: "sdf" });
+        if (!isCurrentRender()) return;
         ligandComp.addRepresentation("ball+stick", {
           colorScheme: "element",
           multipleBond: "symmetric",
@@ -1433,11 +1491,17 @@ async function render3D(mode = "sasa") {
     // =====================================================================
     if (mode === "sasa" && atoms.length) {
       const glowShape = new NGL.Shape("sasaGlow");
+      const renderedAtomKeys = new Set();
 
       let highlightedCount = 0;
       let ignoredCount = 0;
 
       for (const a of atoms) {
+        const atomKey = `${window.currentRecruiterInstanceId}:${a.atom_id}:${a.instance_sdf_atom_index ?? ""}`;
+        if (renderedAtomKeys.has(atomKey)) {
+          continue;
+        }
+        renderedAtomKeys.add(atomKey);
         if (
           a.Exposure_A2 == null ||
           isNaN(a.x) ||
@@ -1489,6 +1553,7 @@ async function render3D(mode = "sasa") {
       }
 
       if (highlightedCount > 0) {
+        if (!isCurrentRender()) return;
         const glowComp = stage3D.addComponentFromObject(glowShape);
 
         glowComp.addRepresentation("buffer", {
@@ -2001,7 +2066,8 @@ function openProtacBuilderSession(sessionId) {
 // OPEN POPUP FROM PAGE
 // =============================================
 async function openProtacPopupFromPage() {
-  const sdfURL = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
+  const sdfURL = window.currentSDFurl;
+  if (!sdfURL) return alert("The exact V1 SDF asset is unavailable.");
   const res = await fetch(sdfURL);
 
   if (!res.ok) return alert("Error loading SDF.");
@@ -2024,8 +2090,8 @@ function downloadPDB() {
 
 function downloadSDF() {
   const a = document.createElement("a");
-  a.href = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
-  a.download = window.currentPDB.replace(".pdb", ".sdf");
+  a.href = window.currentSDFurl;
+  a.download = window.currentSDF || window.currentPDB.replace(".pdb", ".sdf");
   a.click();
 }
 
@@ -2611,7 +2677,9 @@ async function openProtacPopup(sdfText, ligase, pdbFile) {
     window.currentSDFtext = sdfText;
     window.currentLigase  = ligase;
     window.currentPDB     = pdbFile;
-    window.currentPDBurl  = `/Ligases/${ligase}/PDB/${pdbFile}`;
+    // Keep the exact instance URL selected by the page; this popup receives
+    // only its molecular text and must not replace it with a guessed filename.
+    window.currentPDBurl = window.currentPDBurl || null;
 
     const popup = document.getElementById("protac-popup");
     const container = document.getElementById("protac-viewer");

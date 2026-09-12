@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Recruiter {{ recruiter.Recruiter_ID }} — E3 Ligandalyzer{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 md:px-12 py-10 space-y-6">
+  <section class="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-xl">
+    <p class="text-xs uppercase tracking-[0.2em] text-sky-300">Recruiter entity</p>
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-3xl font-bold text-amber-300 font-mono">{{ recruiter.Recruiter_ID }}</h1>
+        <p class="mt-2 text-slate-300">One reconciled chemical recruiter; its observed structures are listed below as separate experimental instances.</p>
+      </div>
+      <a class="text-sky-300 hover:text-sky-200 text-sm" href="/api/recruiters/{{ recruiter.Recruiter_ID }}">JSON record →</a>
+    </div>
+    <div class="mt-5 grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <figure id="recruiter-2d-panel" class="bg-slate-800/70 rounded-lg p-4 flex flex-col min-h-[22rem]">
+        <figcaption>
+          <h2 class="font-semibold text-white">2D recruiter structure</h2>
+          <p class="mt-1 text-xs text-slate-400">Canonical entity-level chemistry</p>
+        </figcaption>
+        <div class="mt-3 flex-1 flex items-center justify-center rounded-md border border-slate-700/80 bg-slate-950/40 p-2">
+          <img id="recruiter-2d-depiction"
+               class="max-h-72 w-full object-contain"
+               src="/api/recruiters/{{ recruiter.Recruiter_ID }}/render-2d"
+               alt="2D chemical structure for recruiter {{ recruiter.Recruiter_ID }}"
+               onerror="this.classList.add('hidden'); document.getElementById('recruiter-2d-fallback').classList.remove('hidden');">
+          <p id="recruiter-2d-fallback" class="hidden text-sm text-slate-400">2D depiction is unavailable for this entity.</p>
+        </div>
+      </figure>
+      <div class="bg-slate-800/70 rounded-lg p-4">
+        <h2 class="font-semibold text-white mb-3">Chemical identity</h2>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt class="text-slate-400">Scaffold</dt><dd><a class="text-sky-300 hover:text-sky-200 font-mono" href="/scaffolds/{{ recruiter.Scaffold_ID }}">{{ recruiter.Scaffold_ID }}</a></dd>
+          <dt class="text-slate-400">Entity type</dt><dd>{{ recruiter.Recruiter_Entity_Type or "—" }}</dd>
+          <dt class="text-slate-400">InChIKey</dt><dd class="font-mono break-all">{{ recruiter.InChIKey or "—" }}</dd>
+          <dt class="text-slate-400">Canonical SMILES</dt><dd class="font-mono break-all">{{ recruiter.Canonical_SMILES or "—" }}</dd>
+          <dt class="text-slate-400">MW / QED</dt><dd>{{ recruiter.MW or "—" }} / {{ recruiter.QED or "—" }}</dd>
+        </dl>
+      </div>
+      <div class="bg-slate-800/70 rounded-lg p-4">
+        <h2 class="font-semibold text-white mb-3">Ligase associations</h2>
+        {% if ligases %}
+          <ul class="space-y-2 text-sm">
+          {% for row in ligases %}
+            <li><span class="text-amber-200 font-medium">{{ row.Ligase }}</span> <span class="text-slate-400">{{ row.Physical_Instance_Count }} physical instance(s), {{ row.PDB_Count }} PDB structure(s)</span></li>
+          {% endfor %}
+          </ul>
+        {% else %}<p class="text-sm text-slate-400">No ligase association is recorded.</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-xl">
+    <div class="flex items-baseline justify-between gap-4 mb-4">
+      <div><h2 class="text-xl font-semibold text-white">Experimental instances</h2><p class="text-sm text-slate-400">Each row is an exact observed physical occurrence, not a separate recruiter entity.</p></div>
+      <span class="rounded-full bg-sky-900/60 text-sky-200 px-3 py-1 text-sm">{{ instances|length }} instance(s)</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-slate-300">
+        <thead class="border-b border-slate-700 text-slate-400"><tr><th class="text-left p-2">Instance</th><th class="text-left p-2">Ligase</th><th class="text-left p-2">PDB / source</th><th class="text-left p-2">Asym / residue</th><th class="text-left p-2">Ligand</th><th class="text-left p-2"></th></tr></thead>
+        <tbody>{% for row in instances %}<tr class="border-b border-slate-800 hover:bg-slate-800/60"><td class="p-2 font-mono text-amber-300">{{ row.Recruiter_Instance_ID }}</td><td class="p-2">{{ row.Ligase }}</td><td class="p-2 font-mono">{{ row.pdb_id }} / {{ row.Source_Entity_ID }}</td><td class="p-2">{{ row.Recruiter_Asym_ID or "—" }} / {{ row.Recruiter_Residue_ID or "—" }}</td><td class="p-2">{{ row.Ligand or row.Name or "—" }}</td><td class="p-2"><a class="text-sky-300 hover:text-sky-200" href="/ligand/{{ row.Recruiter_Instance_ID }}">View structure →</a></td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

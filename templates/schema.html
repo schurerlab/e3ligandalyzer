@@ -222,12 +222,12 @@
         <h2>Core identifiers and cross-table keys</h2>
         <div class="schema-grid">
           <div class="schema-card">
-            <h3>LR recruiter code</h3>
-            <p><span class="mono">RECRUITER_CODE</span> is the main public recruiter identifier. It points to a curated recruiter/structure instance rather than only a chemical name.</p>
+            <h3>Recruiter entity ID</h3>
+            <p><span class="mono">Recruiter_ID</span> (for example, <span class="mono">LR00172</span>) identifies one reconciled chemical recruiter and is used for entity-overview URLs.</p>
           </div>
           <div class="schema-card">
-            <h3>Instance key</h3>
-            <p><span class="mono">Instance_Key</span> preserves a composite structural identity across ligase, PDB, ligand code, and variant context, making duplicate handling and traceability explicit.</p>
+            <h3>Observed-instance ID</h3>
+            <p><span class="mono">Recruiter_Instance_ID</span> (for example, <span class="mono">LR00172-01</span>) is the exact structure-specific key used by the interactive viewer, SASA, and PDB/SDF assets.</p>
           </div>
           <div class="schema-card">
             <h3>PDB-linked identity</h3>
@@ -243,7 +243,7 @@
       <section class="schema-panel" id="recruiters">
         <h2>Recruiter records</h2>
         <p>
-          Recruiter records are primarily assembled from <span class="mono">Ligand_Instance_Recruiter_Codes</span>, <span class="mono">Ligase_Ligand_Metadata</span>, <span class="mono">Ligase_Chemical_Descriptors</span>, <span class="mono">Recruiter_Code_Crosswalk</span>, and related mapping tables. The same public ligand page combines several of these objects into one record view.
+          V1 separates chemical entities in <span class="mono">Recruiter_Catalog</span> from experimental occurrences in <span class="mono">Recruiter_Instance_Catalog</span>. The entity page lists all observations; the structure viewer requires one exact instance.
         </p>
         <div class="mobile-table-wrap">
         <table class="schema-table">
@@ -251,7 +251,8 @@
             <tr><th>Field</th><th>Meaning</th></tr>
           </thead>
           <tbody>
-            <tr><td><span class="mono">RECRUITER_CODE</span></td><td>Canonical LR identifier used in URLs, downloads, descriptors, SASA summaries, and scaffold mappings.</td></tr>
+            <tr><td><span class="mono">Recruiter_ID</span></td><td>Canonical V1 chemical entity identifier, used for overview, descriptors, and scaffold relationships.</td></tr>
+            <tr><td><span class="mono">Recruiter_Instance_ID</span></td><td>Canonical exact structure identifier, used for visualization, SASA, and exact PDB/SDF downloads.</td></tr>
             <tr><td><span class="mono">Ligand</span></td><td>Original ligand/component identifier from the structure, typically a short PDB-style ligand code.</td></tr>
             <tr><td><span class="mono">Ligase</span></td><td>Curated E3 ligase context for the recruiter instance.</td></tr>
             <tr><td><span class="mono">pdb_id</span> / <span class="mono">PDB_File</span></td><td>Structure identifier and resolved structure asset used for traceability and downloads.</td></tr>
@@ -298,7 +299,7 @@
           <tbody>
             <tr><td><span class="mono">Scaffold_ID</span></td><td>Public scaffold identifier used by scaffold routes and summary tables.</td></tr>
             <tr><td><span class="mono">Scaffold_SMILES</span> / <span class="mono">Murcko_SMILES</span></td><td>Scaffold-level structure representations used for display and grouping.</td></tr>
-            <tr><td><span class="mono">RECRUITER_CODE</span> group</td><td>Recruiter records associated with the scaffold.</td></tr>
+            <tr><td><span class="mono">Recruiter_ID</span> group</td><td>Recruiter entities associated with the scaffold; instance counts are reported separately.</td></tr>
             <tr><td><span class="mono">Ligase</span> group</td><td>Ligases carrying that scaffold or unified scaffold family.</td></tr>
             <tr><td><span class="mono">Recruiter_Count</span></td><td>How frequently a scaffold appears in recruiter records.</td></tr>
             <tr><td><span class="mono">Scaffold_Class</span></td><td>Higher-level chemical scaffold family label when assigned by the scaffold workflow.</td></tr>

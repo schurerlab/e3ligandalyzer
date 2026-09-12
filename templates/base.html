@@ -753,7 +753,9 @@ function recolorSVGModal(svgEl) {
         if (isMobile) {
             previewLigand(r.SMILES);
         } else {
-            window.location.href = `/ligand/${r.RECRUITER_CODE}`;
+            // Featured results are V1 recruiter entities; selecting one opens
+            // its overview rather than silently choosing an observation.
+            window.location.href = `/recruiter/${r.RECRUITER_CODE}`;
         }
     });
 
@@ -903,7 +905,7 @@ if (e.key === "ArrowUp") {
 
 if (e.key === "Enter" && activeResultIndex >= 0) {
   e.preventDefault();
-  window.location.href = `/ligand/${rows[activeResultIndex].dataset.code}`;
+  window.location.href = `/recruiter/${rows[activeResultIndex].dataset.code}`;
 }
 });
 

@@ -4,10 +4,11 @@
 import os
 import logging
 from datetime import datetime
-from urllib.parse import urlencode
-from flask import Flask, render_template, send_from_directory, request, redirect, jsonify
+from urllib.parse import quote, urlencode
+from flask import Flask, render_template, send_from_directory, request, redirect, jsonify, abort
 from Ligases.routes import ligases_bp, query_db, build_download_manifest
 from Ligases import randy_client
+from e3_database import E3DatabaseError, configured_asset_root, get_database
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Request
 
@@ -63,75 +64,37 @@ def _safe_scalar(query, fallback=None):
 
 
 def build_release_stats():
-    return {
-        "ligases": _safe_scalar(
-            "SELECT COUNT(DISTINCT Ligase) AS value FROM Ligase_Scaffold_Data",
-            "Not separately tracked in V1",
-        ),
-        "recruiter_records": _safe_scalar(
-            "SELECT COUNT(DISTINCT RECRUITER_CODE) AS value FROM Ligand_Instance_Recruiter_Codes",
-            "Not separately tracked in V1",
-        ),
-        "unique_ligands": _safe_scalar(
-            """
-            SELECT COUNT(
-                DISTINCT COALESCE(
-                    NULLIF(TRIM(InChIKey), ''),
-                    NULLIF(TRIM(Canonical_SMILES), ''),
-                    NULLIF(TRIM(Ligand), '')
-                )
-            ) AS value
-            FROM Ligase_Ligand_Metadata
-            """,
-            "Not separately tracked in V1",
-        ),
-        "pdb_structures": _safe_scalar(
-            "SELECT COUNT(DISTINCT pdb_id) AS value FROM Ligand_Instance_Recruiter_Codes",
-            "Not separately tracked in V1",
-        ),
-        "scaffolds": _safe_scalar(
-            "SELECT COUNT(DISTINCT Scaffold_ID) AS value FROM Ligase_Scaffold_Data",
-            "Not separately tracked in V1",
-        ),
-        "complete_sasa": _safe_scalar(
-            """
-            SELECT COUNT(*) AS value
-            FROM Ligase_Ligand_SASA_summary
-            WHERE RECRUITER_CODE IS NOT NULL
-              AND TRIM(RECRUITER_CODE) != ''
-              AND [%Exposed] IS NOT NULL
-              AND [%Buried] IS NOT NULL
-            """,
-            "Not separately tracked in V1",
-        ),
-    }
+    try:
+        counts = get_database().release_counts()
+        return {
+            "ligases": counts["ligases"],
+            "recruiter_records": counts["recruiter_entities"],
+            "physical_instances": counts["recruiter_instances"],
+            "pdb_structures": counts["distinct_pdbs"],
+            "scaffolds": counts["scaffolds"],
+            "complete_sasa": counts["recruiter_instances"],
+        }
+    except E3DatabaseError:
+        logger.exception("V1 release statistics are unavailable")
+        return {}
 
 
 def build_release_context():
-    db_path = os.environ.get(
-        "E3_LOCAL_DB_PATH",
-        os.path.join(os.path.dirname(__file__), "Ligases", "Ligase_Recruiter.db"),
-    )
-
-    snapshot_date = None
-    try:
-        snapshot_date = datetime.fromtimestamp(os.path.getmtime(db_path)).strftime("%B %d, %Y").replace(" 0", " ")
-    except OSError:
-        snapshot_date = None
-
+    database = get_database()
+    metadata = database.release_metadata()
     stats = build_release_stats()
 
     return {
-        "version_label": "Version 1.0",
-        "short_label": "V1",
-        "release_state": "Public V1 database release",
-        "release_date": "Initial public V1 release",
+        "version_label": f"Version {metadata.get('Release_Version', 'unknown')}",
+        "short_label": metadata.get("Schema_Version", "V1"),
+        "release_state": "Immutable SQLite scientific release",
+        "release_date": metadata.get("Release_Date", "Unknown"),
+        "database_cutoff": metadata.get("Database_Cutoff_Date", "Unknown"),
         "update_cadence": "Annual review and update cycle",
         "update_policy": "New ligases, recruiter structures, scaffold annotations, and SASA-linked assets may be incorporated in future yearly releases after curation and validation.",
-        "snapshot_date": snapshot_date,
         "stats": stats,
-        "download_table_count": 5,
-        "stats_source_note": "Version 1 statistics are calculated from the currently deployed Ligandalyzer database snapshot and the active download manifest.",
+        "download_table_count": int(metadata.get("Manifest_Source_Table_Count", 0) or 0),
+        "stats_source_note": "Statistics and provenance are read from the immutable E3 Ligandalyzer V1 SQLite release.",
     }
 
 
@@ -212,26 +175,57 @@ def create_app():
 
     @app.route("/ligand/<code>")
     def ligand_page(code):
-
-        # 1️⃣ Hard redirect map (canonical)
         if code in LIGAND_REDIRECTS:
             target = LIGAND_REDIRECTS[code]
             return redirect(f"/ligand/{target}", code=302)
 
-        # 2️⃣ Normal render
-        return render_template("ligand.html", recruiter_code=code)
+        database = get_database()
+        resolved = database.entity_for_identifier(code)
+        if resolved and resolved["kind"] == "entity":
+            return redirect(f"/recruiter/{resolved['entity']['Recruiter_ID']}", code=302)
+        if resolved and resolved["kind"] == "instance":
+            return render_template(
+                "ligand.html",
+                initial_instance_id=resolved["instance"]["Recruiter_Instance_ID"],
+            )
+
+        legacy_entities = database.legacy_identifier_entities(code)
+        if len(legacy_entities) == 1:
+            return redirect(f"/recruiter/{legacy_entities[0]}", code=302)
+        if len(legacy_entities) > 1:
+            return redirect(f"/api/search/recruiters?q={code}", code=302)
+        return render_template("missing_data.html"), 404
+
+    @app.route("/recruiter/<recruiter_id>")
+    def recruiter_page(recruiter_id):
+        database = get_database()
+        entity = database.recruiter_entity(recruiter_id)
+        if not entity:
+            return render_template("missing_data.html"), 404
+        return render_template(
+            "recruiter.html",
+            recruiter=entity,
+            instances=database.recruiter_instances(recruiter_id),
+            ligases=database.entity_ligases(recruiter_id),
+        )
+
+    @app.route("/instance/<instance_id>")
+    def instance_page(instance_id):
+        database = get_database()
+        instance = database.recruiter_instance(instance_id)
+        if not instance:
+            return render_template("missing_data.html"), 404
+        return redirect(f"/ligand/{instance['Recruiter_Instance_ID']}", code=302)
 
 
     @app.route("/Ligases/<path:filename>")
     def serve_ligase_file(filename):
-        if randy_client.remote_enabled():
-            parts = filename.split("/", 2)
-            if len(parts) >= 3 and parts[1].upper() == "PDB":
-                return randy_client.proxy_file(
-                    f"file/pdb/{randy_client.quote_part(parts[0])}/{randy_client.quote_path(parts[2])}",
-                    mimetype="chemical/x-pdb",
-                )
-        base_dir = os.path.join(app.root_path, "Ligases")
+        # Compatibility URL only: its root is the selected release asset tree.
+        # It must never quietly fall through to the historical Ligases directory.
+        asset_root = configured_asset_root()
+        if not asset_root or not asset_root.is_dir():
+            abort(404)
+        base_dir = asset_root / "Ligases"
         return send_from_directory(base_dir, filename)
 
     @app.route("/missing")
@@ -240,12 +234,12 @@ def create_app():
 
     @app.route("/about")
     def about():
+        counts = get_database().release_counts()
         stats = {
-            "total_ligases": query_db("SELECT COUNT(DISTINCT Ligase) AS n FROM Ligase_Scaffold_Data;")[0]["n"],
-            "total_scaffolds": query_db("SELECT COUNT(DISTINCT Scaffold_ID) AS n FROM Ligase_Scaffold_Data;")[0]["n"],
-            "avg_density": round(query_db("SELECT AVG(Recruiter_Density_Score) AS n FROM Ligase_Scaffold_Data;")[0]["n"], 2),
-            "total_complexes": query_db("SELECT COUNT(*) AS n FROM Ligase_Ligand_SASA_summary;")[0]["n"],
-            "top_ligase": query_db("SELECT Ligase FROM Ligase_Ligand_SASA_summary GROUP BY Ligase ORDER BY COUNT(*) DESC LIMIT 1;")[0]["Ligase"]
+            "total_ligases": counts["ligases"],
+            "total_scaffolds": counts["scaffolds"],
+            "total_complexes": counts["recruiter_instances"],
+            "top_ligase": get_database().ligases()[0] if get_database().ligases() else "N/A",
         }
         return render_template("about.html", stats=stats)
 
@@ -304,26 +298,18 @@ def create_app():
 
     @app.route("/scaffolds/<scaffold_id>")
     def scaffold_detail(scaffold_id):
-        row = query_db("""
-            SELECT DISTINCT Scaffold_ID, Scaffold_SMILES
-            FROM Ligase_Recruiters_Scaffold
-            WHERE Scaffold_ID = ?
-        """, [scaffold_id], one=True)
+        database = get_database()
+        row = database.scaffold(scaffold_id)
 
         if not row:
             return render_template("missing_data.html")
 
-        recruiters = query_db("""
-            SELECT RECRUITER_CODE, Ligase
-            FROM Ligase_Recruiters_Scaffold
-            WHERE Scaffold_ID = ?
-            ORDER BY Ligase
-        """, [scaffold_id])
+        recruiters = database.scaffold_recruiters(scaffold_id)
 
         return render_template(
             "scaffold_detail.html",
-            scaffold=dict(row),
-            recruiters=[dict(r) for r in recruiters]
+            scaffold=row,
+            recruiters=recruiters
         )
     
 

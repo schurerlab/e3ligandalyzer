@@ -78,6 +78,15 @@ yarn-error.log*
 ._*
 
 # Huge local data files - never push
+releases/
+Rebuild_Staging/
+Corpus_Audit/
+data/
+validation/
+*_validation/
+*.cif
+*.tar
+*.tar.gz
 Ligases/eliah.db
 Ligases/gene_expression_with_tissue.csv
 Ligases/*.db
