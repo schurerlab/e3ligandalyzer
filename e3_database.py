@@ -303,16 +303,27 @@ class E3Database:
     def instance_atom_mapping(self, instance_id: str) -> List[Dict[str, Any]]:
         return self._all(
             """
-            SELECT *, atom_id AS SASA_atom_id,
-                   NULL AS instance_sdf_atom_index,
-                   NULL AS chemistry_atom_index,
-                   NULL AS coordinate_distance_A
+            SELECT *
             FROM Ligase_Ligands_Smiles_3DMapped
             WHERE Recruiter_Instance_ID = ?
             ORDER BY atom_id
             """,
             (instance_id,),
         )
+
+    def instance_2d_asset(self, instance_id: str) -> Optional[Dict[str, Any]]:
+        """Return the release-owned R2 depiction record when present.
+
+        Older immutable releases intentionally have no such table; preserving
+        that fallback keeps their API contract unchanged.
+        """
+        try:
+            return self._one(
+                "SELECT * FROM R2_2D_Chemistry_Assets WHERE Recruiter_Instance_ID = ?",
+                (instance_id,),
+            )
+        except sqlite3.OperationalError:
+            return None
 
     def entity_for_identifier(self, identifier: str) -> Optional[Dict[str, Any]]:
         """Resolve a canonical entity or exact instance identifier without guessing."""
@@ -444,6 +455,8 @@ class RemoteE3Database(E3Database):
 
         info = randy_client.release_info()
         return {
+            "Release_ID": str(info.get("release_id") or "unknown"),
+            "Release_Revision": "2" if str(info.get("release_id") or "").lower().endswith("-r2") else "1",
             "Release_Version": str(info.get("release_version") or "unknown"),
             "Release_Status": str(info.get("release_status") or "unknown"),
             "Release_Date": str(info.get("lockdown_date") or "Unknown"),

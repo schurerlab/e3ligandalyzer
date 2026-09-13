@@ -92,6 +92,48 @@ def query_db(query, args=(), one=False):
     return get_database().execute_read(query, args, one=one)
 
 
+def _active_release_is_r2():
+    """Return whether the selected immutable release is revision R2.
+
+    R1 and R2 share the normalized instance catalog, but only R2 carries the
+    historical-inactive allocations that must be hidden from normal Explorer
+    and download results.  This uses release provenance rather than guessing
+    from a database column or from an instance identifier.
+    """
+    metadata = get_database().release_metadata()
+    revision = str(metadata.get("Release_Revision") or "").strip()
+    release_id = str(metadata.get("Release_ID") or "").strip().lower()
+    return revision == "2" or release_id.endswith("-r2")
+
+
+def _instance_catalog_rows(where_sql, params=(), *, limit=None):
+    """Return legacy-shaped physical-instance rows from the normalized catalog.
+
+    ``Ligand`` and ``Variant`` remain response aliases for established Explorer
+    and download clients.  They are intentionally derived from the normalized
+    source-entity and SASA-observation records, never read as columns from
+    ``Recruiter_Instance_Catalog``.
+    """
+    active_filter = " AND i.Registry_Status = 'ACTIVE'" if _active_release_is_r2() else ""
+    sql = f"""
+        SELECT DISTINCT i.Recruiter_ID, i.Recruiter_Instance_ID, i.Ligase,
+               i.pdb_id, i.Source_Entity_ID,
+               i.Source_Entity_ID AS Ligand,
+               s.Variant AS Variant,
+               i.Recruiter_Asym_ID, i.Recruiter_Residue_ID
+        FROM Recruiter_Instance_Catalog AS i
+        LEFT JOIN Ligase_Ligand_SASA_summary AS s
+          USING (Recruiter_Instance_ID)
+        WHERE {where_sql}{active_filter}
+        ORDER BY i.Recruiter_ID, i.Recruiter_Instance_ID
+    """
+    values = list(params)
+    if limit is not None:
+        sql += " LIMIT ?"
+        values.append(int(limit))
+    return query_db(sql, values)
+
+
 def _exact_instance_or_selection(identifier):
     """Resolve an exact V1 structure instance without silently selecting one."""
     database = get_database()
@@ -140,6 +182,21 @@ def _exact_instance_asset(instance, asset_kind):
     if not asset_root:
         return None
     instance_id = str(instance.get("Recruiter_Instance_ID") or "")
+    # R2 owns a complete per-instance 2D bundle.  Prefer it when the active
+    # immutable database supplies the matching additive asset row; this avoids
+    # combining corrected R2 data with a legacy web-asset release.
+    r2_asset = get_database().instance_2d_asset(instance_id)
+    if r2_asset and r2_asset.get("Asset_Status") == "READY":
+        if asset_kind == "sdf":
+            candidate = asset_root / "chemistry" / instance_id / "structure_2d.sdf"
+            return candidate if candidate.is_file() else None
+        if asset_kind == "pdb":
+            # Resolve the immutable release copy, never its historical build
+            # source.  The source file can be byte-identical, but using it
+            # would allow the local visual route to escape the selected R2
+            # release and disagree with Randy's coordinate endpoint.
+            candidate = asset_root / "coordinates" / instance_id / "structure.pdb"
+            return candidate if candidate.is_file() else None
     row = _asset_manifest_for_active_release().get(instance_id)
     if not row or row.get("Source_Instance_Key") != str(instance.get("Source_Instance_Key") or ""):
         return None
@@ -285,19 +342,35 @@ def _instance_visual_payload(instance_id):
     sdf_available = _remote_instance_asset_available(instance_id, "sdf") if remote else bool(sdf_path)
     pdb_filename = f"{instance_id}.pdb" if remote else (pdb_path.name if pdb_path else Path(str(instance.get("Step4_PDB") or "")).name)
     sdf_filename = Path(str(instance.get("Source_SDF") or "")).name
-    assets = {
-        "pdb": {
-            "url": f"/api/instances/{instance_id}/pdb" if pdb_available else None,
-            "filename": pdb_filename or None,
-            "available": pdb_available,
-        },
-        "sdf": {
-            "url": f"/api/instances/{instance_id}/sdf" if sdf_available else None,
-            "filename": sdf_filename or None,
-            "available": sdf_available,
-        },
+    # Keep coordinate and chemistry assets explicitly separate.  They are
+    # intentionally both exposed for an instance: the coordinate PDB is the
+    # observed bound pose, while the SDF is the curated 2D chemistry artifact.
+    # Frontend consumers must never use chemistry_2d as a 3D structure source.
+    coordinate_pdb = {
+        "url": f"/api/instances/{instance_id}/pdb" if pdb_available else None,
+        "filename": pdb_filename or None,
+        "available": pdb_available,
+        "role": "observed_3d_coordinates",
     }
-    viewer_smiles = _viewer_smiles(entity, sdf_path)
+    chemistry_2d = {
+        "url": f"/api/instances/{instance_id}/sdf" if sdf_available else None,
+        "filename": sdf_filename or None,
+        "available": sdf_available,
+        "role": "curated_2d_chemistry",
+    }
+    assets = {
+        "coordinate_pdb": coordinate_pdb,
+        "chemistry_2d": chemistry_2d,
+        # Backward-compatible aliases.  New code should use the role-specific
+        # names above rather than infer intent from an extension.
+        "pdb": coordinate_pdb,
+        "sdf": chemistry_2d,
+        "pdb_download": coordinate_pdb,
+        "sdf_download": chemistry_2d,
+    }
+    # R2 canonical chemistry is release-owned, so its payload need not parse a
+    # deposited graph merely to populate this legacy 2D-SMILES field.
+    viewer_smiles = str((entity or {}).get("Canonical_SMILES") or "") if database.instance_2d_asset(instance_id) else _viewer_smiles(entity, sdf_path)
     metadata = dict(instance)
     metadata.update({
         "SMILES": viewer_smiles,
@@ -306,6 +379,20 @@ def _instance_visual_payload(instance_id):
     sasa_atoms = database.instance_sasa_atoms(instance_id)
     mapped_atoms = database.instance_atom_mapping(instance_id)
     sasa_overlay_atoms, overlay_diagnostics = _instance_sasa_overlay(instance_id)
+    # These fields describe the selected ligand in the exported exact PDB.
+    # They remain part of the legacy payload contract; the current 3D renderer
+    # uses the authoritative SASA PDB serials for an exact atom selection.
+    pdb_ligand_selection = {}
+    if sasa_atoms:
+        observed = sasa_atoms[0]
+        residue = str(observed.get("Residue_ID") or "").strip()
+        if ":" in residue:
+            _, residue = residue.rsplit(":", 1)
+        pdb_ligand_selection = {
+            "resname": str(observed.get("Ligand") or "").strip(),
+            "chain": str(observed.get("Chain") or "").strip(),
+            "residue_number": residue,
+        }
     return {
         "ok": True,
         "recruiter": entity,
@@ -318,6 +405,7 @@ def _instance_visual_payload(instance_id):
         "mapped_atoms": mapped_atoms,
         "sasa_overlay_atoms": sasa_overlay_atoms,
         "sasa_overlay_diagnostics": overlay_diagnostics,
+        "pdb_ligand_selection": pdb_ligand_selection,
         "scaffold": database.scaffold((entity or {}).get("Scaffold_ID", "")),
         "assets": assets,
         # Compatibility fields used by the established ligand.html renderer.
@@ -333,17 +421,33 @@ def _render_instance_sasa_svg(instance_id):
     database = get_database()
     instance = database.recruiter_instance(instance_id)
     entity = database.recruiter_entity(instance["Recruiter_ID"]) if instance else None
-    if not instance or not entity or not entity.get("Canonical_SMILES"):
+    if not instance or not entity:
         return "<svg><!-- instance chemistry unavailable --></svg>", 404, {"Content-Type": "image/svg+xml"}
 
     from rdkit import Chem
     from rdkit.Chem import rdDepictor
     from rdkit.Chem.Draw import rdMolDraw2D
 
-    mol = Chem.MolFromSmiles(entity["Canonical_SMILES"])
+    r2_asset = database.instance_2d_asset(instance_id)
+    if r2_asset and r2_asset.get("Asset_Status") == "READY":
+        asset_root = configured_asset_root()
+        svg = asset_root / "chemistry" / instance_id / "structure_2d.svg" if asset_root else Path()
+        if svg.is_file():
+            # The complete R2 depiction is already materialized against its
+            # observed-instance atom map. Serving it prevents runtime RDKit
+            # sanitization from substituting or rejecting deposited chemistry.
+            return svg.read_text(encoding="utf-8"), 200, {"Content-Type": "image/svg+xml"}
+    sdf = _exact_instance_asset(instance, "sdf") if r2_asset else None
+    mol = Chem.MolFromMolFile(str(sdf), sanitize=True, removeHs=False) if sdf else Chem.MolFromSmiles(entity.get("Canonical_SMILES") or "")
+    # The R2 asset materializer can preserve an observed deposited graph that
+    # RDKit cannot fully sanitize (for example A1IEV).  It remains drawable;
+    # do not silently substitute canonical chemistry for that depiction.
+    if mol is None and sdf:
+        mol = Chem.MolFromMolFile(str(sdf), sanitize=False, removeHs=False)
     if mol is None:
-        return "<svg><!-- invalid canonical smiles --></svg>", 422, {"Content-Type": "image/svg+xml"}
-    rdDepictor.Compute2DCoords(mol)
+        return "<svg><!-- invalid release chemistry --></svg>", 422, {"Content-Type": "image/svg+xml"}
+    if not sdf:
+        rdDepictor.Compute2DCoords(mol)
     atoms_by_id = {str(row.get("atom_id")): row for row in database.instance_sasa_atoms(instance_id)}
     highlights, colors, radii = [], {}, {}
     for mapping in database.instance_atom_mapping(instance_id):
@@ -1851,17 +1955,12 @@ def get_recruiter_by_pdb():
     pdb_id = request.args.get("pdb_id")
     ligand = request.args.get("ligand")
     variant = str(request.args.get("variant", "") or "").strip()
-    query = """
-        SELECT DISTINCT Recruiter_ID, Recruiter_Instance_ID, Ligase, pdb_id,
-               Source_Entity_ID, Ligand, Variant
-        FROM Recruiter_Instance_Catalog
-        WHERE pdb_id = ? COLLATE NOCASE AND Ligand = ? COLLATE NOCASE
-    """
+    where = "i.pdb_id = ? COLLATE NOCASE AND i.Source_Entity_ID = ? COLLATE NOCASE"
     params = [pdb_id, ligand]
     if variant.isdigit():
-        query += " AND Variant = ?"
+        where += " AND s.Variant = ?"
         params.append(int(variant))
-    rows = query_db(query + " ORDER BY Recruiter_Instance_ID", params)
+    rows = _instance_catalog_rows(where, params)
     if not rows:
         return jsonify({"error": "No recruiter instance found"}), 404
     if len(rows) == 1:
@@ -3676,15 +3775,7 @@ def _mapping_rows_for_recruiter_codes(codes):
     cleaned = _parse_recruiter_codes(codes)
 
     placeholders = ",".join(["?"] * len(cleaned))
-    rows = query_db(f"""
-        SELECT DISTINCT Recruiter_ID, Recruiter_Instance_ID, Ligase,
-               pdb_id, Ligand, Variant
-        FROM Recruiter_Instance_Catalog
-        WHERE Recruiter_ID IN ({placeholders})
-        ORDER BY Recruiter_ID, Recruiter_Instance_ID;
-    """, cleaned)
-
-    return rows
+    return _instance_catalog_rows(f"i.Recruiter_ID IN ({placeholders})", cleaned)
 
 
 def _remote_bundle_payload(rows):
@@ -3822,19 +3913,12 @@ def download_recruiter_code_index():
         limit = 50
     limit = max(1, min(limit, 1000))
 
-    query = """
-        SELECT Recruiter_ID, Recruiter_Instance_ID, Ligase, pdb_id, Ligand, Variant
-        FROM Recruiter_Instance_Catalog
-        WHERE Recruiter_ID IS NOT NULL AND TRIM(Recruiter_ID) != ''
-    """
+    where = "i.Recruiter_ID IS NOT NULL AND TRIM(i.Recruiter_ID) != ''"
     params = []
     if ligase:
-        query += " AND Ligase = ?"
+        where += " AND i.Ligase = ?"
         params.append(ligase)
-    query += " ORDER BY Recruiter_ID, Recruiter_Instance_ID LIMIT ?;"
-    params.append(limit)
-
-    rows = query_db(query, params)
+    rows = _instance_catalog_rows(where, params, limit=limit)
     results = []
     for row in rows:
         pdb_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
