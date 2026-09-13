@@ -3608,8 +3608,27 @@ def _asset_name_for_mapping(ligase, pdb_id, ligand, variant, ext):
     return asset.name if asset else None
 
 
+def _manifest_asset_name_for_mapping(ligase, pdb_id, ligand, variant, ext):
+    """Return the release-defined asset filename without probing Randy.
+
+    The public instance catalog is the release authority for physical
+    structures. In hosted mode, probing the remote asset service for every
+    possible filename turns a small JSON discovery request into thousands of
+    network round trips, which can exceed the web request deadline. Active V1
+    instance assets use the first (variant-specific) canonical candidate; the
+    individual download proxy remains the authority for streaming that file.
+    """
+    if randy_client.remote_enabled():
+        return _asset_filename_candidates(pdb_id, ligand, variant, ext)[0]
+    return _asset_name_for_mapping(ligase, pdb_id, ligand, variant, ext)
+
+
 def _asset_counts_for_ligase(ligase: str):
-    """Count downloadable PDB/SDF assets for one ligase in local or remote mode."""
+    """Count release-defined PDB/SDF assets for one ligase.
+
+    Remote counts come from the immutable instance catalog, never per-file
+    Randy probes. This keeps public discovery requests bounded.
+    """
     if not randy_client.remote_enabled():
         ligase_dir = _resolve_ligase_dir(ligase)
         pdb_files = _files_from_asset_dirs(_asset_dirs_for_ligase(ligase_dir, "pdbs"))
@@ -3620,24 +3639,18 @@ def _asset_counts_for_ligase(ligase: str):
             "sdf_count": len(sdf_files),
         }
 
-    rows = query_db(
-        """
-        SELECT DISTINCT PDB_ID AS pdb_id, Ligand, Variant
-        FROM Ligase_Ligands_Smiles_3DMapped
-        WHERE Ligase = ?
-        ORDER BY PDB_ID, Ligand, Variant
-        """,
-        [ligase],
-    )
+    rows = _instance_catalog_rows("i.Ligase = ?", [ligase])
     pdb_names = set()
     sdf_names = set()
     for row in rows:
-        pdb_name = _asset_name_for_mapping(ligase, _row_value(row, "pdb_id"), _row_value(row, "Ligand"), _row_value(row, "Variant"), ".pdb")
-        sdf_name = _asset_name_for_mapping(ligase, _row_value(row, "pdb_id"), _row_value(row, "Ligand"), _row_value(row, "Variant"), ".sdf")
-        if pdb_name:
-            pdb_names.add(pdb_name)
-        if sdf_name:
-            sdf_names.add(sdf_name)
+        pdb_names.add(_manifest_asset_name_for_mapping(
+            ligase, _row_value(row, "pdb_id"), _row_value(row, "Ligand"),
+            _row_value(row, "Variant"), ".pdb",
+        ))
+        sdf_names.add(_manifest_asset_name_for_mapping(
+            ligase, _row_value(row, "pdb_id"), _row_value(row, "Ligand"),
+            _row_value(row, "Variant"), ".sdf",
+        ))
     return {
         "ligase": ligase,
         "pdb_count": len(pdb_names),
@@ -3645,14 +3658,43 @@ def _asset_counts_for_ligase(ligase: str):
     }
 
 
+def _asset_counts_for_ligases(ligase_filter=None):
+    """Return all requested remote ligase counts from one catalog query."""
+    if not randy_client.remote_enabled():
+        return [_asset_counts_for_ligase(name) for name in _download_manifest_ligase_names(ligase_filter)]
+
+    where = "i.Ligase IS NOT NULL AND TRIM(i.Ligase) != ''"
+    params = []
+    if ligase_filter:
+        where += " AND LOWER(i.Ligase) = LOWER(?)"
+        params.append(ligase_filter)
+
+    grouped = {}
+    for row in _instance_catalog_rows(where, params):
+        ligase = row["Ligase"]
+        counts = grouped.setdefault(ligase, {"pdb": set(), "sdf": set()})
+        counts["pdb"].add(_manifest_asset_name_for_mapping(
+            ligase, row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb",
+        ))
+        counts["sdf"].add(_manifest_asset_name_for_mapping(
+            ligase, row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf",
+        ))
+
+    return [
+        {"ligase": ligase, "pdb_count": len(counts["pdb"]), "sdf_count": len(counts["sdf"])}
+        for ligase, counts in sorted(grouped.items())
+    ]
+
+
 def _download_manifest_ligase_names(ligase_filter=None):
+    active_filter = " AND Registry_Status = 'ACTIVE'" if _active_release_is_r2() else ""
     if ligase_filter:
         if randy_client.remote_enabled():
             rows = query_db(
-                """
+                f"""
                 SELECT DISTINCT Ligase
-                FROM Ligase_Ligands_Smiles_3DMapped
-                WHERE LOWER(Ligase) = LOWER(?)
+                FROM Recruiter_Instance_Catalog
+                WHERE LOWER(Ligase) = LOWER(?) {active_filter}
                 LIMIT 1
                 """,
                 [ligase_filter],
@@ -3665,10 +3707,10 @@ def _download_manifest_ligase_names(ligase_filter=None):
         return [p.name for p in _list_download_ligase_dirs()]
 
     rows = query_db(
-        """
+        f"""
         SELECT DISTINCT Ligase
-        FROM Ligase_Ligands_Smiles_3DMapped
-        WHERE Ligase IS NOT NULL AND TRIM(Ligase) != ''
+        FROM Recruiter_Instance_Catalog
+        WHERE Ligase IS NOT NULL AND TRIM(Ligase) != '' {active_filter}
         ORDER BY Ligase
         """
     )
@@ -3810,8 +3852,8 @@ def build_download_manifest(ligase_filter=None, recruiter_code=None):
         rows = _mapping_rows_for_recruiter_codes([recruiter_code])
         entries = []
         for row in rows:
-            pdb_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
-            sdf_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
+            pdb_file = _manifest_asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
+            sdf_file = _manifest_asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
             entries.append({
                 **row,
                 "pdb_file": pdb_file,
@@ -3828,11 +3870,9 @@ def build_download_manifest(ligase_filter=None, recruiter_code=None):
             "entries": entries,
         }
 
-    ligase_names = _download_manifest_ligase_names(ligase_filter)
     ligases = []
 
-    for ligase_name in ligase_names:
-        counts = _asset_counts_for_ligase(ligase_name)
+    for counts in _asset_counts_for_ligases(ligase_filter):
         ligases.append({
             "ligase": counts["ligase"],
             "pdb_count": counts["pdb_count"],
@@ -3883,8 +3923,7 @@ def download_manifest():
 def download_ligase_index():
     """Compact JSON index of ligases and downloadable file counts."""
     rows = []
-    for ligase_name in _download_manifest_ligase_names():
-        counts = _asset_counts_for_ligase(ligase_name)
+    for counts in _asset_counts_for_ligases():
         rows.append({
             "ligase": counts["ligase"],
             "pdb_count": counts["pdb_count"],
@@ -3921,8 +3960,8 @@ def download_recruiter_code_index():
     rows = _instance_catalog_rows(where, params, limit=limit)
     results = []
     for row in rows:
-        pdb_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
-        sdf_file = _asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
+        pdb_file = _manifest_asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".pdb")
+        sdf_file = _manifest_asset_name_for_mapping(row["Ligase"], row["pdb_id"], row["Ligand"], row.get("Variant"), ".sdf")
         results.append({
             "recruiter_id": row["Recruiter_ID"],
             "recruiter_instance_id": row["Recruiter_Instance_ID"],
