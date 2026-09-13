@@ -677,20 +677,24 @@
   <div class="e3-metric-dock e3-reveal">
     <div class="e3-metric-grid">
       <div class="e3-metric-card e3-tilt">
-        <div class="e3-metric-value" id="structCount">0</div>
-        <p class="e3-metric-label">Recruiter-Bound Structures</p>
+        <div class="e3-metric-value" id="ligaseCount">—</div>
+        <p class="e3-metric-label">E3 Ligases</p>
       </div>
       <div class="e3-metric-card e3-tilt">
-        <div class="e3-metric-value" id="ligaseCount">0</div>
-        <p class="e3-metric-label">E3 Ligases Profiled</p>
+        <div class="e3-metric-value" id="ligandCount">—</div>
+        <p class="e3-metric-label">Recruiter Entities</p>
       </div>
       <div class="e3-metric-card e3-tilt">
-        <div class="e3-metric-value" id="ligandCount">0</div>
-        <p class="e3-metric-label">Unique Ligase Recruiters</p>
+        <div class="e3-metric-value" id="instanceCount">—</div>
+        <p class="e3-metric-label">Active Recruiter Instances</p>
       </div>
       <div class="e3-metric-card e3-tilt">
-        <div class="e3-metric-value e3-gold-value" id="shippedCount">0</div>
-        <p class="e3-metric-label">Recruiters Shipped to PROTAC Builder</p>
+        <div class="e3-metric-value" id="pdbCount">—</div>
+        <p class="e3-metric-label">PDB Structures</p>
+      </div>
+      <div class="e3-metric-card e3-tilt">
+        <div class="e3-metric-value e3-gold-value" id="scaffoldCount">—</div>
+        <p class="e3-metric-label">Active Scaffolds</p>
       </div>
     </div>
   </div>
@@ -707,11 +711,13 @@
     </div>
     <div class="e3-callout">
       <p class="text-slate-300 leading-relaxed">
-        In V1, <strong class="text-amber-200">345 reconciled recruiter entities</strong> are represented across <strong class="text-cyan-200">820 observed structure instances</strong>. One entity can be observed in multiple ligase, PDB, chain, residue, or variant contexts.
+        In the locked R2 snapshot, <strong class="text-amber-200"><span id="contextEntityCount">—</span> reconciled recruiter entities</strong> are represented across <strong class="text-cyan-200"><span id="contextInstanceCount">—</span> active structure-specific recruiter instances</strong>. One entity can be observed in multiple ligase, PDB, chain, residue, or variant contexts.
       </p>
       <div class="mt-4">
-        <span class="e3-count-pill"><strong>345</strong> recruiter entities</span>
-        <span class="e3-count-pill"><strong>820</strong> observed instances</span>
+        <span class="e3-count-pill"><strong id="contextEntityPill">—</strong> recruiter entities</span>
+        <span class="e3-count-pill"><strong id="contextInstancePill">—</strong> active instances</span>
+        <span class="e3-count-pill"><strong id="contextPdbPill">—</strong> PDB structures</span>
+        <span class="e3-count-pill"><strong id="contextScaffoldPill">—</strong> active scaffolds</span>
         <span class="e3-count-pill"><strong>LR…-NN IDs</strong> preserve structural context</span>
       </div>
     </div>
@@ -948,19 +954,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   Promise.allSettled([
     fetch("/api/global-stats").then((r) => r.json()),
-    fetch("/api/visits").then((r) => r.json()),
-    fetch("/api/shipped-count").then((r) => r.json())
+    fetch("/api/release-info").then((r) => r.json())
   ]).then((results) => {
     const stats = results[0].status === "fulfilled" ? results[0].value : {};
-    const visits = results[1].status === "fulfilled" ? results[1].value : {};
-    const shipped = results[2].status === "fulfilled" ? results[2].value : {};
+    const release = results[1].status === "fulfilled" ? results[1].value : {};
+    const counts = release.counts || {};
 
     const metricMap = {
-      structCount: stats.structures,
-      ligaseCount: stats.ligases,
-      ligandCount: stats.ligands,
-      visitCount: visits.total || 0,
-      shippedCount: shipped.total || 0,
+      ligaseCount: counts.ligases ?? stats.ligases,
+      ligandCount: counts.recruiter_entities ?? stats.ligands,
+      instanceCount: counts.recruiter_instances,
+      pdbCount: counts.distinct_pdbs ?? stats.structures,
+      scaffoldCount: counts.scaffolds ?? stats.total_scaffolds,
       avg_shannon: stats.avg_shannon,
       mean_connectivity: stats.mean_connectivity,
       median_bertz: stats.median_bertz,
@@ -969,6 +974,19 @@ document.addEventListener("DOMContentLoaded", () => {
       avg_norm_div: stats.avg_norm_div
     };
     Object.entries(metricMap).forEach(([id, val]) => animateCounter(id, val));
+
+    const textCounts = {
+      contextEntityCount: counts.recruiter_entities,
+      contextInstanceCount: counts.recruiter_instances,
+      contextEntityPill: counts.recruiter_entities,
+      contextInstancePill: counts.recruiter_instances,
+      contextPdbPill: counts.distinct_pdbs,
+      contextScaffoldPill: counts.scaffolds
+    };
+    Object.entries(textCounts).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && Number.isFinite(Number(val))) el.textContent = Number(val).toLocaleString();
+    });
   });
 
   function animateCounter(id, target) {
