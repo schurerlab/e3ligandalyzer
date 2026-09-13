@@ -3,14 +3,16 @@ from __future__ import annotations
 import io
 import json
 import os
+import queue
 import re
 import sqlite3
+import threading
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 from zipfile import ZIP_DEFLATED, ZipFile
 
-from flask import Blueprint, abort, current_app, jsonify, request, send_file
+from flask import Blueprint, Response, abort, current_app, jsonify, request, send_file, stream_with_context
 from werkzeug.exceptions import HTTPException
 from backup_receiver.e3_release_backend import ReleaseBackend, ReleaseError
 
@@ -259,17 +261,46 @@ def _zip_response(files: Iterable[tuple[str, Path]], download_name: str):
     if not file_list:
         abort(404, description="No matching files.")
 
-    buffer = io.BytesIO()
-    with ZipFile(buffer, "w", ZIP_DEFLATED) as zip_handle:
-        for arcname, path in file_list:
-            zip_handle.write(path, arcname.replace("\\", "/"))
-    buffer.seek(0)
-    return send_file(
-        buffer,
+    # ZIPs containing the full PDB release take longer than Heroku's 30-second
+    # first-byte deadline to assemble.  An unseekable ZIP writer emits data
+    # descriptors, allowing the proxy to begin streaming immediately without
+    # changing any files or ZIP membership.
+    chunks: queue.Queue[bytes | None] = queue.Queue(maxsize=16)
+
+    class _QueueWriter:
+        def write(self, data):
+            if data:
+                chunks.put(bytes(data))
+            return len(data)
+
+        def flush(self):
+            return None
+
+        def tell(self):
+            raise OSError("stream is not seekable")
+
+    def build_zip():
+        try:
+            with ZipFile(_QueueWriter(), "w", ZIP_DEFLATED) as zip_handle:
+                for arcname, path in file_list:
+                    zip_handle.write(path, arcname.replace("\\", "/"))
+        finally:
+            chunks.put(None)
+
+    threading.Thread(target=build_zip, daemon=True).start()
+
+    def generate():
+        while True:
+            chunk = chunks.get()
+            if chunk is None:
+                break
+            yield chunk
+
+    return Response(
+        stream_with_context(generate()),
         mimetype="application/zip",
-        as_attachment=True,
-        download_name=download_name,
-        max_age=0,
+        headers={"Content-Disposition": f'attachment; filename="{download_name}"'},
+        direct_passthrough=True,
     )
 
 
