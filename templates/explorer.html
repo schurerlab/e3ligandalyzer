@@ -25,7 +25,7 @@
           <button id="nextLeft" class="px-2 py-1 text-sm bg-slate-800 rounded hover:bg-slate-700">▶</button>
         </div>
       </div>
-      <div id="left-carousel" style="height:420px;"></div>
+      <div id="left-carousel" style="height:440px;"></div>
     </div>
 
     <!-- RIGHT -->
@@ -37,7 +37,7 @@
           <button id="nextRight" class="px-2 py-1 text-sm bg-slate-800 rounded hover:bg-slate-700">▶</button>
         </div>
       </div>
-      <div id="right-carousel" style="height:420px;"></div>
+      <div id="right-carousel" style="height:440px;"></div>
     </div>
   </div>
 
@@ -1915,11 +1915,22 @@ Promise.all([
 ]).then(([ligaseSummary])=>{
   const ligases=ligaseSummary.map(d=>d.Ligase);
 
-  Plotly.newPlot('left-carousel',[{x:ligases,y:ligaseSummary.map(d=>d.Total_Recruiters),type:'bar',marker:{color:'#38bdf8'}}],
-    {template:'plotly_dark',title:'Total Recruiters per Ligase',margin:{t:50,l:50,r:10,b:80},xaxis:{title:'Ligase'}});
+  // The card heading already identifies each chart.  Leave enough room for the
+  // rotated ligase names instead of adding a second x-axis title beneath them.
+  const ligaseBarLayout = {
+    template: 'plotly_dark',
+    margin: {t: 16, l: 50, r: 10, b: 120},
+    xaxis: {tickangle: -90, tickfont: {size: 11}, automargin: true},
+    yaxis: {automargin: true},
+    showlegend: false
+  };
+  const responsiveBarConfig = {responsive: true, displayModeBar: false};
 
-  Plotly.newPlot('right-carousel',[{x:ligases,y:ligaseSummary.map(d=>d.Unique_Scaffolds),type:'bar',marker:{color:'#22d3ee'}}],
-    {template:'plotly_dark',title:'Unique Scaffolds per Ligase',margin:{t:50,l:50,r:10,b:80},xaxis:{title:'Ligase'}});
+  Plotly.newPlot('left-carousel', [{x: ligases, y: ligaseSummary.map(d => d.Total_Recruiters), type: 'bar', marker: {color: '#38bdf8'}}],
+    ligaseBarLayout, responsiveBarConfig);
+
+  Plotly.newPlot('right-carousel', [{x: ligases, y: ligaseSummary.map(d => d.Unique_Scaffolds), type: 'bar', marker: {color: '#22d3ee'}}],
+    ligaseBarLayout, responsiveBarConfig);
 
   const table = $('#ligaseTable').DataTable({
     data: ligaseSummary,
