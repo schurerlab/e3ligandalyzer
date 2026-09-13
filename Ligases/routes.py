@@ -4276,11 +4276,18 @@ def download_table_csv(table_name):
         # RANDY publishes the immutable release CSVs directly. Streaming that
         # export avoids loading a complete table through the JSON query API in
         # the Heroku worker, which is unsafe for the large atom/mapping tables.
-        return randy_client.proxy_file(
-            f"download/table/{randy_client.quote_part(table_name)}.csv",
-            download_name=f"E3Ligandalyzer_{table_name}.csv",
-            mimetype="text/csv",
-        )
+        try:
+            return randy_client.proxy_file(
+                f"download/table/{randy_client.quote_part(table_name)}.csv",
+                download_name=f"E3Ligandalyzer_{table_name}.csv",
+                mimetype="text/csv",
+            )
+        except randy_client.RemoteServiceError as exc:
+            # A few compact registry/catalog exports are not present in
+            # RANDY's CSV directory. They remain safe to serialize from the
+            # read-only database API below; only missing files take this path.
+            if exc.status_code != 404:
+                raise
     rows = query_db(f"SELECT * FROM {table_name};")
     output = StringIO()
 

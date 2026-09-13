@@ -63,6 +63,16 @@ class PublicDownloadManifestTests(unittest.TestCase):
                 mimetype="text/csv",
             )
 
+    def test_remote_table_export_falls_back_only_when_csv_is_not_published(self):
+        app = Flask(__name__)
+        with app.test_request_context("/"), \
+             patch.object(routes.randy_client, "remote_enabled", return_value=True), \
+             patch.object(routes.randy_client, "proxy_file", side_effect=routes.randy_client.RemoteServiceError("missing", status_code=404)), \
+             patch.object(routes, "query_db", return_value=[{"Recruiter_ID": "LR00001"}]):
+            response = routes.download_table_csv("Recruiter_Instance_Catalog")
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("LR00001", response.get_data(as_text=True))
+
 
 if __name__ == "__main__":
     unittest.main()
