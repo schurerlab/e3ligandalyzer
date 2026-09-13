@@ -4272,6 +4272,15 @@ def download_table_csv(table_name):
     """
     if table_name not in _PUBLIC_DOWNLOAD_TABLES:
         abort(404, description=f"Table is not available for public export: {table_name}")
+    if randy_client.remote_enabled():
+        # RANDY publishes the immutable release CSVs directly. Streaming that
+        # export avoids loading a complete table through the JSON query API in
+        # the Heroku worker, which is unsafe for the large atom/mapping tables.
+        return randy_client.proxy_file(
+            f"download/table/{randy_client.quote_part(table_name)}.csv",
+            download_name=f"E3Ligandalyzer_{table_name}.csv",
+            mimetype="text/csv",
+        )
     rows = query_db(f"SELECT * FROM {table_name};")
     output = StringIO()
 

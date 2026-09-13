@@ -50,6 +50,19 @@ class PublicDownloadManifestTests(unittest.TestCase):
             self.assertEqual(body["count"], 1)
             self.assertEqual(body["results"][0]["pdb_file"], "5FNU_L6I_1.pdb")
 
+    def test_remote_table_exports_stream_the_release_csv(self):
+        app = Flask(__name__)
+        with app.test_request_context("/"), \
+             patch.object(routes.randy_client, "remote_enabled", return_value=True), \
+             patch.object(routes.randy_client, "proxy_file", return_value="streamed") as proxy, \
+             patch.object(routes, "query_db", side_effect=AssertionError("no SQL materialization")):
+            self.assertEqual(routes.download_table_csv("Ligase_Ligand_SASA_atoms"), "streamed")
+            proxy.assert_called_once_with(
+                "download/table/Ligase_Ligand_SASA_atoms.csv",
+                download_name="E3Ligandalyzer_Ligase_Ligand_SASA_atoms.csv",
+                mimetype="text/csv",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
