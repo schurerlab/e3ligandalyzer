@@ -33,6 +33,7 @@ UNSAFE_SQL_RE = re.compile(
     re.IGNORECASE,
 )
 SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+R2_LEGACY_LIGASE_RE = re.compile(r"^[A-Za-z0-9_.() -]+$")
 
 
 def _token() -> str:
@@ -124,12 +125,95 @@ def _release_structural_sdf_path(row: dict[str, str]) -> Path:
     return _release_asset_path(row, "SDF_Web_Path")
 
 
+def _is_r2_release() -> bool:
+    root = os.environ.get("E3_RELEASE_ROOT", "").strip()
+    return bool(root) and _release_backend().format == "R2"
+
+
+def _r2_rows_for_ligase(ligase: str) -> list[dict[str, str]]:
+    requested = str(ligase or "").strip()
+    if not requested or not R2_LEGACY_LIGASE_RE.fullmatch(requested):
+        abort(400, description="Invalid ligase name.")
+    rows = [
+        row for row in _release_backend().asset_rows()
+        if str(row.get("Ligase") or "").casefold() == requested.casefold()
+    ]
+    if not rows:
+        abort(404, description=f"Ligase not found: {ligase}")
+    return rows
+
+
+def _r2_legacy_row(ligase: str, filename: str, asset_kind: str) -> dict[str, str]:
+    """Apply the legacy ordered filename fallback to active R2 rows only."""
+    field = "Legacy_PDB_Filename" if asset_kind == "pdb" else "Legacy_SDF_Filename"
+    extension = ".pdb" if asset_kind == "pdb" else ".sdf"
+    rows = _r2_rows_for_ligase(ligase)
+    by_name: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        name = str(row.get(field) or "").strip()
+        if name:
+            by_name.setdefault(name.casefold(), []).append(row)
+
+    candidates = _candidate_names(filename, extension)
+    requested = Path(filename).name
+    stem = Path(requested).stem if requested.lower().endswith(extension) else requested
+    core_no_variant = re.sub(r"_\d+$", "", stem)
+    variant_re = re.compile(rf"^{re.escape(core_no_variant)}_(\d+){re.escape(extension)}$", re.IGNORECASE)
+    candidates.extend(sorted(name for name in by_name if variant_re.fullmatch(name)))
+    for candidate in dict.fromkeys(name.casefold() for name in candidates):
+        matches = by_name.get(candidate, [])
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            abort(409, description="Ambiguous legacy release asset request.")
+    abort(404, description=f"File not found: {requested}")
+
+
+def _r2_legacy_asset_path(ligase: str, filename: str, asset_kind: str) -> Path:
+    row = _r2_legacy_row(ligase, filename, asset_kind)
+    field = "PDB_Web_Path" if asset_kind == "pdb" else "SDF_Web_Path"
+    return _release_asset_path(row, field)
+
+
+def _r2_zip_files(asset_type: str, ligase: str | None = None) -> list[tuple[str, Path]]:
+    key = str(asset_type or "").strip().lower()
+    if key not in {"pdb", "pdbs", "sdf", "sdfs", "all", "structures"}:
+        abort(400, description="asset_type must be one of: pdb, pdbs, sdf, sdfs, all, structures")
+    rows = _r2_rows_for_ligase(ligase) if ligase is not None else _release_backend().asset_rows()
+    include_pdb = key in {"pdb", "pdbs", "all", "structures"}
+    include_sdf = key in {"sdf", "sdfs", "all", "structures"}
+    files: list[tuple[str, Path]] = []
+    seen: set[str] = set()
+    for row in sorted(rows, key=lambda item: (str(item.get("Ligase") or "").casefold(), str(item.get("Recruiter_Instance_ID") or ""))):
+        ligase_name = str(row.get("Ligase") or "").strip()
+        if include_pdb:
+            name = str(row.get("Legacy_PDB_Filename") or "").strip()
+            arcname = f"{ligase_name}/PDB/{name}"
+            if arcname in seen:
+                abort(409, description="Ambiguous R2 legacy archive entry.")
+            seen.add(arcname)
+            files.append((arcname, _release_asset_path(row, "PDB_Web_Path")))
+        if include_sdf:
+            name = str(row.get("Legacy_SDF_Filename") or "").strip()
+            arcname = f"{ligase_name}/SDF_4Download/{name}"
+            if arcname in seen:
+                abort(409, description="Ambiguous R2 legacy archive entry.")
+            seen.add(arcname)
+            files.append((arcname, _release_asset_path(row, "SDF_Web_Path")))
+    return files
+
+
 def _table_root() -> Path:
     return Path(os.environ.get("E3_TABLE_ROOT", str(DEFAULT_E3_TABLE_ROOT))).expanduser()
 
 
 def _shipment_db_path() -> Path:
-    return Path(os.environ.get("E3_SHIPMENT_DB_PATH", str(DEFAULT_E3_SHIPMENT_DB_PATH))).expanduser()
+    configured = os.environ.get("E3_SHIPMENT_DB_PATH", "").strip()
+    if configured:
+        return Path(configured).expanduser()
+    if DEFAULT_E3_SHIPMENT_DB_PATH.parent.is_dir() and os.access(DEFAULT_E3_SHIPMENT_DB_PATH.parent, os.W_OK):
+        return DEFAULT_E3_SHIPMENT_DB_PATH
+    return PROJECT_ROOT / "data" / "e3_shipments.db"
 
 
 def _safe_under(base: Path, path: Path) -> bool:
@@ -489,8 +573,20 @@ def register_e3_routes(app) -> None:
     @bp.get("/release-info")
     def e3_release_info():
         backend = _release_backend()
-        counts = backend.manifest.get("database", {}).get("counts", {})
-        return jsonify({"ok": True, "release_version": "1.0", "release_status": "LOCKED", "database_cutoff": "2026-09-08", "lockdown_date": "2026-09-08", "database_sha256": backend.manifest["database"]["sha256"], "counts": counts})
+        manifest = backend.manifest
+        counts = manifest.get("database", {}).get("counts", {})
+        return jsonify({
+            "ok": True,
+            "release_id": manifest.get("release_id", "v1.0-locked"),
+            "release_version": str(manifest.get("release_version", "1.0")),
+            "release_revision": int(manifest.get("release_revision", 0)),
+            "release_status": "LOCKED",
+            "correction_type": manifest.get("correction_type", "none"),
+            "database_cutoff": manifest.get("database_cutoff_date", "2026-09-08"),
+            "lockdown_date": manifest.get("database_cutoff_date", "2026-09-08"),
+            "database_sha256": manifest["database"]["sha256"],
+            "counts": counts,
+        })
 
     @bp.get("/instances/<instance_id>/pdb")
     def release_instance_pdb(instance_id: str):
@@ -582,6 +678,8 @@ def register_e3_routes(app) -> None:
 
     @bp.get("/ligase-pdbs/<ligase>")
     def ligase_pdbs(ligase: str):
+        if _is_r2_release():
+            return jsonify(sorted(str(row["Legacy_PDB_Filename"]) for row in _r2_rows_for_ligase(ligase)))
         folder = _resolve_ligase_dir(ligase) / "PDB"
         if not folder.is_dir():
             return jsonify([])
@@ -590,12 +688,16 @@ def register_e3_routes(app) -> None:
 
     @bp.get("/file/pdb/<ligase>/<path:filename>")
     def file_pdb(ligase: str, filename: str):
+        if _is_r2_release():
+            return send_file(_r2_legacy_asset_path(ligase, filename, "pdb"), mimetype="chemical/x-pdb", as_attachment=False, max_age=0)
         ligase_dir = _resolve_ligase_dir(ligase)
         file_path = _find_variant_file(ligase_dir / "PDB", filename, ".pdb")
         return send_file(file_path, mimetype="chemical/x-pdb", as_attachment=False, max_age=0)
 
     @bp.get("/file/sdf/<ligase>/<path:filename>")
     def file_sdf(ligase: str, filename: str):
+        if _is_r2_release():
+            return send_file(_r2_legacy_asset_path(ligase, filename, "sdf"), mimetype="chemical/x-mdl-sdfile", as_attachment=False, max_age=0)
         ligase_dir = _resolve_ligase_dir(ligase)
         for folder in _resolve_sdf_folders(ligase_dir):
             try:
@@ -608,12 +710,17 @@ def register_e3_routes(app) -> None:
 
     @bp.get("/file/display-sdf/<ligase>/<path:filename>")
     def file_display_sdf(ligase: str, filename: str):
+        if _is_r2_release():
+            return send_file(_r2_legacy_asset_path(ligase, filename, "sdf"), mimetype="chemical/x-mdl-sdfile", as_attachment=False, max_age=0)
         ligase_dir = _resolve_ligase_dir(ligase)
         file_path = _find_variant_file(_resolve_display_sdf_folder(ligase_dir), filename, ".sdf")
         return send_file(file_path, mimetype="chemical/x-mdl-sdfile", as_attachment=False, max_age=0)
 
     @bp.get("/download/ligase/<ligase>/<asset_type>.zip")
     def download_ligase_zip(ligase: str, asset_type: str):
+        if _is_r2_release():
+            rows = _r2_rows_for_ligase(ligase)
+            return _zip_response(_r2_zip_files(asset_type, ligase), f"E3Ligandalyzer_{rows[0]['Ligase']}_{str(asset_type).lower()}.zip")
         ligase_dir = _resolve_ligase_dir(ligase)
         files = [
             (f"{ligase_dir.name}/{label}/{path.name}", path)
@@ -623,6 +730,8 @@ def register_e3_routes(app) -> None:
 
     @bp.get("/download/all/<asset_type>.zip")
     def download_all_zip(asset_type: str):
+        if _is_r2_release():
+            return _zip_response(_r2_zip_files(asset_type), f"E3Ligandalyzer_ALL_{str(asset_type).lower()}.zip")
         files = []
         for ligase_dir in _list_download_ligase_dirs():
             for label, path in _iter_asset_files(ligase_dir, asset_type):
