@@ -51,6 +51,14 @@ def configured_asset_root() -> Optional[Path]:
     return None
 
 
+def configured_structural_asset_root() -> Optional[Path]:
+    """Return an optional additive observed-coordinate structural-SDF tree."""
+    if remote_backend_enabled():
+        return None
+    raw_root = os.environ.get("E3_STRUCTURAL_ASSET_ROOT", "").strip()
+    return Path(raw_root).expanduser() if raw_root else configured_asset_root()
+
+
 def release_database_path(release_root: Path) -> Path:
     """Resolve the immutable DB named by this release's own manifest."""
     manifest = release_root / "manifests" / "release_manifest.json"

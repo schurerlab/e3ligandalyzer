@@ -637,7 +637,8 @@ function applyLigandBootstrapGlobals(data, instanceId) {
   const ligand = metadata.Ligand || sasaSum.Ligand || atoms[0]?.Ligand || "";
   const pdbId = metadata.PDB_ID || sasaSum.pdb_id || atoms[0]?.pdb_id || "";
   const coordinatePdb = data?.assets?.coordinate_pdb || data?.assets?.pdb || {};
-  const chemistry2d = data?.assets?.chemistry_2d || data?.assets?.sdf || {};
+  const chemistry2d = data?.assets?.chemistry_2d || {};
+  const structuralSdf = data?.assets?.structural_sdf || data?.assets?.sdf || {};
   const pdbFile = coordinatePdb.filename || data?.pdb_file || "";
   const pdbPath = coordinatePdb.url || data?.pdb_path || null;
 
@@ -647,8 +648,9 @@ function applyLigandBootstrapGlobals(data, instanceId) {
   window.currentLigase = ligase;
   window.currentPDB = pdbFile;
   window.currentPDBurl = pdbPath;
-  window.currentSDFurl = chemistry2d.url || data?.ligand_sdf_path || null;
-  window.currentSDF = chemistry2d.filename || data?.ligand_sdf_file || "";
+  window.currentChemistrySDFurl = chemistry2d.url || null;
+  window.currentSDFurl = structuralSdf.url || data?.ligand_sdf_path || null;
+  window.currentSDF = structuralSdf.filename || data?.ligand_sdf_file || "";
   window.currentModel = { name: pdbFile };
   window.models = [window.currentModel];
 
@@ -2104,6 +2106,10 @@ function downloadPDB() {
 }
 
 function downloadSDF() {
+  if (!window.currentSDFurl) {
+    alert("A validated observed-coordinate SDF is not available for this instance.");
+    return;
+  }
   const a = document.createElement("a");
   a.href = window.currentSDFurl;
   a.download = window.currentSDF || window.currentPDB.replace(".pdb", ".sdf");

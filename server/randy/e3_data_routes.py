@@ -100,6 +100,30 @@ def _release_asset_path(row: dict[str, str], field: str) -> Path:
     return path
 
 
+def _release_structural_sdf_path(row: dict[str, str]) -> Path:
+    """Resolve a separately materialized observed-coordinate SDF.
+
+    R2 2D assets are intentionally not eligible here.  Older manifests retain
+    their explicit exact-instance SDF field for backwards compatibility.
+    """
+    asset_root = _release_backend().assets.resolve()
+    structural_root = Path(os.environ.get("E3_STRUCTURAL_ASSET_ROOT", str(asset_root))).expanduser().resolve()
+    instance_id = str(row.get("Recruiter_Instance_ID") or "").strip()
+    candidate = (structural_root / "coordinates" / instance_id / "structure_observed_3d.sdf").resolve()
+    if candidate.is_file() and _safe_under(structural_root, candidate):
+        return candidate
+    # The R2 table identifies a release whose manifest SDF is explicitly a
+    # planar chemistry asset.  Failing closed here prevents the download API
+    # from silently reverting to that different provenance class.
+    with _release_backend().connect() as connection:
+        has_r2_assets = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'R2_2D_Chemistry_Assets'"
+        ).fetchone()
+    if has_r2_assets:
+        abort(404, description="No validated observed-coordinate SDF is available for this instance.")
+    return _release_asset_path(row, "SDF_Web_Path")
+
+
 def _table_root() -> Path:
     return Path(os.environ.get("E3_TABLE_ROOT", str(DEFAULT_E3_TABLE_ROOT))).expanduser()
 
@@ -476,6 +500,12 @@ def register_e3_routes(app) -> None:
 
     @bp.get("/instances/<instance_id>/sdf")
     def release_instance_sdf(instance_id: str):
+        row = _release_asset_row(instance_id)
+        file_path = _release_structural_sdf_path(row)
+        return send_file(file_path, mimetype="chemical/x-mdl-sdfile", as_attachment=False, max_age=0)
+
+    @bp.get("/instances/<instance_id>/chemistry-sdf")
+    def release_instance_chemistry_sdf(instance_id: str):
         row = _release_asset_row(instance_id)
         file_path = _release_asset_path(row, "SDF_Web_Path")
         return send_file(file_path, mimetype="chemical/x-mdl-sdfile", as_attachment=False, max_age=0)

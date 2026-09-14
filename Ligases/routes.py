@@ -18,6 +18,7 @@ import os
 import re
 import sqlite3
 import csv
+import json
 from functools import lru_cache
 from pathlib import Path
 import requests
@@ -26,7 +27,7 @@ import pandas as pd
 from Ligases import randy_client
 from Ligases import shipment_store
 from e3_database import (
-    E3DatabaseError, configured_asset_root, configured_release_root,
+    E3DatabaseError, configured_asset_root, configured_structural_asset_root, configured_release_root,
     get_database, release_bundle_info,
 )
 from werkzeug.exceptions import HTTPException
@@ -177,7 +178,13 @@ def _asset_manifest_for_active_release():
 
 
 def _exact_instance_asset(instance, asset_kind):
-    """Resolve an exact instance asset through the active bundle manifest only."""
+    """Resolve an exact instance asset through the active bundle manifest only.
+
+    ``chemistry_sdf`` is the complete, depiction-oriented graph.  It is never
+    interchangeable with ``structural_sdf``, which is an observed-atom subset
+    carrying only deposited coordinates.  The latter is deliberately absent
+    until a successor release explicitly materializes and validates it.
+    """
     asset_root = configured_asset_root()
     if not asset_root:
         return None
@@ -187,8 +194,12 @@ def _exact_instance_asset(instance, asset_kind):
     # combining corrected R2 data with a legacy web-asset release.
     r2_asset = get_database().instance_2d_asset(instance_id)
     if r2_asset and r2_asset.get("Asset_Status") == "READY":
-        if asset_kind == "sdf":
+        if asset_kind == "chemistry_sdf":
             candidate = asset_root / "chemistry" / instance_id / "structure_2d.sdf"
+            return candidate if candidate.is_file() else None
+        if asset_kind == "structural_sdf":
+            structural_root = configured_structural_asset_root()
+            candidate = structural_root / "coordinates" / instance_id / "structure_observed_3d.sdf" if structural_root else Path()
             return candidate if candidate.is_file() else None
         if asset_kind == "pdb":
             # Resolve the immutable release copy, never its historical build
@@ -200,6 +211,10 @@ def _exact_instance_asset(instance, asset_kind):
     row = _asset_manifest_for_active_release().get(instance_id)
     if not row or row.get("Source_Instance_Key") != str(instance.get("Source_Instance_Key") or ""):
         return None
+    # Earlier releases contain only one SDF class.  Its manifest validation
+    # guarantees an exact instance asset, so it remains the structural SDF
+    # compatibility source.  R2 never falls back from a missing structural
+    # SDF to its deliberately planar chemistry asset.
     relative = row.get("PDB_Web_Path" if asset_kind == "pdb" else "SDF_Web_Path") or ""
     if not relative:
         return None
@@ -337,11 +352,16 @@ def _instance_visual_payload(instance_id):
     entity = database.recruiter_entity(instance["Recruiter_ID"])
     remote = randy_client.remote_enabled()
     pdb_path = None if remote else _exact_instance_asset(instance, "pdb")
-    sdf_path = None if remote else _exact_instance_asset(instance, "sdf")
+    chemistry_sdf_path = None if remote else _exact_instance_asset(instance, "chemistry_sdf")
+    structural_sdf_path = None if remote else _exact_instance_asset(instance, "structural_sdf")
     pdb_available = _remote_instance_asset_available(instance_id, "pdb") if remote else bool(pdb_path)
-    sdf_available = _remote_instance_asset_available(instance_id, "sdf") if remote else bool(sdf_path)
+    chemistry_sdf_available = _remote_instance_asset_available(instance_id, "sdf") if remote else bool(chemistry_sdf_path)
+    # Remote R2 backends expose the structural endpoint themselves.  Local R2
+    # releases must contain the explicitly materialized structural asset.
+    structural_sdf_available = _remote_instance_asset_available(instance_id, "sdf") if remote else bool(structural_sdf_path)
     pdb_filename = f"{instance_id}.pdb" if remote else (pdb_path.name if pdb_path else Path(str(instance.get("Step4_PDB") or "")).name)
-    sdf_filename = Path(str(instance.get("Source_SDF") or "")).name
+    chemistry_sdf_filename = Path(str(instance.get("Source_SDF") or "")).name
+    structural_sdf_filename = f"{instance_id}.observed-3d.sdf" if structural_sdf_available else None
     # Keep coordinate and chemistry assets explicitly separate.  They are
     # intentionally both exposed for an instance: the coordinate PDB is the
     # observed bound pose, while the SDF is the curated 2D chemistry artifact.
@@ -353,24 +373,31 @@ def _instance_visual_payload(instance_id):
         "role": "observed_3d_coordinates",
     }
     chemistry_2d = {
-        "url": f"/api/instances/{instance_id}/sdf" if sdf_available else None,
-        "filename": sdf_filename or None,
-        "available": sdf_available,
+        "url": f"/api/instances/{instance_id}/chemistry-sdf" if chemistry_sdf_available else None,
+        "filename": chemistry_sdf_filename or None,
+        "available": chemistry_sdf_available,
         "role": "curated_2d_chemistry",
+    }
+    structural_sdf = {
+        "url": f"/api/instances/{instance_id}/sdf" if structural_sdf_available else None,
+        "filename": structural_sdf_filename,
+        "available": structural_sdf_available,
+        "role": "observed_3d_structure",
     }
     assets = {
         "coordinate_pdb": coordinate_pdb,
         "chemistry_2d": chemistry_2d,
+        "structural_sdf": structural_sdf,
         # Backward-compatible aliases.  New code should use the role-specific
         # names above rather than infer intent from an extension.
         "pdb": coordinate_pdb,
-        "sdf": chemistry_2d,
+        "sdf": structural_sdf,
         "pdb_download": coordinate_pdb,
-        "sdf_download": chemistry_2d,
+        "sdf_download": structural_sdf,
     }
     # R2 canonical chemistry is release-owned, so its payload need not parse a
     # deposited graph merely to populate this legacy 2D-SMILES field.
-    viewer_smiles = str((entity or {}).get("Canonical_SMILES") or "") if database.instance_2d_asset(instance_id) else _viewer_smiles(entity, sdf_path)
+    viewer_smiles = str((entity or {}).get("Canonical_SMILES") or "") if database.instance_2d_asset(instance_id) else _viewer_smiles(entity, chemistry_sdf_path)
     metadata = dict(instance)
     metadata.update({
         "SMILES": viewer_smiles,
@@ -411,8 +438,8 @@ def _instance_visual_payload(instance_id):
         # Compatibility fields used by the established ligand.html renderer.
         "pdb_path": assets["pdb"]["url"],
         "pdb_file": assets["pdb"]["filename"],
-        "ligand_sdf_path": assets["sdf"]["url"],
-        "ligand_sdf_file": assets["sdf"]["filename"],
+        "ligand_sdf_path": assets["structural_sdf"]["url"],
+        "ligand_sdf_file": assets["structural_sdf"]["filename"],
     }
 
 
@@ -437,7 +464,7 @@ def _render_instance_sasa_svg(instance_id):
             # observed-instance atom map. Serving it prevents runtime RDKit
             # sanitization from substituting or rejecting deposited chemistry.
             return svg.read_text(encoding="utf-8"), 200, {"Content-Type": "image/svg+xml"}
-    sdf = _exact_instance_asset(instance, "sdf") if r2_asset else None
+    sdf = _exact_instance_asset(instance, "chemistry_sdf") if r2_asset else None
     mol = Chem.MolFromMolFile(str(sdf), sanitize=True, removeHs=False) if sdf else Chem.MolFromSmiles(entity.get("Canonical_SMILES") or "")
     # The R2 asset materializer can preserve an observed deposited graph that
     # RDKit cannot fully sanitize (for example A1IEV).  It remains drawable;
@@ -776,6 +803,7 @@ def recruiter_instance_pdb_api(instance_id):
 
 @ligases_bp.route("/instances/<instance_id>/sdf", methods=["GET"])
 def recruiter_instance_sdf_api(instance_id):
+    """Download the observed-coordinate structural SDF, never a 2D depiction."""
     instance = get_database().recruiter_instance(instance_id)
     if not instance:
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
@@ -784,9 +812,29 @@ def recruiter_instance_sdf_api(instance_id):
             f"instances/{randy_client.quote_part(instance_id)}/sdf",
             mimetype="chemical/x-mdl-sdfile",
         )
-    asset = _exact_instance_asset(instance, "sdf")
+    asset = _exact_instance_asset(instance, "structural_sdf")
     if not asset:
-        return jsonify({"error": "The exact V1 SDF asset is unavailable.", "recruiter_instance_id": instance_id}), 404
+        return jsonify({
+            "error": "No validated observed-coordinate SDF is available for this instance.",
+            "recruiter_instance_id": instance_id,
+        }), 404
+    return send_file(asset, mimetype="chemical/x-mdl-sdfile", conditional=True)
+
+
+@ligases_bp.route("/instances/<instance_id>/chemistry-sdf", methods=["GET"])
+def recruiter_instance_chemistry_sdf_api(instance_id):
+    """Return the curated 2D chemistry asset for depiction-specific clients."""
+    instance = get_database().recruiter_instance(instance_id)
+    if not instance:
+        return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
+    if randy_client.remote_enabled():
+        return randy_client.proxy_file(
+            f"instances/{randy_client.quote_part(instance_id)}/chemistry-sdf",
+            mimetype="chemical/x-mdl-sdfile",
+        )
+    asset = _exact_instance_asset(instance, "chemistry_sdf")
+    if not asset:
+        return jsonify({"error": "The curated chemistry SDF is unavailable.", "recruiter_instance_id": instance_id}), 404
     return send_file(asset, mimetype="chemical/x-mdl-sdfile", conditional=True)
 
 
