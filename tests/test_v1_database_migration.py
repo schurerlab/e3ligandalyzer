@@ -77,6 +77,16 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         pdb_search = self.database.search_recruiters("4W9E")
         self.assertTrue(pdb_search["instances"])
 
+    def test_r1_recruiter_by_pdb_retains_legacy_response_aliases(self):
+        response = self.client.get("/api/recruiter-by-pdb?pdb_id=4W9E&ligand=3JT&variant=1")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["pdb_id"], "4W9E")
+        self.assertEqual(payload["Ligand"], "3JT")
+        self.assertEqual(payload["Source_Entity_ID"], "3JT")
+        self.assertEqual(payload["Variant"], 1)
+        self.assertTrue(payload["Recruiter_Instance_ID"].startswith("LR"))
+
     def test_prd_source_aliases_resolve_to_their_canonical_recruiters(self):
         aliases = {
             "PRD_001141": "LR00224", "1YH": "LR00224",
@@ -123,19 +133,29 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         exact = self.client.get("/ligand/LR00172-01")
         self.assertEqual(exact.status_code, 200)
         self.assertIn(b"instance-selector", exact.data)
-        self.assertEqual(self.client.get("/api/instances/LR00172-01/sdf").status_code, 404)
-        unavailable = self.client.get("/api/instances/LR00172-01/render-2d-sasa")
-        self.assertEqual(unavailable.status_code, 409)
-        self.assertIn("validated 2D atom mapping", unavailable.get_json()["error"])
+        release_root = configured_release_root()
+        with (release_root / "manifests" / "Web_Asset_Manifest.csv").open(newline="") as handle:
+            asset_row = next(row for row in csv.DictReader(handle) if row["Recruiter_Instance_ID"] == "LR00172-01")
+        sdf_response = self.client.get("/api/instances/LR00172-01/sdf")
+        try:
+            self.assertEqual(sdf_response.status_code, 200 if asset_row["SDF_Web_Path"] else 404)
+        finally:
+            sdf_response.close()
+        rendered = self.client.get("/api/instances/LR00172-01/render-2d-sasa")
+        self.assertEqual(rendered.status_code, 200)
+        self.assertEqual(rendered.mimetype, "image/svg+xml")
+        self.assertIn(b"<svg", rendered.data)
 
     def test_exact_visual_payload_keeps_suffixed_instance_assets(self):
         payload = self.client.get("/api/instances/LR00001-03/visual").get_json()
         self.assertEqual(payload["recruiter"]["Recruiter_ID"], "LR00001")
         self.assertEqual(payload["instance"]["Recruiter_Instance_ID"], "LR00001-03")
         self.assertEqual(payload["assets"]["pdb"]["filename"], "LR00001-03.pdb")
-        self.assertFalse(payload["assets"]["sdf"]["available"])
         self.assertTrue(payload["assets"]["pdb"]["url"].endswith("/LR00001-03/pdb"))
-        self.assertIsNone(payload["assets"]["sdf"]["url"])
+        release_root = configured_release_root()
+        with (release_root / "manifests" / "Web_Asset_Manifest.csv").open(newline="") as handle:
+            asset_row = next(row for row in csv.DictReader(handle) if row["Recruiter_Instance_ID"] == "LR00001-03")
+        self.assertEqual(payload["assets"]["sdf"]["available"], bool(asset_row["SDF_Web_Path"]))
 
         # Even generic local compatibility paths no longer substitute _1 or a
         # sibling when an exact V1 filename is absent.
@@ -147,6 +167,15 @@ class V1DatabaseMigrationTests(unittest.TestCase):
             self.client.get("/api/render-sdf/VHL/4W9E_3JT_99.sdf").status_code,
             404,
         )
+
+    def test_exact_pdb_selection_uses_observed_exported_ligand_provenance(self):
+        """PDB-only camera fallback must select the observed PDB ligand, not the source asym ID."""
+        payload = self.client.get("/api/instances/LR00198-01/visual").get_json()
+        self.assertEqual(payload["pdb_ligand_selection"], {
+            "resname": "3JJ",
+            "chain": "A",
+            "residue_number": "203",
+        })
 
     def test_multi_ligase_entity_exposes_each_exact_sibling(self):
         payload = self.client.get("/api/instances/LR00026-01/visual").get_json()
@@ -196,6 +225,9 @@ class V1DatabaseMigrationTests(unittest.TestCase):
         self.assertIn("renderGeneration = ++current3D.renderGeneration", source)
         self.assertIn("const renderedAtomKeys = new Set()", source)
         self.assertIn("sasa_overlay_atoms", source)
+        self.assertIn("Exact PDB serial selection matched", source)
+        self.assertIn("expectedPdbSerials", source)
+        self.assertIn('opacity: mode === "sasa" ? 0.32 : 0.88', source)
 
     def test_random_recruiter_returns_a_canonical_v1_recruiter_page(self):
         response = self.client.get("/api/random-recruiter")
