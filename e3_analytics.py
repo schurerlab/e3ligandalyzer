@@ -93,7 +93,7 @@ def track(event_type, *, path=None, failure_stage=None, background=True):
         # Tracking must never delay or break a scientific workflow/page response.
         threading.Thread(target=_post, args=("events", payload), daemon=True, name="e3-analytics-event").start()
     else:
-        _post("events", payload)
+        return _post("events", payload)
 
 
 def admin_required(view):
@@ -133,7 +133,9 @@ def register_analytics(app):
             return jsonify({"ok": False}), 400
         # This is called from a post-load browser request, never the scientific
         # page response, so it can reliably await RANDY without affecting UX.
-        track(event_type, failure_stage=body.get("failure_stage"), background=False)
+        result = track(event_type, failure_stage=body.get("failure_stage"), background=False)
+        if result is None or not result.ok:
+            return jsonify({"ok": False, "error": "Analytics temporarily unavailable."}), 503
         return jsonify({"ok": True}), 202
 
     @bp.route("/admin/login", methods=["GET", "POST"])
