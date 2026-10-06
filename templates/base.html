@@ -1012,6 +1012,15 @@ document.querySelector("details").addEventListener("toggle", e => {
           body: JSON.stringify({event_type: type})
         }).catch(function () {});
       });
+      // Page views are delivered after the page is usable. The only browser
+      // payload is this allowlisted event name; no form or scientific content.
+      window.addEventListener("DOMContentLoaded", function () {
+        fetch("/analytics/event", {
+          method: "POST", keepalive: true,
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({event_type: "page_view"})
+        }).catch(function () {});
+      });
     </script>
     {% block page_scripts %}{% endblock %}
 </body>

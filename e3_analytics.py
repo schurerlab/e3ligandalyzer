@@ -77,7 +77,7 @@ def _get(path):
         return None
 
 
-def track(event_type, *, path=None, failure_stage=None):
+def track(event_type, *, path=None, failure_stage=None, background=True):
     if event_type not in SAFE_EVENTS and event_type != "page_view":
         return
     payload = {
@@ -89,12 +89,11 @@ def track(event_type, *, path=None, failure_stage=None):
     }
     if failure_stage in SAFE_FAILURE_STAGES:
         payload["failure_stage"] = failure_stage
-    # Tracking must never delay or break a scientific workflow/page response.
-    # Construct the daemon in the live Gunicorn worker, not at module import:
-    # an executor inherited across a worker fork cannot run queued work.
-    threading.Thread(
-        target=_post, args=("events", payload), daemon=True, name="e3-analytics-event"
-    ).start()
+    if background:
+        # Tracking must never delay or break a scientific workflow/page response.
+        threading.Thread(target=_post, args=("events", payload), daemon=True, name="e3-analytics-event").start()
+    else:
+        _post("events", payload)
 
 
 def admin_required(view):
@@ -130,9 +129,11 @@ def register_analytics(app):
     def public_event():
         body = request.get_json(silent=True) or {}
         event_type = body.get("event_type")
-        if event_type not in SAFE_EVENTS:
+        if event_type not in SAFE_EVENTS and event_type != "page_view":
             return jsonify({"ok": False}), 400
-        track(event_type, failure_stage=body.get("failure_stage"))
+        # This is called from a post-load browser request, never the scientific
+        # page response, so it can reliably await RANDY without affecting UX.
+        track(event_type, failure_stage=body.get("failure_stage"), background=False)
         return jsonify({"ok": True}), 202
 
     @bp.route("/admin/login", methods=["GET", "POST"])
