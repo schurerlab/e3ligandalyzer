@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from functools import wraps
@@ -18,6 +19,7 @@ SAFE_EVENTS = {
 SAFE_FAILURE_STAGES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
 PUBLIC_EXCLUDED_PREFIXES = ("/admin", "/api", "/static", "/health", "/analytics")
 _EVENT_SENDER = ThreadPoolExecutor(max_workers=2, thread_name_prefix="e3-analytics")
+logger = logging.getLogger(__name__)
 
 
 def _base_url():
@@ -69,9 +71,10 @@ def _get(path):
     try:
         return requests.post(
             f"{_base_url()}/analytics/{path.lstrip('/')}", json=payload,
-            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=5,
+            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=(5, 20),
         )
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        logger.info("E3 analytics delivery failed: %s", type(exc).__name__)
         return None
 
 
