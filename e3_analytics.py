@@ -135,6 +135,7 @@ def register_analytics(app):
         # page response, so it can reliably await RANDY without affecting UX.
         result = track(event_type, failure_stage=body.get("failure_stage"), background=False)
         if result is None or not result.ok:
+            logger.warning("E3 analytics receiver response: %s", getattr(result, "status_code", "no-response"))
             return jsonify({"ok": False, "error": "Analytics temporarily unavailable."}), 503
         return jsonify({"ok": True}), 202
 
