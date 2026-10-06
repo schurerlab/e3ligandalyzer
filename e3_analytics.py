@@ -21,6 +21,14 @@ PUBLIC_EXCLUDED_PREFIXES = ("/admin", "/api", "/static", "/health", "/analytics"
 logger = logging.getLogger(__name__)
 
 
+class _FailedDelivery:
+    ok = False
+    status_code = "no-response"
+
+    def __init__(self, reason):
+        self.reason = reason
+
+
 def _base_url():
     value = (os.getenv("E3_RANDY_BASE_URL") or os.getenv("RANDY_E3_BASE_URL") or "").rstrip("/")
     return value if value.endswith("/backup/e3") else (f"{value}/e3" if value.endswith("/backup") else value)
@@ -76,7 +84,7 @@ def _get(path):
         )
     except requests.RequestException as exc:
         logger.warning("E3 analytics delivery failed: %s", type(exc).__name__)
-        return None
+        return _FailedDelivery(type(exc).__name__)
 
 
 def track(event_type, *, path=None, failure_stage=None, background=True):
@@ -138,7 +146,7 @@ def register_analytics(app):
         result = track(event_type, failure_stage=body.get("failure_stage"), background=False)
         if result is None or not result.ok:
             logger.warning("E3 analytics receiver response: %s", getattr(result, "status_code", "no-response"))
-            return jsonify({"ok": False, "error": "Analytics temporarily unavailable.", "configured": _enabled()}), 503
+            return jsonify({"ok": False, "error": "Analytics temporarily unavailable.", "configured": _enabled(), "reason": getattr(result, "reason", None)}), 503
         return jsonify({"ok": True}), 202
 
     @bp.route("/admin/login", methods=["GET", "POST"])
