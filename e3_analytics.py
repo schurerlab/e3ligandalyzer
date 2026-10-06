@@ -139,14 +139,14 @@ def register_analytics(app):
     def public_event():
         body = request.get_json(silent=True) or {}
         event_type = body.get("event_type")
-        if event_type not in SAFE_EVENTS and event_type != "page_view":
+        if event_type not in SAFE_EVENTS:
             return jsonify({"ok": False}), 400
-        # This is called from a post-load browser request, never the scientific
-        # page response, so it can reliably await RANDY without affecting UX.
+        # Browser-triggered workflow events are safe and controlled. Page views
+        # are recorded exclusively by the server's after-request tracker.
         result = track(event_type, failure_stage=body.get("failure_stage"), background=False)
         if result is None or not result.ok:
             logger.warning("E3 analytics receiver response: %s", getattr(result, "status_code", "no-response"))
-            return jsonify({"ok": False, "error": "Analytics temporarily unavailable.", "configured": _enabled(), "reason": getattr(result, "reason", None)}), 503
+            return jsonify({"ok": False, "error": "Analytics temporarily unavailable."}), 503
         return jsonify({"ok": True}), 202
 
     @bp.route("/admin/login", methods=["GET", "POST"])
