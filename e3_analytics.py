@@ -70,7 +70,9 @@ def _get(path):
     try:
         return requests.post(
             f"{_base_url()}/analytics/{path.lstrip('/')}", json=payload,
-            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=(5, 20),
+            # Match the established RANDY client tolerance. Public page views
+            # are sent by a post-load request, so this cannot delay page use.
+            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=(10, 45),
         )
     except requests.RequestException as exc:
         logger.warning("E3 analytics delivery failed: %s", type(exc).__name__)
