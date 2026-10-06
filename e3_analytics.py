@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import secrets
 import logging
-from concurrent.futures import ThreadPoolExecutor
+import threading
 from datetime import timedelta
 from functools import wraps
 from urllib.parse import urlparse
@@ -18,7 +18,6 @@ SAFE_EVENTS = {
 }
 SAFE_FAILURE_STAGES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
 PUBLIC_EXCLUDED_PREFIXES = ("/admin", "/api", "/static", "/health", "/analytics")
-_EVENT_SENDER = ThreadPoolExecutor(max_workers=2, thread_name_prefix="e3-analytics")
 logger = logging.getLogger(__name__)
 
 
@@ -91,7 +90,11 @@ def track(event_type, *, path=None, failure_stage=None):
     if failure_stage in SAFE_FAILURE_STAGES:
         payload["failure_stage"] = failure_stage
     # Tracking must never delay or break a scientific workflow/page response.
-    _EVENT_SENDER.submit(_post, "events", payload)
+    # Construct the daemon in the live Gunicorn worker, not at module import:
+    # an executor inherited across a worker fork cannot run queued work.
+    threading.Thread(
+        target=_post, args=("events", payload), daemon=True, name="e3-analytics-event"
+    ).start()
 
 
 def admin_required(view):
