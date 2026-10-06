@@ -15,6 +15,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from flask import Blueprint, Response, abort, current_app, jsonify, request, send_file, stream_with_context
 from werkzeug.exceptions import HTTPException
 from backup_receiver.e3_release_backend import ReleaseBackend, ReleaseError
+from backup_receiver.e3_analytics_routes import register_e3_analytics_routes
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_E3_DATA_DIR = PROJECT_ROOT
@@ -766,3 +767,6 @@ def register_e3_routes(app) -> None:
         )
 
     app.register_blueprint(bp)
+    # Analytics has an independent blueprint and SQLite store so it can never
+    # affect the immutable scientific-data API above.
+    register_e3_analytics_routes(app, _token)

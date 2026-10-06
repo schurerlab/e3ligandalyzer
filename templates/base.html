@@ -995,6 +995,24 @@ document.querySelector("details").addEventListener("toggle", e => {
 
 
 
+    <script>
+      // Deliberately sends only a controlled event name. Cookies and all
+      // anonymous context stay server-side; no scientific page/form content
+      // is ever placed in this request.
+      document.addEventListener("click", function (event) {
+        const link = event.target.closest("a[href]");
+        if (!link) return;
+        const href = link.getAttribute("href") || "";
+        const type = href.includes("/download/") ? "export_generated" :
+          (href.includes("protacbuilder") ? "companion_handoff" : "");
+        if (!type) return;
+        fetch("/analytics/event", {
+          method: "POST", keepalive: true,
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({event_type: type})
+        }).catch(function () {});
+      });
+    </script>
     {% block page_scripts %}{% endblock %}
 </body>
 </html>

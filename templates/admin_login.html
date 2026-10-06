@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E3 Ligandalyzer Admin</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon2.png') }}">
+  <style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#071827;color:#102a43;display:grid;min-height:100vh;place-items:center}.card{background:#fff;width:min(420px,calc(100vw - 40px));border-radius:16px;padding:34px;box-sizing:border-box;box-shadow:0 20px 55px #0008}.brand{display:flex;gap:12px;align-items:center;color:#073b4c}.brand img{width:40px;height:40px}.brand h1{font-size:20px;margin:0}.brand p{margin:3px 0 22px;color:#486581;font-size:14px}label{font-weight:700;font-size:14px;display:block;margin:16px 0 6px}input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #9fb3c8;border-radius:7px;font-size:16px}button{margin-top:23px;width:100%;padding:12px;background:#008c95;color:#fff;border:0;border-radius:7px;font-weight:800;font-size:15px;cursor:pointer}.error{background:#fff1f0;color:#9b1c1c;padding:10px;border-radius:6px;font-size:14px}</style>
+</head><body><form class="card" method="post" autocomplete="off">
+  <div class="brand"><img src="{{ url_for('static', filename='images/favicon2.png') }}" alt=""><div><h1>E3 Ligandalyzer</h1><p>Restricted analytics administration</p></div></div>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <label for="email">Administrator email</label><input id="email" type="email" name="email" required autofocus>
+  <label for="password">Password</label><input id="password" type="password" name="password" required>
+  <button type="submit">Sign in</button>
+</form></body></html>

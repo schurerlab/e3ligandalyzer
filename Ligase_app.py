@@ -11,6 +11,7 @@ from Ligases import randy_client
 from e3_database import E3DatabaseError, configured_asset_root, get_database
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Request
+from e3_analytics import register_analytics
 
 import random
 
@@ -117,7 +118,11 @@ def create_app():
     # Register your API blueprint normally (no prefix)
     app.register_blueprint(ligases_bp, url_prefix="/api")
 
-    app.secret_key = os.urandom(24)
+    # A stable, environment-provided key is required for server-side admin
+    # sessions to survive worker restarts.  Development retains a safe fallback.
+    app.secret_key = os.environ.get("FLASK_SECRET_KEY") or os.environ.get("SECRET_KEY") or os.urandom(24)
+    app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
+    register_analytics(app)
 
     @app.context_processor
     def inject_protac_builder_config():
