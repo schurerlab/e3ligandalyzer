@@ -73,7 +73,7 @@ def _get(path):
             headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=(5, 20),
         )
     except requests.RequestException as exc:
-        logger.info("E3 analytics delivery failed: %s", type(exc).__name__)
+        logger.warning("E3 analytics delivery failed: %s", type(exc).__name__)
         return None
 
 
