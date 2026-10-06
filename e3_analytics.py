@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import secrets
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from functools import wraps
 from urllib.parse import urlparse
@@ -16,6 +17,7 @@ SAFE_EVENTS = {
 }
 SAFE_FAILURE_STAGES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
 PUBLIC_EXCLUDED_PREFIXES = ("/admin", "/api", "/static", "/health", "/analytics")
+_EVENT_SENDER = ThreadPoolExecutor(max_workers=2, thread_name_prefix="e3-analytics")
 
 
 def _base_url():
@@ -67,10 +69,9 @@ def _get(path):
     try:
         return requests.post(
             f"{_base_url()}/analytics/{path.lstrip('/')}", json=payload,
-            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=1.5,
+            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=5,
         )
     except requests.RequestException:
-        current_app.logger.info("E3 analytics receiver unavailable")
         return None
 
 
@@ -86,7 +87,8 @@ def track(event_type, *, path=None, failure_stage=None):
     }
     if failure_stage in SAFE_FAILURE_STAGES:
         payload["failure_stage"] = failure_stage
-    _post("events", payload)
+    # Tracking must never delay or break a scientific workflow/page response.
+    _EVENT_SENDER.submit(_post, "events", payload)
 
 
 def admin_required(view):

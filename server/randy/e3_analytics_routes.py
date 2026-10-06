@@ -95,7 +95,7 @@ def register_e3_analytics_routes(app, token_getter):
         clause, params = ("", ()) if not since else (" WHERE occurred_at >= ?", (since,))
         with sqlite3.connect(_db_path()) as db:
             db.row_factory = sqlite3.Row
-            metrics = dict(db.execute("SELECT COUNT(DISTINCT visitor_id) visitors, COUNT(DISTINCT session_id) sessions, SUM(event_type='page_view') page_views FROM e3_ligandalyzer_events" + clause, params).fetchone())
+            metrics = dict(db.execute("SELECT COUNT(DISTINCT visitor_id) visitors, COUNT(DISTINCT session_id) sessions, COALESCE(SUM(event_type='page_view'), 0) page_views FROM e3_ligandalyzer_events" + clause, params).fetchone())
             daily = [dict(r) for r in db.execute("SELECT substr(occurred_at,1,10) date, SUM(event_type='page_view') page_views, COUNT(DISTINCT visitor_id) visitors FROM e3_ligandalyzer_events" + clause + " GROUP BY 1 ORDER BY 1", params)]
             grouped = lambda select: [dict(r) for r in db.execute(select + clause + " GROUP BY 1 ORDER BY 2 DESC LIMIT 30", params)]
             event_sessions = {r["event_type"]: r["sessions"] for r in db.execute("SELECT event_type, COUNT(DISTINCT session_id) sessions FROM e3_ligandalyzer_events" + clause + " GROUP BY event_type", params)}
