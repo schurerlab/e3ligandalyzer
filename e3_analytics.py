@@ -62,6 +62,16 @@ def _referrer():
 def _post(path, payload):
     if not _enabled():
         return None
+    try:
+        return requests.post(
+            f"{_base_url()}/analytics/{path.lstrip('/')}", json=payload,
+            # Match the established RANDY client tolerance. Public page views
+            # are sent by a post-load request, so this cannot delay page use.
+            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=(10, 45),
+        )
+    except requests.RequestException as exc:
+        logger.warning("E3 analytics delivery failed: %s", type(exc).__name__)
+        return _FailedDelivery(type(exc).__name__)
 
 
 def _get(path):
@@ -75,16 +85,6 @@ def _get(path):
     except requests.RequestException:
         current_app.logger.info("E3 analytics receiver unavailable")
         return None
-    try:
-        return requests.post(
-            f"{_base_url()}/analytics/{path.lstrip('/')}", json=payload,
-            # Match the established RANDY client tolerance. Public page views
-            # are sent by a post-load request, so this cannot delay page use.
-            headers={"Authorization": f"Bearer {_token()}", "User-Agent": "e3-ligandalyzer-analytics/1.0"}, timeout=(10, 45),
-        )
-    except requests.RequestException as exc:
-        logger.warning("E3 analytics delivery failed: %s", type(exc).__name__)
-        return _FailedDelivery(type(exc).__name__)
 
 
 def track(event_type, *, path=None, failure_stage=None, background=True):
