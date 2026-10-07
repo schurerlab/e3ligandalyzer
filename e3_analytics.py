@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import secrets
 import logging
+import re
 import threading
 from datetime import timedelta
 from functools import wraps
@@ -17,6 +18,7 @@ SAFE_EVENTS = {
     "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff",
 }
 SAFE_FAILURE_STAGES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
+SAFE_HANDOFF_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
 # Features are deliberately paired to the broad event families.  This is the
 # complete browser/server contract; it prevents a page from smuggling user or
 # scientific values into the analytics store.
@@ -99,10 +101,12 @@ def _get(path):
         return None
 
 
-def track(event_type, *, feature=None, path=None, failure_stage=None, background=True):
+def track(event_type, *, feature=None, handoff_id=None, path=None, failure_stage=None, background=True):
     if event_type not in SAFE_EVENTS and event_type != "page_view":
         return
     if feature is not None and feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
+        return
+    if handoff_id is not None and (event_type != "companion_handoff" or not SAFE_HANDOFF_ID.fullmatch(str(handoff_id))):
         return
     payload = {
         "event_id": secrets.token_urlsafe(24), "event_type": event_type,
@@ -115,6 +119,8 @@ def track(event_type, *, feature=None, path=None, failure_stage=None, background
         payload["failure_stage"] = failure_stage
     if feature:
         payload["feature"] = feature
+    if handoff_id:
+        payload["handoff_id"] = handoff_id
     if background:
         # Tracking must never delay or break a scientific workflow/page response.
         threading.Thread(target=_post, args=("events", payload), daemon=True, name="e3-analytics-event").start()
@@ -157,12 +163,14 @@ def register_analytics(app):
         event_type, feature = body.get("event_type"), body.get("feature")
         if event_type not in SAFE_EVENTS or feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
             return jsonify({"ok": False}), 400
-        failure_stage = body.get("failure_stage")
+        failure_stage, handoff_id = body.get("failure_stage"), body.get("handoff_id")
         if failure_stage is not None and failure_stage not in SAFE_FAILURE_STAGES:
+            return jsonify({"ok": False}), 400
+        if handoff_id is not None and (event_type != "companion_handoff" or not SAFE_HANDOFF_ID.fullmatch(str(handoff_id))):
             return jsonify({"ok": False}), 400
         # Browser-triggered workflow events are safe and controlled. Page views
         # are recorded exclusively by the server's after-request tracker.
-        result = track(event_type, feature=feature, failure_stage=failure_stage, background=False)
+        result = track(event_type, feature=feature, handoff_id=handoff_id, failure_stage=failure_stage, background=False)
         # Browser analytics is best effort: failure must never make a user
         # action appear failed, including a Builder navigation.
         if result is None or not result.ok:

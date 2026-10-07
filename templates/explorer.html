@@ -1399,10 +1399,11 @@ function enableLigandInfoHover() {
         // 💠 Generate SDF
         tip.querySelector(".sdf-btn").addEventListener("click", (e) => {
           e.stopPropagation();
-          let sdfURL = `/api/render-sdf/${ligase}/${pdbFileName}?download=1`;
-          if (!sdfURL.endsWith(".pdb")) sdfURL += ".pdb";
+          const sdfFilename = pdbFileName.endsWith(".pdb") ? pdbFileName : `${pdbFileName}.pdb`;
+          const sdfURL = new URL(`/api/render-sdf/${ligase}/${sdfFilename}`, window.location.origin);
+          sdfURL.searchParams.set("download", "1");
           const a = document.createElement("a");
-          a.href = sdfURL;
+          a.href = sdfURL.toString();
           a.download = pdbFileName.replace(".pdb", ".sdf");
           document.body.appendChild(a);
           a.click();

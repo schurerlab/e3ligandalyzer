@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from flask import Flask
+from flask import Flask, Response
 
 os.environ.setdefault("E3_DATABASE_PATH", "data/does-not-exist.sqlite")
 
@@ -66,3 +66,53 @@ def test_randy_receiver_rejects_scientific_values_and_rolls_up_feature(monkeypat
     payload["event_id"] = "d" * 24
     payload["feature"] = "CCO"
     assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).status_code == 400
+
+
+def test_handoff_id_is_validated_and_deduplicated(monkeypatch, tmp_path):
+    from server.randy.e3_analytics_routes import register_e3_analytics_routes
+    monkeypatch.setenv("E3_ANALYTICS_DB_PATH", str(tmp_path / "analytics.sqlite3"))
+    receiver = Flask(__name__)
+    register_e3_analytics_routes(receiver, lambda: "token")
+    client, headers = receiver.test_client(), {"Authorization": "Bearer token"}
+    payload = {"event_id": "a" * 24, "visitor_id": "b" * 24, "session_id": "c" * 24, "event_type": "companion_handoff", "feature": "builder_from_explorer", "path": "/explorer", "referrer": "direct", "device": "desktop", "handoff_id": "f77c2a9c-9a09-4c88-8aa9-80be738ab123"}
+    assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).json["stored"] is True
+    payload["event_id"] = "d" * 24
+    assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).json["duplicate"] is True
+    payload["event_id"], payload["handoff_id"] = "e" * 24, "not-a-uuid"
+    assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).status_code == 400
+
+
+def test_explorer_tooltip_sdf_url_builds_filename_before_query():
+    text = (os.path.join(os.path.dirname(__file__), "..", "templates", "explorer.html"))
+    source = open(text, encoding="utf-8").read()
+    assert "const sdfFilename = pdbFileName.endsWith(\".pdb\")" in source
+    assert "sdfURL.searchParams.set(\"download\", \"1\")" in source
+    assert "?download=1.pdb" not in source
+
+
+@pytest.mark.parametrize("endpoint, feature", [
+    ("serve_ligase_pdb", "structure_pdb"),
+    ("serve_sdf_file", "structure_sdf"),
+])
+def test_remote_proxy_export_tracks_only_after_success(monkeypatch, endpoint, feature):
+    from Ligases import routes
+    app, recorded = Flask(__name__), []
+    monkeypatch.setattr(routes.randy_client, "remote_enabled", lambda: True)
+    monkeypatch.setattr(routes.randy_client, "proxy_file", lambda *args, **kwargs: Response("asset", status=200))
+    monkeypatch.setattr(routes, "track", lambda *args, **kwargs: recorded.append((args, kwargs)))
+    with app.test_request_context("/asset?download=1"):
+        response = getattr(routes, endpoint)("VHL", "example.pdb")
+    assert response.status_code == 200
+    assert recorded == [(('export_generated',), {'feature': feature})]
+
+
+def test_remote_proxy_failure_does_not_track_export(monkeypatch):
+    from Ligases import routes
+    app, recorded = Flask(__name__), []
+    monkeypatch.setattr(routes.randy_client, "remote_enabled", lambda: True)
+    monkeypatch.setattr(routes.randy_client, "proxy_file", lambda *args, **kwargs: (_ for _ in ()).throw(routes.requests.HTTPError("missing")))
+    monkeypatch.setattr(routes, "track", lambda *args, **kwargs: recorded.append((args, kwargs)))
+    with app.test_request_context("/asset?download=1"):
+        response = routes.serve_sdf_file("VHL", "example.pdb")
+    assert response.status_code >= 400
+    assert recorded == []

@@ -24,7 +24,8 @@ SAFE_EVENT_FEATURES = {
 }
 SAFE_PATH = re.compile(r"^/[A-Za-z0-9_./-]{0,255}$")
 SAFE_ID = re.compile(r"^[A-Za-z0-9_-]{12,100}$")
-SAFE_PAYLOAD_KEYS = {"event_id", "event_type", "visitor_id", "session_id", "path", "referrer", "device", "ip_address", "failure_stage", "feature"}
+SAFE_HANDOFF_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
+SAFE_PAYLOAD_KEYS = {"event_id", "event_type", "visitor_id", "session_id", "path", "referrer", "device", "ip_address", "failure_stage", "feature", "handoff_id"}
 
 
 def _db_path():
@@ -38,7 +39,7 @@ def _init():
         CREATE TABLE IF NOT EXISTS e3_ligandalyzer_events (
           event_id TEXT PRIMARY KEY, occurred_at TEXT NOT NULL, visitor_id TEXT NOT NULL, session_id TEXT NOT NULL,
           path TEXT NOT NULL, referrer TEXT NOT NULL, device TEXT NOT NULL, country_code TEXT, country_name TEXT,
-          latitude REAL, longitude REAL, event_type TEXT NOT NULL, failure_stage TEXT, feature TEXT
+          latitude REAL, longitude REAL, event_type TEXT NOT NULL, failure_stage TEXT, feature TEXT, handoff_id TEXT
         );
         CREATE INDEX IF NOT EXISTS e3_events_time ON e3_ligandalyzer_events(occurred_at);
         CREATE INDEX IF NOT EXISTS e3_events_type ON e3_ligandalyzer_events(event_type);
@@ -47,6 +48,9 @@ def _init():
         columns = {row[1] for row in db.execute("PRAGMA table_info(e3_ligandalyzer_events)")}
         if "feature" not in columns:
             db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN feature TEXT")
+        if "handoff_id" not in columns:
+            db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN handoff_id TEXT")
+        db.execute("CREATE UNIQUE INDEX IF NOT EXISTS e3_events_handoff_id ON e3_ligandalyzer_events(handoff_id) WHERE handoff_id IS NOT NULL")
 
 
 def _geo(ip):
@@ -88,6 +92,9 @@ def register_e3_analytics_routes(app, token_getter):
         feature = str(body.get("feature") or "") or None
         if event_type != "page_view" and feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
             return jsonify({"ok": False, "error": "Invalid analytics feature."}), 400
+        handoff_id = str(body.get("handoff_id") or "") or None
+        if handoff_id is not None and (event_type != "companion_handoff" or not SAFE_HANDOFF_ID.fullmatch(handoff_id)):
+            return jsonify({"ok": False, "error": "Invalid handoff identifier."}), 400
         failure = str(body.get("failure_stage") or "") or None
         if failure and failure not in SAFE_FAILURES:
             return jsonify({"ok": False, "error": "Invalid failure stage."}), 400
@@ -96,11 +103,10 @@ def register_e3_analytics_routes(app, token_getter):
         _init()
         with sqlite3.connect(_db_path()) as db:
             before = db.total_changes
-            db.execute("""INSERT INTO e3_ligandalyzer_events (event_id, occurred_at, visitor_id, session_id, path, referrer, device, country_code, country_name, latitude, longitude, event_type, failure_stage, feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                       ON CONFLICT(event_id) DO NOTHING""", (
+            db.execute("""INSERT OR IGNORE INTO e3_ligandalyzer_events (event_id, occurred_at, visitor_id, session_id, path, referrer, device, country_code, country_name, latitude, longitude, event_type, failure_stage, feature, handoff_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )""", (
                 body["event_id"], datetime.now(timezone.utc).isoformat(), body["visitor_id"], body["session_id"], path,
                 str(body.get("referrer") or "direct")[:255], str(body.get("device") if body.get("device") in {"desktop", "mobile", "tablet"} else "desktop"),
-                country_code, country_name, latitude, longitude, event_type, failure, feature,
+                country_code, country_name, latitude, longitude, event_type, failure, feature, handoff_id,
             ))
             stored = db.total_changes > before
         return jsonify({"ok": True, "stored": stored, "duplicate": not stored})

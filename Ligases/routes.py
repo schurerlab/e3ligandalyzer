@@ -1213,10 +1213,13 @@ def serve_ligase_pdb(ligase, filename):
       4) Debug output for all steps
     """
     if randy_client.remote_enabled():
-        return randy_client.proxy_file(
+        response = randy_client.proxy_file(
             f"file/pdb/{randy_client.quote_part(ligase)}/{randy_client.quote_path(filename)}",
             mimetype="chemical/x-pdb",
         )
+        if request.args.get("download") == "1":
+            track("export_generated", feature="structure_pdb")
+        return response
 
     # Local V1 mode has no filename inference.  Callers without an exact
     # instance ID may still request a known filename, but a missing basename
@@ -1862,10 +1865,13 @@ def serve_sdf_file(ligase, filename):
                 f"{randy_client.quote_path(candidate_filename)}"
             )
             try:
-                return randy_client.proxy_file(
+                response = randy_client.proxy_file(
                     remote_path,
                     mimetype="chemical/x-mdl-sdfile",
                 )
+                if request.args.get("download") == "1":
+                    track("export_generated", feature="structure_sdf")
+                return response
             except requests.HTTPError as exc:
                 status_code = exc.response.status_code if exc.response is not None else 502
                 if status_code == 404:

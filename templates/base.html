@@ -999,9 +999,10 @@ document.querySelector("details").addEventListener("toggle", e => {
       // Only controlled enum values are sent. Never add scientific content,
       // form values, identifiers, or URLs to this payload.
       window.E3Analytics = {
-        track(eventType, feature, failureStage) {
+        track(eventType, feature, failureStage, handoffId) {
           const body = {event_type: eventType, feature: feature};
           if (failureStage) body.failure_stage = failureStage;
+          if (handoffId) body.handoff_id = handoffId;
           try {
             const encoded = JSON.stringify(body);
             if (navigator.sendBeacon) {
@@ -1011,9 +1012,15 @@ document.querySelector("details").addEventListener("toggle", e => {
             }
           } catch (_) {}
         },
+        _handoffs: new Set(),
         builderUrl(base, sessionId, origin) {
           const handoffId = (crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join(""));
-          this.track("companion_handoff", origin);
+          // A UUID is generated once per successful preparation. The set
+          // makes accidental reuse of an ID unable to double-count.
+          if (!this._handoffs.has(handoffId)) {
+            this._handoffs.add(handoffId);
+            this.track("companion_handoff", origin, null, handoffId);
+          }
           const url = new URL("/builder", base);
           // session remains the existing scientific transfer mechanism.  Only
           // the four attribution values below are analytics-safe.
