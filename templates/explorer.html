@@ -1336,7 +1336,7 @@ function enableLigandInfoHover() {
         else if (pdbId && (ligand || ligName)) pdbFileName = `${pdbId}_${ligand || ligName}${variant ? "_" + variant : ""}.pdb`;
         else pdbFileName = `${ligName}.pdb`;
 
-        const pdbDownloadURL = `/api/Ligases/${ligase}/PDB/${pdbFileName}`;
+        const pdbDownloadURL = `/api/Ligases/${ligase}/PDB/${pdbFileName}?download=1`;
 
         // 🧱 Tooltip inner HTML (with PROTAC Builder integration)
         tip.innerHTML = `
@@ -1399,7 +1399,7 @@ function enableLigandInfoHover() {
         // 💠 Generate SDF
         tip.querySelector(".sdf-btn").addEventListener("click", (e) => {
           e.stopPropagation();
-          let sdfURL = `/api/render-sdf/${ligase}/${pdbFileName}`;
+          let sdfURL = `/api/render-sdf/${ligase}/${pdbFileName}?download=1`;
           if (!sdfURL.endsWith(".pdb")) sdfURL += ".pdb";
           const a = document.createElement("a");
           a.href = sdfURL;
@@ -1560,7 +1560,7 @@ async function handleProtacConfirm() {
   const sessionId = await convertAtomToV_backend(atomIndex, skipModify);
   if (!sessionId) return;
 
-  window.open(`${window.PROTACSUITE}/builder?session=${sessionId}`, "_blank");
+  window.open(window.E3Analytics.builderUrl(window.PROTACSUITE, sessionId, "builder_from_explorer"), "_blank");
 
   document.getElementById("protac-popup").classList.add("hidden");
 }
@@ -1579,7 +1579,7 @@ async function openProtacPopupFromPage() {
 
 function downloadPDB() {
   const a = document.createElement("a");
-  a.href = `/Ligases/${window.currentLigase}/PDB/${window.currentPDB}`;
+  a.href = `/api/Ligases/${window.currentLigase}/PDB/${window.currentPDB}?download=1`;
   a.download = window.currentPDB;
   a.click();
 }
@@ -1587,7 +1587,7 @@ function downloadPDB() {
 
 function downloadSDF() {
   const a = document.createElement("a");
-  a.href = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}`;
+  a.href = `/api/render-sdf/${window.currentLigase}/${window.currentPDB}?download=1`;
   a.download = window.currentPDB.replace(".pdb", ".sdf");
   a.click();
 }
@@ -1608,7 +1608,7 @@ async function sendToProtacBuilder(modifiedSDF) {
   });
 
   const { sessionId } = await uploadResponse.json();
-  window.open(`${window.PROTACSUITE}/builder?session=${sessionId}`, "_blank");
+  window.open(window.E3Analytics.builderUrl(window.PROTACSUITE, sessionId, "builder_from_explorer"), "_blank");
 }
 
 
@@ -1629,6 +1629,8 @@ async function useLigaseRecruiterFromTooltip(pdbFileName, ligase) {
     }
 
     const sdfText = await res.text();
+    window.E3Analytics.track("workflow_started", "recruiter_builder_preparation");
+    window.E3Analytics.track("results_viewed", "attachment_context");
     openProtacPopup(sdfText);
 }
 

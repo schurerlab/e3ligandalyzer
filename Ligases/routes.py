@@ -26,6 +26,7 @@ from flask import Blueprint, jsonify, request, send_file, send_from_directory, c
 import pandas as pd
 from Ligases import randy_client
 from Ligases import shipment_store
+from e3_analytics import track
 from e3_database import (
     E3DatabaseError, configured_asset_root, configured_structural_asset_root, configured_release_root,
     get_database, release_bundle_info,
@@ -1223,6 +1224,8 @@ def serve_ligase_pdb(ligase, filename):
     pdb_dir = (_download_ligases_root() / ligase / "PDB").resolve()
     candidate = (pdb_dir / Path(filename).name).resolve()
     if pdb_dir.is_dir() and candidate.parent == pdb_dir and candidate.is_file():
+        if request.args.get("download") == "1":
+            track("export_generated", feature="structure_pdb")
         return send_from_directory(pdb_dir, candidate.name, mimetype="chemical/x-pdb")
     return jsonify({"error": "Exact PDB filename not found.", "ligase": ligase, "filename": filename}), 404
 
@@ -1917,6 +1920,8 @@ def serve_sdf_file(ligase, filename):
     sdf_dir = (_download_ligases_root() / ligase / "SDF_4Download").resolve()
     candidate = (sdf_dir / Path(normalized_filename).name).resolve()
     if sdf_dir.is_dir() and candidate.parent == sdf_dir and candidate.is_file():
+        if request.args.get("download") == "1":
+            track("export_generated", feature="structure_sdf")
         return send_from_directory(sdf_dir, candidate.name, mimetype="chemical/x-mdl-sdfile", as_attachment=True)
     return jsonify({"error": "Exact SDF filename not found.", "ligase": ligase, "filename": normalized_filename}), 404
 
@@ -2816,6 +2821,7 @@ def convert_atom_to_v():
         # LOAD INPUT FIELDS
         # ---------------------------
         data = request.get_json(silent=True) or {}
+        track("analysis_submitted", feature="attachment_vector_preparation")
         sdf_text = data["sdf"]
         atom_index = int(data["atom_index"])
         recruiter = data.get("recruiter") or data.get("RECRUITER") or "UNKNOWN"
@@ -2838,6 +2844,7 @@ def convert_atom_to_v():
         print("🧪 Parsing incoming SDF...")
         mol = Chem.MolFromMolBlock(sdf_text, sanitize=False)
         if mol is None:
+            track("analysis_failed", feature="attachment_vector_preparation", failure_stage="input_validation")
             print("❌ RDKit could NOT parse SDF!!!")
             return jsonify({"error": "Unable to parse SDF"}), 400
 
@@ -2864,6 +2871,7 @@ def convert_atom_to_v():
                 print(f"🧬 Converted atom index {atom_index} → Vanadium (23)")
                 modified = 1
             except Exception as e:
+                track("analysis_failed", feature="attachment_vector_preparation", failure_stage="analysis")
                 print(f"❌ Atom conversion failure: {e}")
                 traceback.print_exc()
                 return jsonify({"error": f"Atom conversion failed: {e}"}), 500
@@ -2955,6 +2963,7 @@ def convert_atom_to_v():
             print(f"⚠️ Shipment event logging failed: {shipment_error}")
 
         print("✅ [convert_atom_to_v] COMPLETED")
+        track("analysis_completed", feature="attachment_vector_preparation")
         print("==============================\n")
 
         return jsonify({
@@ -2966,6 +2975,7 @@ def convert_atom_to_v():
         })
 
     except Exception as e:
+        track("analysis_failed", feature="attachment_vector_preparation", failure_stage="analysis")
         print(f"❌ FATAL ERROR in convert_atom_to_v: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

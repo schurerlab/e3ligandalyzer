@@ -74,7 +74,11 @@ feather.replace();
 document.addEventListener("DOMContentLoaded", async () => {
   await populateFilters();
   await loadFeaturedRecruiters();
-  document.getElementById("apply-filters").addEventListener("click", loadFeaturedRecruiters);
+  document.getElementById("apply-filters").addEventListener("click", () => {
+    window.e3FilterRequested = true;
+    window.E3Analytics.track("workflow_started", "recruiter_discovery");
+    loadFeaturedRecruiters();
+  });
 });
 
 async function populateFilters() {
@@ -102,6 +106,7 @@ async function populateFilters() {
 }
 
 async function loadFeaturedRecruiters() {
+  if (window.e3FilterRequested) window.E3Analytics.track("analysis_submitted", "recruiter_filter");
   try {
     const ligase = document.getElementById("ligase-filter").value;
     const scaffold_class = document.getElementById("scaffold-filter").value;
@@ -137,8 +142,16 @@ async function loadFeaturedRecruiters() {
 
     // 🚀 all files are now valid — no filtering needed
     renderRecruiterPlot(processed);
+    if (window.e3FilterRequested) {
+      window.E3Analytics.track("analysis_completed", "recruiter_filter");
+      window.e3FilterRequested = false;
+    }
 
   } catch (err) {
+    if (window.e3FilterRequested) {
+      window.E3Analytics.track("analysis_failed", "recruiter_filter", "analysis");
+      window.e3FilterRequested = false;
+    }
     console.error("Error loading featured recruiters:", err);
   }
 }

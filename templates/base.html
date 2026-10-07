@@ -996,22 +996,31 @@ document.querySelector("details").addEventListener("toggle", e => {
 
 
     <script>
-      // Deliberately sends only a controlled event name. Cookies and all
-      // anonymous context stay server-side; no scientific page/form content
-      // is ever placed in this request.
-      document.addEventListener("click", function (event) {
-        const link = event.target.closest("a[href]");
-        if (!link) return;
-        const href = link.getAttribute("href") || "";
-        const type = href.includes("/download/") ? "export_generated" :
-          (href.includes("protacbuilder") ? "companion_handoff" : "");
-        if (!type) return;
-        fetch("/analytics/event", {
-          method: "POST", keepalive: true,
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({event_type: type})
-        }).catch(function () {});
-      });
+      // Only controlled enum values are sent. Never add scientific content,
+      // form values, identifiers, or URLs to this payload.
+      window.E3Analytics = {
+        track(eventType, feature, failureStage) {
+          const body = {event_type: eventType, feature: feature};
+          if (failureStage) body.failure_stage = failureStage;
+          try {
+            const encoded = JSON.stringify(body);
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon("/analytics/event", new Blob([encoded], {type: "application/json"}));
+            } else {
+              fetch("/analytics/event", {method: "POST", keepalive: true, headers: {"Content-Type": "application/json"}, body: encoded}).catch(() => {});
+            }
+          } catch (_) {}
+        },
+        builderUrl(base, sessionId, origin) {
+          const handoffId = (crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, "0")).join(""));
+          this.track("companion_handoff", origin);
+          const url = new URL("/builder", base);
+          // session remains the existing scientific transfer mechanism.  Only
+          // the four attribution values below are analytics-safe.
+          url.search = new URLSearchParams({session: sessionId, utm_source: "e3_ligandalyzer", utm_medium: "ecosystem_referral", utm_content: origin, handoff_id: handoffId});
+          return url.toString();
+        }
+      };
     </script>
     {% block page_scripts %}{% endblock %}
 </body>

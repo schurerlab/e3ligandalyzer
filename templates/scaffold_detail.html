@@ -291,6 +291,7 @@ async function renderScaffoldSVG(smiles) {
 
 function copyScaffoldSmiles(smiles) {
   navigator.clipboard.writeText(smiles);
+  window.E3Analytics.track("export_generated", "scaffold_smiles_copy");
   alert("SMILES copied!");
 }
 

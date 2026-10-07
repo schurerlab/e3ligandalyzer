@@ -11,7 +11,7 @@ from Ligases import randy_client
 from e3_database import E3DatabaseError, configured_asset_root, get_database
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Request
-from e3_analytics import register_analytics
+from e3_analytics import register_analytics, track
 
 import random
 
@@ -143,6 +143,7 @@ def create_app():
 
     @app.route("/explorer")
     def explorer():
+        track("workflow_started", feature="structure_explorer")
         return render_template("explorer.html")
 
     @app.route("/scaffolds")
@@ -189,6 +190,7 @@ def create_app():
         if resolved and resolved["kind"] == "entity":
             return redirect(f"/recruiter/{resolved['entity']['Recruiter_ID']}", code=302)
         if resolved and resolved["kind"] == "instance":
+            track("results_viewed", feature="ligand_structure_page")
             return render_template(
                 "ligand.html",
                 initial_instance_id=resolved["instance"]["Recruiter_Instance_ID"],
@@ -207,6 +209,7 @@ def create_app():
         entity = database.recruiter_entity(recruiter_id)
         if not entity:
             return render_template("missing_data.html"), 404
+        track("results_viewed", feature="recruiter_record")
         return render_template(
             "recruiter.html",
             recruiter=entity,
@@ -220,6 +223,7 @@ def create_app():
         instance = database.recruiter_instance(instance_id)
         if not instance:
             return render_template("missing_data.html"), 404
+        track("results_viewed", feature="structural_instance")
         return redirect(f"/ligand/{instance['Recruiter_Instance_ID']}", code=302)
 
 
@@ -303,6 +307,7 @@ def create_app():
 
     @app.route("/scaffold-network-full")
     def scaffold_network_full_page():
+        track("results_viewed", feature="scaffold_network")
         return render_template("scaffold_network_full.html")
 
     @app.route("/scaffolds/<scaffold_id>")
@@ -312,6 +317,7 @@ def create_app():
 
         if not row:
             return render_template("missing_data.html")
+        track("results_viewed", feature="scaffold_record")
 
         recruiters = database.scaffold_recruiters(scaffold_id)
 

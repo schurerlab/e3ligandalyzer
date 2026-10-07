@@ -824,6 +824,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("open-network-btn");
   if (btn) {
     btn.addEventListener("click", () => {
+      window.E3Analytics.track("results_viewed", "scaffold_network");
       window.open("/scaffold-network-full", "_blank");
     });
   }

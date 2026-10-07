@@ -17,6 +17,18 @@ SAFE_EVENTS = {
     "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff",
 }
 SAFE_FAILURE_STAGES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
+# Features are deliberately paired to the broad event families.  This is the
+# complete browser/server contract; it prevents a page from smuggling user or
+# scientific values into the analytics store.
+SAFE_EVENT_FEATURES = {
+    "workflow_started": {"recruiter_discovery", "structure_explorer", "recruiter_builder_preparation"},
+    "analysis_submitted": {"recruiter_filter", "attachment_vector_preparation"},
+    "analysis_completed": {"recruiter_filter", "attachment_vector_preparation"},
+    "analysis_failed": {"recruiter_filter", "attachment_vector_preparation"},
+    "results_viewed": {"recruiter_record", "structural_instance", "scaffold_record", "scaffold_network", "ligand_structure_page", "sasa_mapping", "attachment_context"},
+    "export_generated": {"structure_pdb", "structure_sdf", "scaffold_smiles_copy"},
+    "companion_handoff": {"builder_from_explorer", "builder_from_recruiter"},
+}
 PUBLIC_EXCLUDED_PREFIXES = ("/admin", "/api", "/static", "/health", "/analytics")
 logger = logging.getLogger(__name__)
 
@@ -87,8 +99,10 @@ def _get(path):
         return None
 
 
-def track(event_type, *, path=None, failure_stage=None, background=True):
+def track(event_type, *, feature=None, path=None, failure_stage=None, background=True):
     if event_type not in SAFE_EVENTS and event_type != "page_view":
+        return
+    if feature is not None and feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
         return
     payload = {
         "event_id": secrets.token_urlsafe(24), "event_type": event_type,
@@ -99,6 +113,8 @@ def track(event_type, *, path=None, failure_stage=None, background=True):
     }
     if failure_stage in SAFE_FAILURE_STAGES:
         payload["failure_stage"] = failure_stage
+    if feature:
+        payload["feature"] = feature
     if background:
         # Tracking must never delay or break a scientific workflow/page response.
         threading.Thread(target=_post, args=("events", payload), daemon=True, name="e3-analytics-event").start()
@@ -138,15 +154,20 @@ def register_analytics(app):
     @bp.route("/analytics/event", methods=["POST"])
     def public_event():
         body = request.get_json(silent=True) or {}
-        event_type = body.get("event_type")
-        if event_type not in SAFE_EVENTS:
+        event_type, feature = body.get("event_type"), body.get("feature")
+        if event_type not in SAFE_EVENTS or feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
+            return jsonify({"ok": False}), 400
+        failure_stage = body.get("failure_stage")
+        if failure_stage is not None and failure_stage not in SAFE_FAILURE_STAGES:
             return jsonify({"ok": False}), 400
         # Browser-triggered workflow events are safe and controlled. Page views
         # are recorded exclusively by the server's after-request tracker.
-        result = track(event_type, failure_stage=body.get("failure_stage"), background=False)
+        result = track(event_type, feature=feature, failure_stage=failure_stage, background=False)
+        # Browser analytics is best effort: failure must never make a user
+        # action appear failed, including a Builder navigation.
         if result is None or not result.ok:
             logger.warning("E3 analytics receiver response: %s", getattr(result, "status_code", "no-response"))
-            return jsonify({"ok": False, "error": "Analytics temporarily unavailable."}), 503
+            return jsonify({"ok": True, "delivered": False}), 202
         return jsonify({"ok": True}), 202
 
     @bp.route("/admin/login", methods=["GET", "POST"])
