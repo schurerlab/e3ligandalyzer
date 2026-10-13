@@ -18,6 +18,8 @@ SAFE_EVENTS = {
     "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff",
 }
 SAFE_FAILURE_STAGES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
+SAFE_FAILURE_REASONS = {"timeout", "remote_unavailable", "missing_artifact", "output_validation", "conversion_failed", "permission_denied", "internal_error", "unknown"}
+SAFE_OUTCOMES = {"success", "empty", "failed"}
 SAFE_HANDOFF_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
 # Features are deliberately paired to the broad event families.  This is the
 # complete browser/server contract; it prevents a page from smuggling user or
@@ -101,12 +103,23 @@ def _get(path):
         return None
 
 
-def track(event_type, *, feature=None, handoff_id=None, path=None, failure_stage=None, background=True):
+def track(event_type, *, feature=None, handoff_id=None, path=None, failure_stage=None,
+          failure_reason=None, duration_ms=None, outcome_status=None, background=True):
     if event_type not in SAFE_EVENTS and event_type != "page_view":
         return
     if feature is not None and feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
         return
     if handoff_id is not None and (event_type != "companion_handoff" or not SAFE_HANDOFF_ID.fullmatch(str(handoff_id))):
+        return
+    if failure_reason is not None and failure_reason not in SAFE_FAILURE_REASONS:
+        return
+    if outcome_status is not None and outcome_status not in SAFE_OUTCOMES:
+        return
+    try:
+        duration_ms = int(duration_ms) if duration_ms is not None else None
+    except (TypeError, ValueError):
+        return
+    if duration_ms is not None and not 0 <= duration_ms <= 900000:
         return
     payload = {
         "event_id": secrets.token_urlsafe(24), "event_type": event_type,
@@ -117,6 +130,12 @@ def track(event_type, *, feature=None, handoff_id=None, path=None, failure_stage
     }
     if failure_stage in SAFE_FAILURE_STAGES:
         payload["failure_stage"] = failure_stage
+    if failure_reason in SAFE_FAILURE_REASONS:
+        payload["failure_reason"] = failure_reason
+    if duration_ms is not None:
+        payload["duration_ms"] = duration_ms
+    if outcome_status in SAFE_OUTCOMES:
+        payload["outcome_status"] = outcome_status
     if feature:
         payload["feature"] = feature
     if handoff_id:
@@ -153,7 +172,9 @@ def register_analytics(app):
             response.set_cookie("e3_vid", g.analytics_visitor_id, max_age=int(timedelta(days=400).total_seconds()), secure=request.is_secure, httponly=True, samesite="Lax")
         if g.get("analytics_new_session"):
             response.set_cookie("e3_sid", g.analytics_session_id, secure=request.is_secure, httponly=True, samesite="Lax")
-        if response.content_type.startswith("text/html") and response.status_code < 400 and not request.path.startswith(PUBLIC_EXCLUDED_PREFIXES):
+        user_agent = (request.user_agent.string or "").lower()
+        likely_bot = any(token in user_agent for token in ("bot", "crawler", "spider", "slurp", "headless"))
+        if response.content_type.startswith("text/html") and response.status_code < 400 and not likely_bot and not request.path.startswith(PUBLIC_EXCLUDED_PREFIXES):
             track("page_view")
         return response
 
@@ -164,13 +185,20 @@ def register_analytics(app):
         if event_type not in SAFE_EVENTS or feature not in SAFE_EVENT_FEATURES.get(event_type, set()):
             return jsonify({"ok": False}), 400
         failure_stage, handoff_id = body.get("failure_stage"), body.get("handoff_id")
+        failure_reason, outcome_status = body.get("failure_reason"), body.get("outcome_status")
         if failure_stage is not None and failure_stage not in SAFE_FAILURE_STAGES:
             return jsonify({"ok": False}), 400
         if handoff_id is not None and (event_type != "companion_handoff" or not SAFE_HANDOFF_ID.fullmatch(str(handoff_id))):
             return jsonify({"ok": False}), 400
+        if failure_reason is not None and failure_reason not in SAFE_FAILURE_REASONS:
+            return jsonify({"ok": False}), 400
+        if outcome_status is not None and outcome_status not in SAFE_OUTCOMES:
+            return jsonify({"ok": False}), 400
         # Browser-triggered workflow events are safe and controlled. Page views
         # are recorded exclusively by the server's after-request tracker.
-        result = track(event_type, feature=feature, handoff_id=handoff_id, failure_stage=failure_stage, background=False)
+        result = track(event_type, feature=feature, handoff_id=handoff_id, failure_stage=failure_stage,
+                       failure_reason=failure_reason, duration_ms=body.get("duration_ms"),
+                       outcome_status=outcome_status, background=False)
         # Browser analytics is best effort: failure must never make a user
         # action appear failed, including a Builder navigation.
         if result is None or not result.ok:

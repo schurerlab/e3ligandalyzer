@@ -13,6 +13,8 @@ from flask import Blueprint, jsonify, request
 
 SAFE_EVENTS = {"page_view", "workflow_started", "upload_started", "import_started", "analysis_submitted", "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff"}
 SAFE_FAILURES = {"selection", "upload", "input_validation", "analysis", "result_generation", "export", "handoff", "unknown"}
+SAFE_FAILURE_REASONS = {"timeout", "remote_unavailable", "missing_artifact", "output_validation", "conversion_failed", "permission_denied", "internal_error", "unknown"}
+SAFE_OUTCOMES = {"success", "empty", "failed"}
 SAFE_EVENT_FEATURES = {
     "workflow_started": {"recruiter_discovery", "structure_explorer", "recruiter_builder_preparation"},
     "analysis_submitted": {"recruiter_filter", "attachment_vector_preparation"},
@@ -25,7 +27,7 @@ SAFE_EVENT_FEATURES = {
 SAFE_PATH = re.compile(r"^/[A-Za-z0-9_./-]{0,255}$")
 SAFE_ID = re.compile(r"^[A-Za-z0-9_-]{12,100}$")
 SAFE_HANDOFF_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
-SAFE_PAYLOAD_KEYS = {"event_id", "event_type", "visitor_id", "session_id", "path", "referrer", "device", "ip_address", "failure_stage", "feature", "handoff_id"}
+SAFE_PAYLOAD_KEYS = {"event_id", "event_type", "visitor_id", "session_id", "path", "referrer", "device", "ip_address", "failure_stage", "failure_reason", "feature", "handoff_id", "duration_ms", "outcome_status"}
 
 
 def _db_path():
@@ -39,7 +41,8 @@ def _init():
         CREATE TABLE IF NOT EXISTS e3_ligandalyzer_events (
           event_id TEXT PRIMARY KEY, occurred_at TEXT NOT NULL, visitor_id TEXT NOT NULL, session_id TEXT NOT NULL,
           path TEXT NOT NULL, referrer TEXT NOT NULL, device TEXT NOT NULL, country_code TEXT, country_name TEXT,
-          latitude REAL, longitude REAL, event_type TEXT NOT NULL, failure_stage TEXT, feature TEXT, handoff_id TEXT
+          latitude REAL, longitude REAL, event_type TEXT NOT NULL, failure_stage TEXT, failure_reason TEXT, feature TEXT, handoff_id TEXT,
+          duration_ms INTEGER, outcome_status TEXT
         );
         CREATE INDEX IF NOT EXISTS e3_events_time ON e3_ligandalyzer_events(occurred_at);
         CREATE INDEX IF NOT EXISTS e3_events_type ON e3_ligandalyzer_events(event_type);
@@ -50,6 +53,12 @@ def _init():
             db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN feature TEXT")
         if "handoff_id" not in columns:
             db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN handoff_id TEXT")
+        if "failure_reason" not in columns:
+            db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN failure_reason TEXT")
+        if "duration_ms" not in columns:
+            db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN duration_ms INTEGER")
+        if "outcome_status" not in columns:
+            db.execute("ALTER TABLE e3_ligandalyzer_events ADD COLUMN outcome_status TEXT")
         db.execute("CREATE UNIQUE INDEX IF NOT EXISTS e3_events_handoff_id ON e3_ligandalyzer_events(handoff_id) WHERE handoff_id IS NOT NULL")
 
 
@@ -98,15 +107,27 @@ def register_e3_analytics_routes(app, token_getter):
         failure = str(body.get("failure_stage") or "") or None
         if failure and failure not in SAFE_FAILURES:
             return jsonify({"ok": False, "error": "Invalid failure stage."}), 400
+        reason = str(body.get("failure_reason") or "") or None
+        if reason and reason not in SAFE_FAILURE_REASONS:
+            return jsonify({"ok": False, "error": "Invalid failure reason."}), 400
+        outcome = str(body.get("outcome_status") or "") or None
+        if outcome and outcome not in SAFE_OUTCOMES:
+            return jsonify({"ok": False, "error": "Invalid outcome status."}), 400
+        try:
+            duration_ms = int(body["duration_ms"]) if body.get("duration_ms") is not None else None
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "Invalid operation duration."}), 400
+        if duration_ms is not None and not 0 <= duration_ms <= 900000:
+            return jsonify({"ok": False, "error": "Invalid operation duration."}), 400
         # Raw IP is used only here for GeoIP and is never written or logged.
         country_code, country_name, latitude, longitude = _geo(str(body.get("ip_address") or ""))
         _init()
         with sqlite3.connect(_db_path()) as db:
             before = db.total_changes
-            db.execute("""INSERT OR IGNORE INTO e3_ligandalyzer_events (event_id, occurred_at, visitor_id, session_id, path, referrer, device, country_code, country_name, latitude, longitude, event_type, failure_stage, feature, handoff_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )""", (
+            db.execute("""INSERT OR IGNORE INTO e3_ligandalyzer_events (event_id, occurred_at, visitor_id, session_id, path, referrer, device, country_code, country_name, latitude, longitude, event_type, failure_stage, failure_reason, feature, handoff_id, duration_ms, outcome_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )""", (
                 body["event_id"], datetime.now(timezone.utc).isoformat(), body["visitor_id"], body["session_id"], path,
                 str(body.get("referrer") or "direct")[:255], str(body.get("device") if body.get("device") in {"desktop", "mobile", "tablet"} else "desktop"),
-                country_code, country_name, latitude, longitude, event_type, failure, feature, handoff_id,
+                country_code, country_name, latitude, longitude, event_type, failure, reason, feature, handoff_id, duration_ms, outcome,
             ))
             stored = db.total_changes > before
         return jsonify({"ok": True, "stored": stored, "duplicate": not stored})
@@ -120,7 +141,7 @@ def register_e3_analytics_routes(app, token_getter):
         with sqlite3.connect(_db_path()) as db:
             db.row_factory = sqlite3.Row
             metrics = dict(db.execute("SELECT COUNT(DISTINCT visitor_id) visitors, COUNT(DISTINCT session_id) sessions, COALESCE(SUM(event_type='page_view'), 0) page_views FROM e3_ligandalyzer_events" + clause, params).fetchone())
-            daily = [dict(r) for r in db.execute("SELECT substr(occurred_at,1,10) date, SUM(event_type='page_view') page_views, COUNT(DISTINCT visitor_id) visitors FROM e3_ligandalyzer_events" + clause + " GROUP BY 1 ORDER BY 1", params)]
+            daily = [dict(r) for r in db.execute("SELECT substr(occurred_at,1,10) date, SUM(event_type='page_view') page_views, COUNT(DISTINCT visitor_id) visitors, COUNT(DISTINCT session_id) sessions, SUM(event_type='workflow_started') workflow_starts, SUM(event_type='analysis_completed' AND COALESCE(outcome_status,'success') != 'empty') completed, SUM(event_type='export_generated') exports, SUM(event_type='companion_handoff') handoffs FROM e3_ligandalyzer_events" + clause + " GROUP BY 1 ORDER BY 1", params)]
             grouped = lambda select: [dict(r) for r in db.execute(select + clause + " GROUP BY 1 ORDER BY 2 DESC LIMIT 30", params)]
             event_sessions = {r["event_type"]: r["sessions"] for r in db.execute("SELECT event_type, COUNT(DISTINCT session_id) sessions FROM e3_ligandalyzer_events" + clause + " GROUP BY event_type", params)}
             def feature_sessions(features, event_types=None):
@@ -139,18 +160,54 @@ def register_e3_analytics_routes(app, token_getter):
                 ("Attachment-vector preparation completed", feature_sessions(("attachment_vector_preparation",), ("analysis_completed",))),
                 ("Export or Builder handoff", export_handoff),
             ]
-            failures = [dict(r) for r in db.execute("SELECT occurred_at, failure_stage FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " event_type='analysis_failed' ORDER BY occurred_at DESC LIMIT 20", params)]
+            failures = [dict(r) for r in db.execute("SELECT occurred_at, failure_stage, failure_reason, feature FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " event_type='analysis_failed' ORDER BY occurred_at DESC LIMIT 20", params)]
+            workflow_outcomes = [dict(r) for r in db.execute(
+                "SELECT feature, "
+                "SUM(event_type IN ('workflow_started','analysis_submitted')) started, "
+                "SUM(event_type='analysis_completed' AND COALESCE(outcome_status,'success') != 'empty') completed, "
+                "SUM(outcome_status='empty') empty_results, "
+                "SUM(event_type='analysis_failed') failed, "
+                "SUM(event_type='export_generated') exports, "
+                "SUM(event_type='companion_handoff') handoffs "
+                "FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " feature IS NOT NULL GROUP BY feature "
+                "ORDER BY completed DESC, started DESC, exports DESC", params)]
+            all_first_seen = {r[0]: r[1] for r in db.execute("SELECT visitor_id, MIN(occurred_at) FROM e3_ligandalyzer_events GROUP BY visitor_id")}
+            visible_visitors = {r[0] for r in db.execute("SELECT DISTINCT visitor_id FROM e3_ligandalyzer_events" + clause, params)}
+            first_cutoff = since or ""
+            new_visitors = sum(1 for visitor in visible_visitors if not first_cutoff or all_first_seen.get(visitor, "") >= first_cutoff)
+            session_rows = db.execute("SELECT session_id, SUM(event_type='page_view') pages, SUM(event_type IN ('analysis_submitted','analysis_completed','results_viewed','export_generated','companion_handoff')) research FROM e3_ligandalyzer_events" + clause + " GROUP BY session_id", params).fetchall()
+            engaged_sessions = sum(int(row[1] or 0) >= 2 for row in session_rows)
+            research_sessions = sum(int(row[2] or 0) > 0 for row in session_rows)
+            timed = [dict(r) for r in db.execute("SELECT feature, duration_ms FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " duration_ms IS NOT NULL AND feature IS NOT NULL", params)]
+            empty_results = [dict(r) for r in db.execute("SELECT feature, COUNT(*) count FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " outcome_status='empty' GROUP BY feature ORDER BY count DESC", params)]
+            segment_rows = [dict(r) for r in db.execute("SELECT 'Device' label, device value, COUNT(DISTINCT session_id) sessions FROM e3_ligandalyzer_events" + clause + " GROUP BY device HAVING COUNT(DISTINCT session_id) >= 5 UNION ALL SELECT 'Referral', referrer, COUNT(DISTINCT session_id) sessions FROM e3_ligandalyzer_events" + clause + " GROUP BY referrer HAVING COUNT(DISTINCT session_id) >= 5", params + params)]
+            handoff_total = db.execute("SELECT COUNT(*) FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " event_type='companion_handoff'", params).fetchone()[0]
+            handoff_origins = [dict(r) for r in db.execute("SELECT feature, COUNT(*) count FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " event_type='companion_handoff' GROUP BY feature ORDER BY count DESC", params)]
         previous = None; funnel_rows = []
         for label, count in funnel:
             funnel_rows.append({"label": label, "sessions": count, "conversion": None if previous in (None, 0) else round(100 * count / previous, 1)})
             previous = count
-        submitted, completed, failed = (event_sessions.get(key, 0) for key in ("analysis_submitted", "analysis_completed", "analysis_failed"))
+        submitted, failed = (event_sessions.get(key, 0) for key in ("analysis_submitted", "analysis_failed"))
+        completed = sum(item.get("completed", 0) or 0 for item in workflow_outcomes)
+        duration_groups = {}
+        for row in timed:
+            duration_groups.setdefault(row["feature"], []).append(int(row["duration_ms"]))
+        performance = []
+        for feature, values in duration_groups.items():
+            values.sort(); p95 = values[min(len(values) - 1, round((len(values) - 1) * .95))]
+            performance.append({"feature": feature, "count": len(values), "median_ms": values[len(values)//2], "p95_ms": p95})
+        performance.sort(key=lambda item: item["p95_ms"], reverse=True)
+        alerts = []
+        if failed >= 3 and submitted and failed / submitted >= .2:
+            alerts.append("Failure rate is above the 20% review threshold.")
+        if any(item["p95_ms"] > 60000 for item in performance):
+            alerts.append("One or more operations exceeded the 60-second p95 review threshold.")
         return jsonify({"ok": True, "metrics": metrics, "daily": daily,
             "referrers": grouped("SELECT referrer label, COUNT(*) value FROM e3_ligandalyzer_events"), "devices": grouped("SELECT device label, COUNT(*) value FROM e3_ligandalyzer_events"),
             "pages": [dict(r) for r in db.execute("SELECT path, SUM(event_type='page_view') views, COUNT(DISTINCT visitor_id) visitors FROM e3_ligandalyzer_events" + clause + " GROUP BY path ORDER BY views DESC LIMIT 50", params)],
             "countries": [dict(r) for r in db.execute("SELECT country_code, country_name, latitude, longitude, SUM(event_type='page_view') views FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " country_code IS NOT NULL GROUP BY country_code ORDER BY views DESC", params)],
-            "funnel": funnel_rows, "operational": {"submitted": submitted, "completed": completed, "failed": failed, "success_rate": round(100 * completed / submitted, 1) if submitted else None}, "failures": failures,
-            "workflows": grouped("SELECT COALESCE(feature, event_type) label, COUNT(*) value FROM e3_ligandalyzer_events"),
+            "funnel": funnel_rows, "operational": {"submitted": submitted, "completed": completed, "failed": failed, "success_rate": round(100 * completed / submitted, 1) if submitted else None, "empty_results": empty_results, "performance": performance[:10], "segmentation": segment_rows, "alerts": alerts}, "engagement": {"new_visitors": new_visitors, "returning_visitors": len(visible_visitors) - new_visitors, "engaged_sessions": engaged_sessions, "research_sessions": research_sessions, "research_session_rate": round(100 * research_sessions / len(session_rows), 1) if session_rows else None}, "handoffs": {"total": handoff_total, "by_origin": handoff_origins, "cross_tool": {"initiated": handoff_total, "builder_arrived": None, "candidate_constructed": None, "candidate_exported": None}}, "failures": failures,
+            "workflows": grouped("SELECT COALESCE(feature, event_type) label, COUNT(*) value FROM e3_ligandalyzer_events"), "workflow_outcomes": workflow_outcomes,
             "features": [dict(r) for r in db.execute("SELECT feature, event_type, COUNT(*) events, COUNT(DISTINCT session_id) sessions FROM e3_ligandalyzer_events" + clause + (" AND" if clause else " WHERE") + " feature IS NOT NULL GROUP BY feature, event_type ORDER BY events DESC", params)]})
 
     app.register_blueprint(bp)

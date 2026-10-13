@@ -68,6 +68,22 @@ def test_randy_receiver_rejects_scientific_values_and_rolls_up_feature(monkeypat
     assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).status_code == 400
 
 
+def test_randy_receiver_accepts_only_safe_outcome_and_duration_fields(monkeypatch, tmp_path):
+    from server.randy.e3_analytics_routes import register_e3_analytics_routes
+    monkeypatch.setenv("E3_ANALYTICS_DB_PATH", str(tmp_path / "analytics.sqlite3"))
+    receiver = Flask(__name__)
+    register_e3_analytics_routes(receiver, lambda: "token")
+    client = receiver.test_client()
+    headers = {"Authorization": "Bearer token"}
+    payload = {"event_id": "a" * 24, "visitor_id": "b" * 24, "session_id": "c" * 24, "event_type": "analysis_completed", "feature": "recruiter_filter", "path": "/", "duration_ms": 24, "outcome_status": "empty"}
+    assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).status_code == 200
+    report = client.get("/backup/e3/analytics/rollup", headers=headers).json
+    assert report["operational"]["empty_results"] == [{"feature": "recruiter_filter", "count": 1}]
+    assert report["operational"]["performance"][0]["p95_ms"] == 24
+    payload.update(event_id="d" * 24, outcome_status="scientific-output")
+    assert client.post("/backup/e3/analytics/events", json=payload, headers=headers).status_code == 400
+
+
 def test_handoff_id_is_validated_and_deduplicated(monkeypatch, tmp_path):
     from server.randy.e3_analytics_routes import register_e3_analytics_routes
     monkeypatch.setenv("E3_ANALYTICS_DB_PATH", str(tmp_path / "analytics.sqlite3"))

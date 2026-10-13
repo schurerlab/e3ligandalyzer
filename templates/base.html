@@ -999,10 +999,13 @@ document.querySelector("details").addEventListener("toggle", e => {
       // Only controlled enum values are sent. Never add scientific content,
       // form values, identifiers, or URLs to this payload.
       window.E3Analytics = {
-        track(eventType, feature, failureStage, handoffId) {
+        track(eventType, feature, failureStage, handoffId, details) {
           const body = {event_type: eventType, feature: feature};
           if (failureStage) body.failure_stage = failureStage;
           if (handoffId) body.handoff_id = handoffId;
+          if (details && Number.isInteger(details.duration_ms) && details.duration_ms >= 0 && details.duration_ms <= 900000) body.duration_ms = details.duration_ms;
+          if (details && ['success','empty','failed'].includes(details.outcome_status)) body.outcome_status = details.outcome_status;
+          if (details && ['timeout','remote_unavailable','missing_artifact','output_validation','conversion_failed','permission_denied','internal_error','unknown'].includes(details.failure_reason)) body.failure_reason = details.failure_reason;
           try {
             const encoded = JSON.stringify(body);
             if (navigator.sendBeacon) {

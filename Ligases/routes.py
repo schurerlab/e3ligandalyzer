@@ -19,6 +19,7 @@ import re
 import sqlite3
 import csv
 import json
+import time
 from functools import lru_cache
 from pathlib import Path
 import requests
@@ -792,13 +793,17 @@ def recruiter_instance_pdb_api(instance_id):
     if not instance:
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
     if randy_client.remote_enabled():
-        return randy_client.proxy_file(
+        response = randy_client.proxy_file(
             f"instances/{randy_client.quote_part(instance_id)}/pdb",
             mimetype="chemical/x-pdb",
         )
+        if response.status_code < 400:
+            track("export_generated", feature="structure_pdb")
+        return response
     asset = _exact_instance_asset(instance, "pdb")
     if not asset:
         return jsonify({"error": "The exact V1 PDB asset is unavailable.", "recruiter_instance_id": instance_id}), 404
+    track("export_generated", feature="structure_pdb")
     return send_file(asset, mimetype="chemical/x-pdb", conditional=True)
 
 
@@ -809,16 +814,20 @@ def recruiter_instance_sdf_api(instance_id):
     if not instance:
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
     if randy_client.remote_enabled():
-        return randy_client.proxy_file(
+        response = randy_client.proxy_file(
             f"instances/{randy_client.quote_part(instance_id)}/sdf",
             mimetype="chemical/x-mdl-sdfile",
         )
+        if response.status_code < 400:
+            track("export_generated", feature="structure_sdf")
+        return response
     asset = _exact_instance_asset(instance, "structural_sdf")
     if not asset:
         return jsonify({
             "error": "No validated observed-coordinate SDF is available for this instance.",
             "recruiter_instance_id": instance_id,
         }), 404
+    track("export_generated", feature="structure_sdf")
     return send_file(asset, mimetype="chemical/x-mdl-sdfile", conditional=True)
 
 
@@ -829,13 +838,17 @@ def recruiter_instance_chemistry_sdf_api(instance_id):
     if not instance:
         return jsonify({"error": f"Recruiter instance not found: {instance_id}"}), 404
     if randy_client.remote_enabled():
-        return randy_client.proxy_file(
+        response = randy_client.proxy_file(
             f"instances/{randy_client.quote_part(instance_id)}/chemistry-sdf",
             mimetype="chemical/x-mdl-sdfile",
         )
+        if response.status_code < 400:
+            track("export_generated", feature="structure_sdf")
+        return response
     asset = _exact_instance_asset(instance, "chemistry_sdf")
     if not asset:
         return jsonify({"error": "The curated chemistry SDF is unavailable.", "recruiter_instance_id": instance_id}), 404
+    track("export_generated", feature="structure_sdf")
     return send_file(asset, mimetype="chemical/x-mdl-sdfile", conditional=True)
 
 
@@ -2822,6 +2835,10 @@ def convert_atom_to_v():
     print("🔥 [convert_atom_to_v] Incoming request...")
     print("==============================")
 
+    started_at = time.monotonic()
+    def analytics_duration_ms():
+        return round((time.monotonic() - started_at) * 1000)
+
     try:
         # ---------------------------
         # LOAD INPUT FIELDS
@@ -2850,7 +2867,7 @@ def convert_atom_to_v():
         print("🧪 Parsing incoming SDF...")
         mol = Chem.MolFromMolBlock(sdf_text, sanitize=False)
         if mol is None:
-            track("analysis_failed", feature="attachment_vector_preparation", failure_stage="input_validation")
+            track("analysis_failed", feature="attachment_vector_preparation", failure_stage="input_validation", failure_reason="output_validation", duration_ms=analytics_duration_ms(), outcome_status="failed")
             print("❌ RDKit could NOT parse SDF!!!")
             return jsonify({"error": "Unable to parse SDF"}), 400
 
@@ -2877,7 +2894,7 @@ def convert_atom_to_v():
                 print(f"🧬 Converted atom index {atom_index} → Vanadium (23)")
                 modified = 1
             except Exception as e:
-                track("analysis_failed", feature="attachment_vector_preparation", failure_stage="analysis")
+                track("analysis_failed", feature="attachment_vector_preparation", failure_stage="analysis", failure_reason="conversion_failed", duration_ms=analytics_duration_ms(), outcome_status="failed")
                 print(f"❌ Atom conversion failure: {e}")
                 traceback.print_exc()
                 return jsonify({"error": f"Atom conversion failed: {e}"}), 500
@@ -2969,7 +2986,7 @@ def convert_atom_to_v():
             print(f"⚠️ Shipment event logging failed: {shipment_error}")
 
         print("✅ [convert_atom_to_v] COMPLETED")
-        track("analysis_completed", feature="attachment_vector_preparation")
+        track("analysis_completed", feature="attachment_vector_preparation", duration_ms=analytics_duration_ms(), outcome_status="success")
         print("==============================\n")
 
         return jsonify({
@@ -2981,7 +2998,7 @@ def convert_atom_to_v():
         })
 
     except Exception as e:
-        track("analysis_failed", feature="attachment_vector_preparation", failure_stage="analysis")
+        track("analysis_failed", feature="attachment_vector_preparation", failure_stage="analysis", failure_reason="internal_error", duration_ms=analytics_duration_ms(), outcome_status="failed")
         print(f"❌ FATAL ERROR in convert_atom_to_v: {e}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

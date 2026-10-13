@@ -106,6 +106,7 @@ async function populateFilters() {
 }
 
 async function loadFeaturedRecruiters() {
+  const startedAt = performance.now();
   if (window.e3FilterRequested) window.E3Analytics.track("analysis_submitted", "recruiter_filter");
   try {
     const ligase = document.getElementById("ligase-filter").value;
@@ -143,13 +144,18 @@ async function loadFeaturedRecruiters() {
     // 🚀 all files are now valid — no filtering needed
     renderRecruiterPlot(processed);
     if (window.e3FilterRequested) {
-      window.E3Analytics.track("analysis_completed", "recruiter_filter");
+      window.E3Analytics.track("analysis_completed", "recruiter_filter", null, null, {
+        duration_ms: Math.round(performance.now() - startedAt),
+        outcome_status: processed.length ? "success" : "empty"
+      });
       window.e3FilterRequested = false;
     }
 
   } catch (err) {
     if (window.e3FilterRequested) {
-      window.E3Analytics.track("analysis_failed", "recruiter_filter", "analysis");
+      window.E3Analytics.track("analysis_failed", "recruiter_filter", "analysis", null, {
+        duration_ms: Math.round(performance.now() - startedAt), outcome_status: "failed", failure_reason: "remote_unavailable"
+      });
       window.e3FilterRequested = false;
     }
     console.error("Error loading featured recruiters:", err);
