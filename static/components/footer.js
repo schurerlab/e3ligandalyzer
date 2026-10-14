@@ -160,6 +160,22 @@ class CustomFooter extends HTMLElement {
           transform: translateX(3px);
         }
 
+        .citation-link {
+          margin-top: 0.55rem;
+          padding: 0.55rem 0.75rem;
+          border: 1px solid rgba(56,189,248,0.7);
+          border-radius: 0.5rem;
+          background: rgba(8, 47, 73, 0.58);
+          color: #cffafe;
+          font-weight: 700;
+          box-shadow: 0 0 14px rgba(56,189,248,0.16);
+        }
+
+        .citation-link:hover {
+          background: rgba(8, 145, 178, 0.24);
+          color: #ffffff;
+        }
+
         /* 🔹 Badges */
         .badge {
           font-size: 0.65rem;
@@ -267,6 +283,7 @@ class CustomFooter extends HTMLElement {
               <li><a href="/release"><i data-feather="archive"></i>Release Notes</a></li>
               <li><a href="/download-manifest"><i data-feather="download"></i>Download Manifest</a></li>
               <li><a href="/case-studies"><i data-feather="clipboard"></i>Case Studies</a></li>
+              <li><a href="/citation" class="citation-link"><i data-feather="quote"></i>Citation &amp; RIS Download</a></li>
             </ul>
           </div>
 
