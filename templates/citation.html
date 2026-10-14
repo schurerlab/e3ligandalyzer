@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Cite E3 Ligandalyzer{% endblock %}
+{% block content %}
+<section class="max-w-4xl mx-auto py-10 space-y-6">
+  <div><p class="uppercase tracking-widest text-cyan-300 text-sm font-semibold">Research software</p><h1 class="text-4xl font-bold">How to cite E3 Ligandalyzer</h1><p class="mt-3 text-slate-300 text-lg">Please cite the version-specific Zenodo software record when using E3 Ligandalyzer, its curated content, or exported assets.</p></div>
+  <article class="rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-xl"><h2 class="text-xl font-semibold text-white">Recommended citation</h2><p class="mt-3 text-slate-200 leading-7">Schulz, J. M., Bardhan, M., Reynolds, R. C., LeRoy, G., Reinberg, D., &amp; Schürer, S. C. (2026). <em>E3 Ligandalyzer</em> [Computer software]. Zenodo. <a class="text-cyan-300 underline" href="https://doi.org/10.5281/zenodo.23374710">https://doi.org/10.5281/zenodo.23374710</a></p></article>
+  <div class="flex flex-wrap gap-3"><a class="rounded-lg bg-cyan-500 px-5 py-3 font-semibold text-slate-950" href="https://doi.org/10.5281/zenodo.23374710">Open Zenodo DOI</a><a class="rounded-lg border border-cyan-300 px-5 py-3 font-semibold text-cyan-200" href="{{ url_for('static', filename='citations/e3-ligandalyzer-2026.10.ris') }}" download>Download RIS</a></div>
+  <p class="text-sm text-slate-400">RIS imports into Zotero, EndNote, Mendeley, and other reference managers.</p>
+</section>
+{% endblock %}

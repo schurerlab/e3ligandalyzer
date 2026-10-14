@@ -256,6 +256,10 @@ def create_app():
         }
         return render_template("about.html", stats=stats)
 
+    @app.route("/citation")
+    def citation():
+        return render_template("citation.html")
+
     @app.route("/docs")
     def docs():
         return render_template("docs.html")
