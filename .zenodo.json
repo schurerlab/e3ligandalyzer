@@ -1,0 +1,13 @@
+{
+  "title": "E3 Ligandalyzer",
+  "description": "A structure-first atlas for E3 ligase recruiters, scaffolds, solvent-accessible surface area exposure, and downloadable PROTAC-design assets.",
+  "creators": [
+    {
+      "name": "The Schürer Lab",
+      "affiliation": "University of Miami"
+    }
+  ],
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "access_right": "open",
+  "keywords": ["E3 ligase", "PROTAC", "molecular design", "structural biology", "research software"]
+}

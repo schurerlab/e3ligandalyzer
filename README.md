@@ -313,9 +313,11 @@ E3_RANDY_TOKEN=<shared-secret>
 
 ## 📚 Citation & Attribution
 
-If you use E3 Ligandalyzer in research, cite or acknowledge the resource as:
+If you use E3 Ligandalyzer in research, cite the exact tagged software release:
 
-> Schulz, J. M. E3 Ligandalyzer: a structure-first atlas for E3 ligase recruiters, scaffold analysis, and PROTAC-design data access.
+> The Schürer Lab. (2026). *E3 Ligandalyzer* (Version 2026.10) [Computer software]. https://github.com/schurerlab/e3ligandalyzer
+
+The repository provides `CITATION.cff` and `.zenodo.json`. Once the Zenodo release DOI is issued, use the version DOI in place of the GitHub URL and add it to `CITATION.cff`.
 
 Please also cite the original PDB structures, source datasets, and software libraries used in your downstream analysis as appropriate.
 
