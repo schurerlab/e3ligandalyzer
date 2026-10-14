@@ -313,11 +313,11 @@ E3_RANDY_TOKEN=<shared-secret>
 
 ## 📚 Citation & Attribution
 
-If you use E3 Ligandalyzer in research, cite the exact tagged software release:
+If you use E3 Ligandalyzer in research, cite the published Zenodo software record:
 
-> The Schürer Lab. (2026). *E3 Ligandalyzer* (Version 2026.10) [Computer software]. https://github.com/schurerlab/e3ligandalyzer
+> Schulz, J. M., Bardhan, M., Reynolds, R. C., LeRoy, G., Reinberg, D., & Schürer, S. C. (2026). *E3 Ligandalyzer* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23374710
 
-The repository provides `CITATION.cff` and `.zenodo.json`. Once the Zenodo release DOI is issued, use the version DOI in place of the GitHub URL and add it to `CITATION.cff`.
+Use the [E3 Ligandalyzer citation page](https://e3ligandalyzer.com/citation) to copy the citation or download RIS. `CITATION.cff` provides GitHub citation metadata.
 
 Please also cite the original PDB structures, source datasets, and software libraries used in your downstream analysis as appropriate.
 
